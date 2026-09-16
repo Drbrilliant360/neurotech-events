@@ -1,181 +1,181 @@
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
-import { MediaTile } from "../../components/shared/Widgets";
 import { formatRange } from "../../lib/dates";
 import { fromLowestPrice } from "../../lib/money";
-import { publicEvents, sponsorsForEvent, ticketsFor, venueOf } from "../../repositories/platform";
+import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
+
+const EVENT_IMAGES = ["/img/event-a.png", "/img/event-b.png", "/img/cover.png"];
+const HISTORY_IMAGES = ["/img/scene-1.png", "/img/scene-2.png", "/img/scene-3.png"];
 
 export function HomePage() {
   const { db } = usePlatform();
-  const featured = db.events.find((event) => event.featured) ?? publicEvents(db)[0];
-  const venue = featured ? venueOf(db, featured.venueId) : undefined;
-  const speakers = db.speakers.slice(0, 4);
-  const why = [
-    ["01", "Learn", "Three tracks of research, clinical and engineering content."],
-    ["02", "Network", "Meet peers across the region and beyond."],
-    ["03", "Innovate", "Hands-on labs with real BCI and imaging hardware."],
-    ["04", "Invest", "Roundtables with funds active in African health tech."],
-    ["05", "Collaborate", "Find co-authors, clinical partners and pilot sites."],
-  ];
+  const visibleEvents = publicEvents(db);
+  const upcomingEvents = visibleEvents.filter((event) => event.status !== "completed");
+  const pastEvents = visibleEvents.filter((event) => event.status === "completed");
+  const featured = db.events.find((event) => event.featured && event.status !== "completed") ?? upcomingEvents[0];
+  const featuredVenue = featured ? venueOf(db, featured.venueId) : undefined;
 
   return (
-    <div>
-      <section className="nt-container nt-hero" style={{ padding: "40px 24px 80px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,420px),1fr))", gap: 56, alignItems: "center" }}>
-        <div>
-          <div className="nt-pill">
-            <span className="nt-dot" />
-            {featured ? `${formatRange(featured.startsAt, featured.endsAt)} · ${venue?.city}` : "Upcoming events"}
-          </div>
-          <h1 style={{ marginTop: 26 }}>
-            Connecting Minds With <span style={{ fontWeight: 800 }}>Future</span> Technology
-          </h1>
-          <p className="nt-lede">
-            Explore the future of neuroscience, AI, brain–computer interfaces and healthcare technology at East Africa's leading neurotechnology gathering.
-          </p>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 44 }}>
-            {featured ? (
-              <Link to={`/register/${featured.id}`} className="nt-btn">
-                Register Now <span style={{ width: 30, height: 30, borderRadius: "50%", background: "#8ad356", color: "#0d1a09" }}>→</span>
-              </Link>
-            ) : null}
-            <Link to="/events" className="nt-btn ghost">
-              Explore Events
-            </Link>
-          </div>
-          <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
-            {[
-              ["1,200+", "Attendees"],
-              ["50+", "Speakers"],
-              ["30+", "Sessions"],
-            ].map(([value, label]) => (
-              <div key={label}>
-                <div style={{ font: "700 30px Manrope,sans-serif" }}>{value}</div>
-                <div className="nt-muted">{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          {["Keynote stage", "BCI workshop", "Research showcase", "Networking lounge"].map((label) => (
-            <div key={label} className="nt-card">
-              <MediaTile label={label} height={150} />
-              <div style={{ paddingTop: 11 }}>{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {featured ? (
-        <section style={{ background: "#fbfaf0", borderTop: "1px solid rgba(18,21,12,.07)", borderBottom: "1px solid rgba(18,21,12,.07)" }}>
-          <div className="nt-container" style={{ padding: "64px 24px" }}>
-            <p className="nt-kicker">Featured event</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 40, alignItems: "center" }}>
-              <MediaTile label={`${featured.title} cover`} height={340} />
-              <div>
-                <h2 style={{ font: "700 clamp(30px,3.4vw,46px)/1.05 Manrope,sans-serif", margin: "0 0 18px" }}>{featured.title}</h2>
-                <p className="nt-lede">{featured.description}</p>
-                <Link to={`/events/${featured.slug}`} className="nt-btn">
-                  View Event
+    <div className="nt-public-home">
+      <section className="nt-container nt-home-hero">
+        <div className="nt-home-hero-grid">
+          <div>
+            <div className="nt-eyebrow">Neurotech Africa · Events</div>
+            <h1 className="nt-home-title">
+              Where Africa&apos;s technology community meets <em>what&apos;s next.</em>
+            </h1>
+            <p className="nt-home-copy">
+              Discover Neurotech Africa workshops, product sessions, partner gatherings and community events. Register once, keep your tickets in one place and build a history of every event you attend with us.
+            </p>
+            <div className="nt-actions">
+              {featured ? (
+                <Link to={`/register/${featured.id}`} className="nt-btn accent">
+                  Register for the next event →
                 </Link>
-              </div>
+              ) : null}
+              <Link to="/events" className="nt-btn ghost">
+                Explore all events
+              </Link>
+              <Link to="/app" className="nt-arrow-link">
+                View my events →
+              </Link>
+            </div>
+            <div className="nt-proof-row" aria-label="Platform benefits">
+              <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>One account across events</div>
+              <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Tickets and event history</div>
+              <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Schedules, notices and certificates</div>
             </div>
           </div>
-        </section>
-      ) : null}
 
-      <section className="nt-container" style={{ padding: "72px 24px" }}>
-        <p className="nt-kicker">Explore by interest</p>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          {["Neuroscience", "AI & Brain Technology", "Brain Computer Interface", "Neurohealth", "Research", "Innovation", "Investment"].map((item) => (
-            <Link key={item} to={`/events?q=${encodeURIComponent(item)}`} className="nt-chip" style={{ background: "#fff", padding: "14px 24px", fontSize: 15 }}>
-              {item}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="nt-container" style={{ padding: "0 24px 72px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
-          <p className="nt-kicker">Featured speakers</p>
-          <Link to="/speakers" className="nt-btn ghost">
-            All speakers
-          </Link>
-        </div>
-        <div className="nt-grid cards">
-          {speakers.map((speaker) => (
-            <article key={speaker.id} className="nt-card">
-              <MediaTile label={speaker.initials} height={200} />
-              <h3 style={{ marginTop: 16 }}>{speaker.name}</h3>
-              <div style={{ color: "#2f7d34" }}>{speaker.role}</div>
-              <div className="nt-muted">{speaker.organization}</div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section style={{ background: "#fbfaf0" }}>
-        <div className="nt-container" style={{ padding: "72px 24px" }}>
-          <h2 style={{ font: "700 40px/1.1 Manrope,sans-serif", margin: "0 0 34px" }}>Why attend?</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 2, background: "rgba(18,21,12,.08)" }}>
-            {why.map(([n, title, body]) => (
-              <div key={n} style={{ background: "#fbfaf0", padding: "26px 22px 30px" }}>
-                <div style={{ color: "#8ad356", marginBottom: 22 }}>{n}</div>
-                <h3>{title}</h3>
-                <p className="nt-muted">{body}</p>
-              </div>
-            ))}
+          <div className="nt-feature-card" aria-label="Featured Neurotech event">
+            <img src="/img/cover.png" alt="Neurotech Africa event audience" />
+            <div className="nt-feature-card-content">
+              {featured ? (
+                <>
+                  <div className="nt-feature-date">
+                    {formatRange(featured.startsAt, featured.endsAt)}{featuredVenue?.city ? ` · ${featuredVenue.city}` : ""}
+                  </div>
+                  <h2>{featured.title}</h2>
+                  <p>{featured.description}</p>
+                </>
+              ) : (
+                <>
+                  <div className="nt-feature-date">Neurotech Events</div>
+                  <h2>New events are being prepared.</h2>
+                  <p>Explore the event archive or return when the next Neurotech Africa experience is published.</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {featured ? (
-        <section className="nt-container" style={{ padding: "72px 24px" }}>
-          <p className="nt-kicker">Sponsors & partners</p>
-          <div className="nt-grid cards">
-            {sponsorsForEvent(db, featured.id).map((sponsor) => (
-              <div key={sponsor.id} className="nt-card" style={{ minHeight: 92, display: "grid", placeItems: "center" }}>
-                {sponsor.name}
-              </div>
-            ))}
+      <section className="nt-section soft">
+        <div className="nt-container">
+          <div className="nt-section-heading">
+            <div>
+              <p className="nt-kicker">Coming up</p>
+              <h2>Choose the room you want to be in next.</h2>
+              <p>Every event keeps the essentials clear: what it is, where it happens, when registration closes and what you need to attend.</p>
+            </div>
+            <Link to="/events" className="nt-btn ghost">See every event</Link>
           </div>
-        </section>
-      ) : null}
 
-      <section className="nt-container" style={{ padding: "0 24px 80px" }}>
-        <div className="nt-cta">
-          <h2>Ready to join the future?</h2>
-          {featured ? (
-            <Link to={`/register/${featured.id}`} className="nt-btn accent">
-              Register for the Summit
-            </Link>
+          {upcomingEvents.length ? (
+            <div className="nt-event-grid">
+              {upcomingEvents.slice(0, 3).map((event, index) => {
+                const venue = venueOf(db, event.venueId);
+                const prices = ticketsFor(db, event.id).map((ticket) => ticket.price);
+                return (
+                  <Link key={event.id} to={`/events/${event.slug}`} className="nt-event-card">
+                    <div className="nt-event-card-media">
+                      <img src={EVENT_IMAGES[index % EVENT_IMAGES.length]} alt="" />
+                      <span className="nt-event-status">Upcoming</span>
+                    </div>
+                    <div className="nt-event-card-body">
+                      <div className="nt-event-meta">
+                        <span>{formatRange(event.startsAt, event.endsAt)}</span>
+                        <span>{venue?.city ?? "Event venue"}</span>
+                      </div>
+                      <h3>{event.title}</h3>
+                      <div className="nt-event-card-footer">
+                        <span className="nt-event-price">{fromLowestPrice(prices)}</span>
+                        <span className="nt-arrow-link">View event →</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           ) : (
-            <Link to="/events" className="nt-btn accent">
-              Explore events
-            </Link>
+            <div className="nt-empty">There are no published upcoming events in the demo data yet.</div>
           )}
         </div>
       </section>
 
-      <section className="nt-container" style={{ padding: "0 24px 80px" }}>
-        <p className="nt-kicker">Upcoming</p>
-        <div className="nt-grid events">
-          {publicEvents(db)
-            .filter((event) => event.status !== "completed")
-            .slice(0, 3)
-            .map((event) => {
-              const prices = ticketsFor(db, event.id).map((ticket) => ticket.price);
-              const city = venueOf(db, event.venueId)?.city;
-              return (
-                <Link key={event.id} to={`/events/${event.slug}`} className="nt-card" style={{ color: "inherit" }}>
-                  <MediaTile label={event.bannerLabel} height={150} />
-                  <h3 style={{ marginTop: 12 }}>{event.title}</h3>
-                  <div className="nt-muted">
-                    {formatRange(event.startsAt, event.endsAt)} · {city}
-                  </div>
-                  <div style={{ color: "#2f7d34", marginTop: 8 }}>{fromLowestPrice(prices)}</div>
-                </Link>
-              );
-            })}
+      <section className="nt-section dark">
+        <div className="nt-container">
+          <div className="nt-section-heading">
+            <div>
+              <p className="nt-kicker" style={{ color: "#8ad356" }}>Built for more than conferences</p>
+              <h2>One event platform, multiple Neurotech experiences.</h2>
+            </div>
+          </div>
+          <div className="nt-format-grid">
+            {[
+              ["01", "Product sessions", "Launches, live demos and deeper product conversations around Sarufi, SemaCall, Ghala and Snippe."],
+              ["02", "Workshops", "Focused technical and business sessions with practical participation and limited-capacity registration."],
+              ["03", "Partner events", "Sessions created with enterprises, institutions, banks, telcos and ecosystem partners."],
+              ["04", "Community gatherings", "Meetups, talks and learning experiences that keep builders and operators connected."],
+            ].map(([number, title, body]) => (
+              <article key={number} className="nt-format-card">
+                <div className="nt-format-number">{number}</div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="nt-section">
+        <div className="nt-container">
+          <div className="nt-section-heading">
+            <div>
+              <p className="nt-kicker">Your event relationship</p>
+              <h2>Registration should not disappear after the event ends.</h2>
+              <p>Your attendee account is designed to retain tickets, notices, schedules, past attendance and certificates across Neurotech events.</p>
+            </div>
+            <Link to="/app" className="nt-btn">Open attendee dashboard</Link>
+          </div>
+
+          <div className="nt-history-strip">
+            {(pastEvents.length ? pastEvents.slice(0, 3) : visibleEvents.slice(0, 3)).map((event, index) => (
+              <Link key={event.id} to={`/events/${event.slug}`} className="nt-history-card">
+                <img src={HISTORY_IMAGES[index % HISTORY_IMAGES.length]} alt="" />
+                <div className="nt-history-card-content">
+                  <small>{event.status === "completed" ? "Past event" : "Neurotech event"} · {formatRange(event.startsAt, event.endsAt)}</small>
+                  <h3>{event.title}</h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="nt-container" style={{ padding: "0 24px 86px" }}>
+        <div className="nt-platform-cta">
+          <div>
+            <p className="nt-kicker" style={{ color: "#8ad356" }}>Ready for the next one?</p>
+            <h2>Find the next Neurotech Africa event and keep everything about your attendance in one account.</h2>
+            <p>Browse what is coming up, register, access your ticket and return later to see the events you have attended.</p>
+          </div>
+          <div className="nt-cta-actions">
+            <Link to="/events" className="nt-btn accent">Explore events</Link>
+            <Link to="/app" className="nt-btn ghost" style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.22)" }}>
+              My events
+            </Link>
+          </div>
         </div>
       </section>
     </div>
