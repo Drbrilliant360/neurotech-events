@@ -1,6 +1,7 @@
 import { AppRouter } from "./app/router/AppRouter";
 import "./App.css";
 import "./styles/platform.css";
+import "./styles/experience.css";
 
 export default function App() {
   return (
