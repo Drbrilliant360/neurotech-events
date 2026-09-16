@@ -10,7 +10,7 @@ NeuroTech Events is the frontend for an event-management platform serving three 
 - **Attendee:** dashboard, ticket, personal schedule, networking, notifications, and certificates.
 - **Admin:** event management, ticket configuration, attendee management, check-in, schedule/timeline management, marketing, sponsors, payments, and reporting.
 
-The current repository is a React + TypeScript + Vite frontend prototype. The existing UI is driven primarily by `src/lib/useAppModel.ts` and rendered from design data in `src/design/blocks.json` through `src/lib/dcRender.tsx`.
+The current repository is a React + TypeScript + Vite frontend. Interactive surfaces are routed React features backed by typed domain models and a local mock repository. Prototype design artifacts remain under `src/design/` and `src/lib/dcRender.tsx`.
 
 ## 2. Non-negotiable Git workflow
 
