@@ -32,17 +32,13 @@ Frontend prototype for the NeuroTech Events platform: a React + TypeScript event
 
 ## Current architecture
 
-The current repository is a frontend prototype built with:
+The current repository is a React 19 + TypeScript + Vite SPA.
 
-- React 19;
-- TypeScript;
-- Vite;
-- Framer Motion;
-- Oxlint.
+Interactive product flows live under `src/features/`, with typed domain models in `src/domain/`, a local repository in `src/repositories/`, and React Router routes in `src/app/`. Demo data is seeded on first visit and persisted through repositories to `localStorage`. The prototype design renderer (`src/lib/dcRender.tsx`, `src/design/`) is retained as a visual reference.
 
-The current UI is largely driven by `src/lib/useAppModel.ts`, with design blocks from `src/design/blocks.json` rendered through `src/lib/dcRender.tsx`.
+This application is **frontend only**. There is no backend, database, live payment provider, or production authentication. The Public / Attendee / Admin control is a demo identity switcher.
 
-This repository does not currently define a production backend, database, authentication provider, payment gateway, or notification provider. Those integrations should be introduced behind explicit interfaces and documented system boundaries.
+Reset demo data from the top bar.
 
 ## Local development
 
@@ -90,11 +86,15 @@ Read these before major implementation work:
 
 ```text
 src/
+  app/          Router, layouts, demo identity provider
+  components/   Shared presentational widgets
+  domain/       Typed event-platform contracts
+  data/seed/    Deterministic mock dataset
+  features/     Public, attendee, and admin screens
+  repositories/ Local persistence implementations
+  lib/          Formatters, CSV, storage helper, prototype renderer
   design/       Prototype/design source artifacts
-  lib/          Current renderer and application model
   App.tsx       Application shell
-  App.css       Application styling
-  main.tsx      React entry point
 ```
 
 As the application evolves, new production work should move toward explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating additional business logic in the current prototype model.
