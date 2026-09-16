@@ -1,0 +1,20 @@
+<sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+  <div style="position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(250,251,238,.82);border-bottom:1px solid rgba(18,21,12,.08)">
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-right:6px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+        <div style="font:800 17px 'Manrope',sans-serif;letter-spacing:-.02em">NeuroTech</div>
+      </div>
+      <div style="display:flex;gap:6px;background:rgba(18,21,12,.05);padding:4px;border-radius:999px">
+        <sc-for list="{{ groupTabs }}" as="g" hint-placeholder-count="3">
+          <button onClick="{{ g.go }}" style="border:none;cursor:pointer;border-radius:999px;padding:8px 16px;font:600 13px 'DM Sans',sans-serif;background:{{ g.bg }};color:{{ g.fg }}">{{ g.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0">
+        <sc-for list="{{ screenChips }}" as="s" hint-placeholder-count="6">
+          <button onClick="{{ s.go }}" style="border:1px solid {{ s.border }};cursor:pointer;border-radius:999px;padding:7px 13px;font:500 12.5px 'DM Sans',sans-serif;background:{{ s.bg }};color:{{ s.fg }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
