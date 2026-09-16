@@ -12,7 +12,7 @@ The present application has three logical surfaces:
 - registered attendee;
 - administrator.
 
-Navigation and much of the demo state currently live in `src/lib/useAppModel.ts`. UI composition is primarily driven through `src/design/blocks.json` and rendered by `src/lib/dcRender.tsx`.
+Navigation and demo product data currently live behind `src/app/` routing and `src/repositories/`. Prototype HTML composition remains in `src/design/` for reference.
 
 At this stage, the repository does **not** establish a production backend, database, identity provider, payment gateway, notification service, or event analytics pipeline. Any such integration must therefore be introduced behind explicit contracts rather than assumed.
 

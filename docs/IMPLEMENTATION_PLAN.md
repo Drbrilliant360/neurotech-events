@@ -46,10 +46,10 @@ Every implementation increment should:
 - [x] Git workflow documentation
 - [x] system engineering blueprint
 - [x] implementation roadmap
-- [ ] pull request template
-- [ ] contribution guide
-- [ ] CI workflow for lint/build validation
-- [ ] ADR directory/template
+- [x] pull request template
+- [x] contribution guide
+- [x] CI workflow for lint/build validation
+- [x] ADR directory/template
 
 ### Exit criteria
 
