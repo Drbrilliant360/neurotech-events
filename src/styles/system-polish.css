@@ -1,0 +1,391 @@
+/* Final cross-platform design refinement: public, attendee and admin surfaces. */
+
+.nt-shell {
+  background: transparent;
+}
+
+.nt-container {
+  max-width: var(--nt-content);
+}
+
+.nt-surface-admin,
+.nt-surface-attendee {
+  min-height: 100vh;
+}
+
+.nt-main {
+  background: rgba(247, 249, 244, 0.82);
+}
+
+.nt-page,
+.nt-workspace-content,
+.nt-main > div {
+  min-width: 0;
+}
+
+.nt-page h1,
+.nt-main h1 {
+  max-width: 18ch;
+  color: var(--nt-ink);
+}
+
+.nt-lede {
+  color: var(--nt-ink-soft);
+}
+
+.nt-kicker {
+  color: #74806f;
+  font-weight: 700;
+}
+
+.nt-card,
+.nt-panel,
+.nt-table-wrap,
+.nt-dialog-card,
+.nt-choice,
+.nt-ticket {
+  border-color: var(--nt-line);
+  box-shadow: var(--nt-shadow-sm);
+}
+
+.nt-card,
+.nt-panel,
+.nt-table-wrap,
+.nt-dialog-card {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.nt-card,
+.nt-panel {
+  border-radius: var(--nt-radius-md);
+}
+
+.nt-card:hover {
+  border-color: rgba(78, 155, 59, 0.18);
+}
+
+.nt-grid.cards > .nt-card,
+.nt-grid.events > .nt-card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.nt-grid.cards > .nt-card:hover,
+.nt-grid.events > .nt-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--nt-shadow-md);
+}
+
+.nt-btn {
+  min-height: 44px;
+  padding: 11px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(16, 23, 16, 0.10);
+}
+
+.nt-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(16, 23, 16, 0.14);
+}
+
+.nt-btn.ghost {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--nt-line-strong);
+  box-shadow: none;
+}
+
+.nt-btn.accent {
+  background: var(--nt-accent);
+  color: #12200f;
+}
+
+.nt-chip {
+  min-height: 38px;
+  border-color: var(--nt-line);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.nt-chip:hover {
+  border-color: rgba(78, 155, 59, 0.28);
+  background: #fff;
+}
+
+.nt-chip.is-on,
+.nt-seg button.is-on {
+  background: var(--nt-dark);
+  color: #fff;
+  border-color: var(--nt-dark);
+}
+
+.nt-toolbar {
+  padding: 12px;
+  border: 1px solid var(--nt-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--nt-shadow-sm);
+}
+
+.nt-search,
+.nt-field input,
+.nt-field select,
+.nt-field textarea {
+  border-color: var(--nt-line-strong);
+  background: #fff;
+  color: var(--nt-ink);
+}
+
+.nt-search {
+  min-height: 44px;
+  border-radius: 12px;
+}
+
+.nt-field span {
+  color: #566153;
+  font-weight: 700;
+}
+
+.nt-field input,
+.nt-field select,
+.nt-field textarea {
+  border-radius: 12px;
+  min-height: 44px;
+}
+
+.nt-table-wrap {
+  border-radius: 18px;
+  box-shadow: var(--nt-shadow-sm);
+}
+
+.nt-table th {
+  background: #f5f8f2;
+  color: #758070;
+  border-bottom: 1px solid var(--nt-line);
+}
+
+.nt-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.nt-table tbody tr:hover {
+  background: #f8faf6;
+}
+
+.nt-table td {
+  border-top-color: rgba(22, 32, 22, 0.07);
+}
+
+.nt-badge {
+  font-weight: 700;
+}
+
+.nt-empty {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(78, 155, 59, 0.22);
+}
+
+.nt-dialog {
+  backdrop-filter: blur(6px);
+  background: rgba(9, 15, 9, 0.54);
+}
+
+.nt-dialog-card {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 28px 90px rgba(8, 14, 8, 0.28);
+}
+
+/* Attendee workspace */
+.nt-surface-attendee .nt-app {
+  grid-template-columns: 248px minmax(0, 1fr);
+}
+
+.nt-surface-attendee .nt-side {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  border-right-color: var(--nt-line);
+}
+
+.nt-surface-attendee .nt-side a {
+  margin-bottom: 5px;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.nt-surface-attendee .nt-side a:hover {
+  background: #f3f7ef;
+  border-color: rgba(78, 155, 59, 0.10);
+}
+
+.nt-surface-attendee .nt-side a[aria-current="page"] {
+  background: var(--nt-dark);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(16, 23, 16, 0.13);
+}
+
+/* Admin workspace */
+.nt-surface-admin .nt-app {
+  grid-template-columns: 274px minmax(0, 1fr);
+}
+
+.nt-side.admin {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(119, 201, 76, 0.13), transparent 18rem),
+    linear-gradient(180deg, #111811 0%, #0c120c 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nt-side.admin a {
+  color: #aeb9aa;
+  border: 1px solid transparent;
+}
+
+.nt-side.admin a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.nt-side.admin a[aria-current="page"] {
+  background: linear-gradient(90deg, rgba(119, 201, 76, 0.18), rgba(119, 201, 76, 0.08));
+  color: #dff3d3;
+  border-color: rgba(119, 201, 76, 0.14);
+}
+
+.nt-side.admin .sec {
+  color: #6f7e6c;
+}
+
+.nt-workspace-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: calc(clamp(22px, 3vw, 44px) * -1) calc(clamp(22px, 3vw, 44px) * -1) 28px;
+  padding: 18px clamp(22px, 3vw, 44px);
+  border-bottom: 1px solid var(--nt-line);
+  background: rgba(248, 250, 246, 0.90);
+  backdrop-filter: blur(18px);
+}
+
+.nt-workspace-content {
+  max-width: 1480px;
+}
+
+.nt-priority-card {
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(12, 18, 12, 0.18);
+}
+
+.nt-mini-stat {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--nt-line);
+  box-shadow: var(--nt-shadow-sm);
+}
+
+.nt-mini-stat strong {
+  letter-spacing: -0.04em;
+}
+
+.nt-operation-card {
+  border-color: var(--nt-line);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--nt-shadow-sm);
+}
+
+.nt-operation-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(78, 155, 59, 0.22);
+  box-shadow: var(--nt-shadow-md);
+}
+
+/* Shared page rhythm for all remaining attendee/admin operation pages. */
+.nt-main > div > h1:first-child,
+.nt-workspace-content > div > h1:first-child {
+  margin-bottom: 10px;
+}
+
+.nt-main > div > h1:first-child::after,
+.nt-workspace-content > div > h1:first-child::after {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 4px;
+  margin-top: 14px;
+  border-radius: 999px;
+  background: var(--nt-accent);
+}
+
+.nt-ticket {
+  width: min(100%, 480px);
+  border-radius: 24px;
+  box-shadow: var(--nt-shadow-md);
+}
+
+.nt-qr {
+  box-shadow: inset 0 0 0 10px #fff, 0 12px 32px rgba(16, 23, 16, 0.10);
+}
+
+.nt-choice {
+  border-width: 1px;
+}
+
+.nt-choice:hover,
+.nt-choice.is-on {
+  border-color: rgba(78, 155, 59, 0.42);
+  background: var(--nt-accent-soft);
+}
+
+@media (max-width: 1100px) {
+  .nt-surface-admin .nt-app,
+  .nt-surface-attendee .nt-app {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .nt-surface-admin .nt-app,
+  .nt-surface-attendee .nt-app {
+    grid-template-columns: 1fr;
+  }
+
+  .nt-workspace-topbar {
+    position: relative;
+    margin-top: 0;
+    margin-inline: 0;
+    border: 1px solid var(--nt-line);
+    border-radius: 16px;
+  }
+
+  .mobile-nav {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--nt-line);
+    background: rgba(248, 250, 246, 0.94);
+    backdrop-filter: blur(16px);
+  }
+}
+
+@media (max-width: 640px) {
+  .nt-main {
+    padding: 18px;
+  }
+
+  .nt-toolbar {
+    padding: 10px;
+  }
+
+  .nt-toolbar > * {
+    width: 100%;
+  }
+
+  .nt-table-wrap {
+    border-radius: 14px;
+  }
+
+  .nt-btn {
+    min-height: 44px;
+  }
+}
