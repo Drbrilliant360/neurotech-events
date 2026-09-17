@@ -14,33 +14,51 @@ export function NotificationsPage() {
   const unread = items.filter((item) => !item.read).length;
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      <h1>Notifications {unread ? `(${unread})` : ""}</h1>
+    <div>
+      <div className="nt-dashboard-head">
+        <div>
+          <p className="nt-kicker">Inbox</p>
+          <h1>Notifications</h1>
+          <p className="nt-lede">Registration updates, schedule changes, reminders and event announcements in one place.</p>
+        </div>
+        <button type="button" className="nt-btn ghost" onClick={readAll}>Mark all read</button>
+      </div>
+
+      <div className="nt-mini-stat-grid" style={{ marginBottom: 18 }}>
+        <div className="nt-mini-stat"><strong>{items.length}</strong><span>Visible notices</span></div>
+        <div className="nt-mini-stat"><strong>{unread}</strong><span>Unread</span></div>
+      </div>
+
       <div className="nt-toolbar">
         {CATS.map((item) => (
           <button key={item} type="button" className={`nt-chip ${cat === item ? "is-on" : ""}`} onClick={() => setCat(item)}>
             {item}
           </button>
         ))}
-        <button type="button" className="nt-btn ghost" onClick={readAll}>
-          Mark all read
-        </button>
       </div>
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          className="nt-card"
-          style={{ width: "100%", textAlign: "left", marginBottom: 10, opacity: item.read ? 0.7 : 1 }}
-          onClick={() => readOne(item.id)}
-        >
-          <strong>{item.title}</strong>
-          <div className="nt-muted">{item.body}</div>
-          <div className="nt-muted">
-            {item.category} · {formatDateTime(item.createdAt)} {item.read ? "" : "· unread"}
-          </div>
-        </button>
-      ))}
+
+      <section className="nt-panel">
+        <div className="nt-row-list">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="nt-row-item"
+              style={{ width: "100%", textAlign: "left", background: item.read ? "transparent" : "#f5faF1", border: 0 }}
+              onClick={() => readOne(item.id)}
+            >
+              <span style={{ width: 9, height: 9, borderRadius: 99, background: item.read ? "#cfd6ca" : "#77c94c", flex: "0 0 auto" }} />
+              <div className="nt-row-main">
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+                <span>{formatDateTime(item.createdAt)}</span>
+              </div>
+              <span className="nt-badge neutral">{item.category}</span>
+            </button>
+          ))}
+          {items.length === 0 ? <div className="nt-empty">No notifications match this filter.</div> : null}
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,0 +1,339 @@
+.nt-checkout-note {
+  margin-top: 18px;
+  padding: 13px 14px;
+  border: 1px solid rgba(79, 158, 57, 0.16);
+  border-radius: 13px;
+  background: #f3f9ee;
+  color: #53654e;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.nt-consent-row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 15px 16px;
+  border: 1px solid var(--nt-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--nt-muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.nt-consent-row input {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--nt-green-strong);
+}
+
+.nt-order-summary .nt-summary-total {
+  padding-top: 12px;
+  border-bottom: 0;
+}
+
+.nt-order-summary .nt-summary-total dt,
+.nt-order-summary .nt-summary-total dd {
+  color: var(--nt-ink);
+  font: 760 15px "Manrope", sans-serif;
+}
+
+.nt-payment-disclaimer {
+  margin: 14px 0 0;
+  color: var(--nt-subtle);
+  font-size: 10.5px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.nt-payment-page {
+  min-height: 70vh;
+}
+
+.nt-demo-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.nt-demo-controls > span {
+  margin-right: 3px;
+  color: var(--nt-subtle);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nt-payment-state-card {
+  padding: clamp(28px, 5vw, 48px);
+  text-align: center;
+}
+
+.nt-payment-state-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 18px;
+  place-items: center;
+  border-radius: 22px;
+  background: #eef2ed;
+  color: #6c7669;
+  font: 800 25px "Manrope", sans-serif;
+}
+
+.nt-payment-state-icon.paid {
+  background: #e5f5df;
+  color: #347d34;
+}
+
+.nt-payment-state-icon.failed,
+.nt-payment-state-icon.cancelled {
+  background: #f8e8e4;
+  color: #9a4036;
+}
+
+.nt-payment-state-card h1 {
+  margin: 16px auto 10px;
+  font-size: clamp(32px, 5vw, 48px);
+}
+
+.nt-payment-state-card .nt-lede {
+  margin: 0 auto 28px;
+}
+
+.nt-payment-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto 26px;
+  text-align: left;
+}
+
+.nt-payment-facts > div {
+  padding: 13px 14px;
+  border: 1px solid var(--nt-line);
+  border-radius: 13px;
+  background: #f8faf7;
+}
+
+.nt-payment-facts span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--nt-subtle);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nt-payment-facts strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--nt-ink);
+  font-size: 12.5px;
+}
+
+.nt-payment-actions {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.nt-payment-event {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--nt-line);
+  color: var(--nt-subtle);
+  font-size: 11.5px;
+}
+
+.nt-receipt-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.nt-receipt-toolbar h1 {
+  margin-bottom: 0;
+}
+
+.nt-receipt-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.nt-receipt-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 26px;
+  padding: 30px;
+  border-bottom: 1px solid var(--nt-line);
+}
+
+.nt-receipt-brand strong {
+  color: var(--nt-ink);
+}
+
+.nt-receipt-brand span:last-child {
+  color: var(--nt-subtle);
+}
+
+.nt-receipt-number {
+  text-align: right;
+}
+
+.nt-receipt-number span,
+.nt-receipt-number small {
+  display: block;
+  color: var(--nt-subtle);
+  font-size: 10.5px;
+}
+
+.nt-receipt-number strong {
+  display: block;
+  margin: 5px 0 3px;
+  color: var(--nt-ink);
+  font: 750 14px "Manrope", sans-serif;
+}
+
+.nt-receipt-callout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--nt-line);
+  border-bottom: 1px solid var(--nt-line);
+}
+
+.nt-receipt-callout > div {
+  display: flex;
+  min-height: 82px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px 30px;
+  background: #f8faf7;
+}
+
+.nt-receipt-callout span:first-child {
+  color: var(--nt-subtle);
+  font-size: 11px;
+}
+
+.nt-receipt-callout strong {
+  color: var(--nt-ink);
+  font: 760 20px "Manrope", sans-serif;
+}
+
+.nt-receipt-parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 42px;
+  padding: 30px;
+  border-bottom: 1px solid var(--nt-line);
+}
+
+.nt-receipt-parties section {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+
+.nt-receipt-parties strong {
+  color: var(--nt-ink);
+  font-size: 13.5px;
+}
+
+.nt-receipt-parties span {
+  color: var(--nt-muted);
+  font-size: 12.5px;
+}
+
+.nt-receipt-lines {
+  padding: 16px 30px 26px;
+}
+
+.nt-receipt-lines > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(16, 21, 16, 0.06);
+  color: var(--nt-muted);
+  font-size: 12.5px;
+}
+
+.nt-receipt-lines strong {
+  flex: 0 0 auto;
+  color: var(--nt-copy);
+}
+
+.nt-receipt-lines .nt-receipt-total {
+  margin-top: 8px;
+  padding-top: 18px;
+  border-bottom: 0;
+  color: var(--nt-ink);
+  font: 760 20px "Manrope", sans-serif;
+}
+
+.nt-receipt-note {
+  padding: 16px 30px;
+  border-top: 1px solid var(--nt-line);
+  background: #f8faf7;
+  color: var(--nt-subtle);
+  font-size: 10.5px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .nt-payment-facts,
+  .nt-receipt-callout,
+  .nt-receipt-parties {
+    grid-template-columns: 1fr;
+  }
+
+  .nt-receipt-toolbar,
+  .nt-receipt-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nt-receipt-number {
+    text-align: left;
+  }
+
+  .nt-receipt-callout > div,
+  .nt-receipt-parties,
+  .nt-receipt-header,
+  .nt-receipt-lines {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+}
+
+@media print {
+  .no-print,
+  .nt-demo,
+  .nt-header,
+  .nt-footer-bar {
+    display: none !important;
+  }
+
+  .nt-receipt-page {
+    padding: 0 !important;
+  }
+
+  .nt-receipt-card {
+    border: 0;
+    box-shadow: none;
+  }
+}

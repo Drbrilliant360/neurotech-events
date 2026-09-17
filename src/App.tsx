@@ -2,6 +2,11 @@ import { AppRouter } from "./app/router/AppRouter";
 import "./App.css";
 import "./styles/platform.css";
 import "./styles/experience.css";
+import "./styles/pages.css";
+import "./styles/commerce.css";
+import "./styles/workspace.css";
+import "./styles/revision.css";
+import "./styles/system-polish.css";
 
 export default function App() {
   return (

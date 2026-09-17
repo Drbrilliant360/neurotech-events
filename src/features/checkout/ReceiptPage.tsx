@@ -10,71 +10,70 @@ export function ReceiptPage() {
   const { db } = usePlatform();
   const bundle = registrationBundle(db, registrationId);
   if (!bundle?.payment) {
-    return (
-      <div className="nt-container" style={{ padding: 48 }}>
-        <EmptyState title="Receipt not found" body="Complete checkout to generate a receipt." />
-      </div>
-    );
+    return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Receipt not found" body="Complete checkout to generate a receipt." /></div>;
   }
   const { attendee, event, ticket, payment, registration } = bundle;
 
   return (
-    <div className="nt-container nt-page" style={{ maxWidth: 760, padding: "44px 24px 90px" }}>
-      <div className="no-print" style={{ display: "flex", justifyContent: "space-between", marginBottom: 22 }}>
-        <h1>Receipt</h1>
-        <button type="button" className="nt-btn" onClick={() => window.print()}>
-          Print / download
-        </button>
+    <div className="nt-container nt-page nt-form-page nt-receipt-page" style={{ maxWidth: 820 }}>
+      <div className="nt-receipt-toolbar no-print">
+        <div>
+          <p className="nt-kicker">Payment record</p>
+          <h1>Receipt</h1>
+        </div>
+        <button type="button" className="nt-btn" onClick={() => window.print()}>Print / download</button>
       </div>
-      <article className="nt-card" style={{ padding: 40 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
-          <div className="nt-brand">
-            <span className="nt-mark sm" />
+
+      <article className="nt-card nt-receipt-card">
+        <header className="nt-receipt-header">
+          <div className="nt-footer-brand nt-receipt-brand">
+            <span className="nt-mark" />
             <div>
-              <strong>NeuroTech Summit</strong>
-              <div className="nt-muted">Demo invoice · not a fiscal receipt</div>
+              <strong>Neurotech Events</strong>
+              <span>by Neurotech Africa</span>
             </div>
           </div>
-          <div>
-            <div className="nt-kicker">Tax invoice</div>
-            <div>{registration.ticketNumber}</div>
-            <div className="nt-muted">{formatDateTime(payment.updatedAt)}</div>
+          <div className="nt-receipt-number">
+            <span>Receipt reference</span>
+            <strong>{registration.ticketNumber}</strong>
+            <small>{formatDateTime(payment.updatedAt)}</small>
           </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 20, padding: "24px 0" }}>
+        </header>
+
+        <div className="nt-receipt-callout">
           <div>
-            <div className="nt-kicker">Billed to</div>
-            {attendee.fullName}
-            <br />
-            {attendee.organization}
-            <br />
-            {attendee.email}
-            <br />
-            {attendee.phone}
-          </div>
-          <div>
-            <div className="nt-kicker">Payment</div>
-            {paymentMethodLabel(payment.method)}
-            <br />
-            {payment.reference}
-            <br />
+            <span>Payment status</span>
             <StatusPill value={payment.status} />
           </div>
+          <div>
+            <span>Amount paid</span>
+            <strong>{formatMoney(payment.amount)}</strong>
+          </div>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderTop: "1px solid rgba(18,21,12,.08)" }}>
-          <span>
-            {ticket.name} · {event.title}
-          </span>
-          <span>{formatMoney(ticket.price)}</span>
+
+        <div className="nt-receipt-parties">
+          <section>
+            <p className="nt-kicker">Billed to</p>
+            <strong>{attendee.fullName}</strong>
+            <span>{attendee.organization}</span>
+            <span>{attendee.email}</span>
+            <span>{attendee.phone}</span>
+          </section>
+          <section>
+            <p className="nt-kicker">Payment</p>
+            <strong>{paymentMethodLabel(payment.method)}</strong>
+            <span>Reference {payment.reference}</span>
+            <span>{event.title}</span>
+          </section>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0" }}>
-          <span>VAT {db.settings.vatPercent}%</span>
-          <span>{formatMoney(payment.amount - ticket.price)}</span>
+
+        <div className="nt-receipt-lines">
+          <div><span>{ticket.name} · {event.title}</span><strong>{formatMoney(ticket.price)}</strong></div>
+          <div><span>VAT {db.settings.vatPercent}%</span><strong>{formatMoney(payment.amount - ticket.price)}</strong></div>
+          <div className="nt-receipt-total"><span>Total</span><strong>{formatMoney(payment.amount)}</strong></div>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 18, font: "700 26px Manrope,sans-serif" }}>
-          <span>Total</span>
-          <span>{formatMoney(payment.amount)}</span>
-        </div>
+
+        <footer className="nt-receipt-note">Demo invoice · not a fiscal receipt · generated by the Neurotech Events frontend prototype.</footer>
       </article>
     </div>
   );

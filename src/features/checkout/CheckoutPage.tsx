@@ -18,11 +18,7 @@ export function CheckoutPage() {
   const [accepted, setAccepted] = useState(true);
 
   if (!bundle?.payment) {
-    return (
-      <div className="nt-container" style={{ padding: 48 }}>
-        <EmptyState title="Checkout not found" body="Start registration again from the event page." />
-      </div>
-    );
+    return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Checkout not found" body="Start registration again from the event page." /></div>;
   }
 
   const { registration, attendee, event, ticket, payment } = bundle;
@@ -30,75 +26,69 @@ export function CheckoutPage() {
   function startPay() {
     if (!accepted || busy) return;
     setBusy(true);
-    if (payment.status !== "paid" && ticket.price > 0) {
-      pay(payment.id, method, "paid");
-    }
+    if (payment.status !== "paid" && ticket.price > 0) pay(payment.id, method, "paid");
     navigate(`/payment/${payment.id}`);
   }
 
   return (
-    <div className="nt-container nt-page" style={{ padding: "44px 24px 90px" }}>
-      <h1>Checkout</h1>
-      <p className="nt-lede">
-        {registration.ticketNumber} · {event.title}
-      </p>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(240px,360px)", gap: 32 }}>
+    <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 1080 }}>
+      <div className="nt-page-intro">
+        <div>
+          <p className="nt-kicker">Secure checkout · Demo environment</p>
+          <h1>Complete your registration.</h1>
+          <p className="nt-lede">{registration.ticketNumber} · {event.title}</p>
+        </div>
+      </div>
+
+      <div className="nt-form-shell">
         <div className="nt-grid">
-          <div className="nt-card">
-            <h3>Attendee</h3>
-            <p>
-              {attendee.fullName}
-              <br />
-              {attendee.email}
-              <br />
-              {attendee.phone}
-              <br />
-              {attendee.organization}
-            </p>
-          </div>
-          <div className="nt-card">
-            <h3>Payment method</h3>
-            <p className="nt-muted">Frontend simulation only. Do not enter real payment credentials.</p>
-            <div className="nt-grid cards">
+          <section className="nt-card nt-form-card">
+            <div className="nt-panel-header">
+              <div><p className="nt-kicker">Attendee</p><h3>{attendee.fullName}</h3></div>
+              <span className="nt-badge ok">Registration ready</span>
+            </div>
+            <div className="nt-profile-details">
+              <div className="nt-profile-detail"><span>Email</span><strong>{attendee.email}</strong></div>
+              <div className="nt-profile-detail"><span>Phone</span><strong>{attendee.phone}</strong></div>
+              <div className="nt-profile-detail"><span>Organization</span><strong>{attendee.organization}</strong></div>
+              <div className="nt-profile-detail"><span>Ticket</span><strong>{ticket.name}</strong></div>
+            </div>
+          </section>
+
+          <section className="nt-card nt-form-card">
+            <p className="nt-kicker">Payment method</p>
+            <h2>How would you like to pay?</h2>
+            <p className="nt-muted">This frontend simulates the payment experience. Do not enter real payment credentials.</p>
+            <div className="nt-grid cards" style={{ marginTop: 20 }}>
               {METHODS.map((item) => (
                 <button key={item} type="button" className={`nt-choice ${method === item ? "is-on" : ""}`} onClick={() => setMethod(item)}>
-                  {paymentMethodLabel(item)}
+                  <strong>{paymentMethodLabel(item)}</strong>
+                  <div className="nt-muted">{isMobileMoney(item) ? "Mobile money prompt" : item === "card" ? "Card checkout" : "Bank payment"}</div>
                 </button>
               ))}
             </div>
-            {isMobileMoney(method) ? (
-              <p className="nt-muted" style={{ marginTop: 16 }}>
-                A {paymentMethodLabel(method)} prompt will be simulated for {attendee.phone}. No PIN is collected in this demo.
-              </p>
-            ) : null}
-          </div>
-          <label style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            {isMobileMoney(method) ? <div className="nt-checkout-note">A {paymentMethodLabel(method)} prompt will be simulated for {attendee.phone}. No PIN is collected in this demo.</div> : null}
+          </section>
+
+          <label className="nt-consent-row">
             <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-            <span>I accept the summit terms. This checkout is a local demo and does not charge a real wallet or card.</span>
+            <span>I accept the event terms and understand that this local demo does not charge a real wallet, card or bank account.</span>
           </label>
         </div>
-        <aside className="nt-card">
+
+        <aside className="nt-flow-summary nt-order-summary">
           <p className="nt-kicker">Order summary</p>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
-            <span>
-              {ticket.name} pass × 1
-            </span>
-            <span>{formatMoney(ticket.price)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
-            <span>VAT {db.settings.vatPercent}%</span>
-            <span>{formatMoney(payment.amount - ticket.price)}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "18px 0", font: "700 22px Manrope,sans-serif" }}>
-            <span>Total</span>
-            <span>{formatMoney(payment.amount)}</span>
-          </div>
-          <button type="button" className="nt-btn" style={{ width: "100%" }} disabled={!accepted || busy} onClick={startPay}>
+          <h3>{event.title}</h3>
+          <dl>
+            <div><dt>{ticket.name} pass × 1</dt><dd>{formatMoney(ticket.price)}</dd></div>
+            <div><dt>VAT {db.settings.vatPercent}%</dt><dd>{formatMoney(payment.amount - ticket.price)}</dd></div>
+            <div className="nt-summary-total"><dt>Total</dt><dd>{formatMoney(payment.amount)}</dd></div>
+          </dl>
+          <button type="button" className="nt-btn" style={{ width: "100%", marginTop: 18 }} disabled={!accepted || busy} onClick={startPay}>
             {busy ? "Starting…" : `Pay ${formatMoney(payment.amount)}`}
           </button>
-          <Link to={`/register/${event.id}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 10 }}>
-            Back
-          </Link>
+          <Link to={`/register/${event.id}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 9 }}>Back to registration</Link>
+          <p className="nt-payment-disclaimer">Frontend simulation only · no real payment is processed.</p>
         </aside>
       </div>
     </div>
