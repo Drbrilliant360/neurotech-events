@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { usePlatform } from "../providers/PlatformProvider";
 import { DemoSwitcher } from "./DemoSwitcher";
 
 const SECTIONS = [
@@ -44,8 +45,11 @@ const SECTIONS = [
 ] as const;
 
 export function AdminLayout() {
+  const { db } = usePlatform();
+  const activeEvent = db.events.find((event) => event.featured && event.status !== "completed") ?? db.events.find((event) => event.status !== "completed");
+
   return (
-    <div className="nt-shell">
+    <div className="nt-shell nt-surface-admin">
       <DemoSwitcher />
       <nav className="mobile-nav" aria-label="Admin">
         {SECTIONS.flatMap((sec) =>
@@ -56,26 +60,67 @@ export function AdminLayout() {
           )),
         )}
       </nav>
+
       <div className="nt-app">
         <aside className="nt-side admin">
-          <div className="nt-brand" style={{ padding: "0 10px 24px" }}>
+          <NavLink to="/admin" className="nt-brand nt-side-brand" aria-label="Neurotech Events admin dashboard">
             <span className="nt-mark sm" />
-            <strong style={{ color: "#fbfaf0", fontSize: 15 }}>NEUROTECH ADMIN</strong>
-          </div>
+            <span>
+              <strong>Neurotech Events</strong>
+              <small>Operations console</small>
+            </span>
+          </NavLink>
+
           {SECTIONS.map((sec) => (
-            <div key={sec.title} style={{ marginBottom: 16 }}>
+            <div key={sec.title} className="nt-side-section">
               <div className="sec">{sec.title}</div>
-              {sec.items.map(([to, label]) => (
-                <NavLink key={to} to={to} end={to === "/admin"}>
-                  {label}
-                </NavLink>
-              ))}
+              <nav aria-label={sec.title}>
+                {sec.items.map(([to, label]) => (
+                  <NavLink key={to} to={to} end={to === "/admin"}>
+                    {label}
+                  </NavLink>
+                ))}
+              </nav>
             </div>
           ))}
+
+          <div className="nt-side-footer admin-footer">
+            <NavLink to="/" className="nt-side-explore">
+              View public site →
+            </NavLink>
+            <div className="nt-admin-status">
+              <span className="nt-status-dot" />
+              <span>
+                <strong>Operations workspace</strong>
+                <small>Frontend demo environment</small>
+              </span>
+            </div>
+          </div>
         </aside>
-        <div className="nt-main">
-          <Outlet />
-        </div>
+
+        <main className="nt-main">
+          <div className="nt-workspace-topbar">
+            <div className="nt-workspace-heading">
+              <strong>Event operations</strong>
+              <span>{activeEvent ? `Managing ${activeEvent.title}` : "Manage Neurotech Africa events and attendee operations."}</span>
+            </div>
+            <div className="nt-workspace-actions">
+              <NavLink to="/admin/events/new" className="nt-btn accent nt-topbar-action">
+                Create event
+              </NavLink>
+              <div className="nt-user-chip" aria-label="Administrator session">
+                <span className="nt-user-avatar">NA</span>
+                <span>
+                  <strong>Neurotech Admin</strong>
+                  <span>Event operations</span>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="nt-workspace-content">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

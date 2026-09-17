@@ -18,10 +18,20 @@ export function PublicSchedulePage() {
   const saved = new Set(db.savedSessions.filter((item) => item.attendeeId === attendeeId).map((item) => item.sessionId));
 
   return (
-    <div className="nt-container nt-page" style={{ maxWidth: 1100, padding: "44px 24px 90px" }}>
-      <h1>Schedule</h1>
-      <p className="nt-lede">{featured.title}</p>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+    <div className="nt-container nt-page nt-directory-page nt-public-schedule">
+      <div className="nt-page-intro">
+        <div>
+          <p className="nt-kicker">Programme</p>
+          <h1>Build your day around the sessions that matter.</h1>
+          <p className="nt-lede">{featured.title} · Browse the programme by day and session type, then save sessions directly to your attendee schedule.</p>
+        </div>
+        <div className="nt-page-intro-stat">
+          <strong>{items.length}</strong>
+          <span>sessions in view</span>
+        </div>
+      </div>
+
+      <div className="nt-schedule-toolbar">
         {days.map((value, index) => {
           const sample = sessions.find((session) => session.dayIndex === value);
           return (
@@ -31,26 +41,25 @@ export function PublicSchedulePage() {
           );
         })}
         <select className="nt-chip" value={type} onChange={(e) => setType(e.target.value)} aria-label="Session type">
-          <option value="all">All types</option>
-          {types.map((item) => (
-            <option key={item}>{item}</option>
-          ))}
+          <option value="all">All session types</option>
+          {types.map((item) => <option key={item}>{item}</option>)}
         </select>
       </div>
-      {items.map((session) => (
-        <div key={session.id} style={{ display: "grid", gridTemplateColumns: "110px minmax(0,1fr)", gap: 24, padding: "22px 0", borderTop: "1px solid rgba(18,21,12,.12)" }}>
-          <div style={{ font: "700 18px Manrope,sans-serif" }}>{session.startTime}</div>
-          <div>
-            <div style={{ font: "600 19px DM Sans,sans-serif" }}>{session.title}</div>
-            <div className="nt-muted">
-              {session.speakerLabel} · {session.room} · {session.type} · {minutesBetween(session.startTime, session.endTime)} min
+
+      <div className="nt-public-schedule-list">
+        {items.map((session) => (
+          <article key={session.id} className="nt-public-session">
+            <div className="nt-public-session-time">{session.startTime}</div>
+            <div>
+              <div className="nt-public-session-title">{session.title}</div>
+              <div className="nt-muted">{session.speakerLabel} · {session.room} · {session.type} · {minutesBetween(session.startTime, session.endTime)} min</div>
             </div>
-            <button type="button" className="nt-btn ghost" style={{ marginTop: 12 }} onClick={() => toggleAgenda(session.id)}>
-              {saved.has(session.id) ? "Remove from my schedule" : "Add to my schedule"}
+            <button type="button" className={`nt-btn ${saved.has(session.id) ? "ghost" : ""}`} onClick={() => toggleAgenda(session.id)}>
+              {saved.has(session.id) ? "Saved" : "Add to schedule"}
             </button>
-          </div>
-        </div>
-      ))}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

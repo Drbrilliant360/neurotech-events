@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
-import { EmptyState, MediaTile, StatusPill } from "../../components/shared/Widgets";
+import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatRange, isPast } from "../../lib/dates";
 import { fromLowestPrice } from "../../lib/money";
 import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
+
+const EVENT_IMAGES = ["/img/event-a.png", "/img/event-b.png", "/img/cover.png"];
 
 export function EventsPage() {
   const { db } = usePlatform();
@@ -33,13 +35,27 @@ export function EventsPage() {
   }, [events, query, when, city, category, db]);
 
   return (
-    <div className="nt-container nt-page" style={{ padding: "44px 24px 90px" }}>
-      <h1>Events</h1>
-      <div className="nt-toolbar">
+    <div className="nt-container nt-page nt-directory-page">
+      <div className="nt-page-intro">
+        <div>
+          <p className="nt-kicker">Discover Neurotech Africa</p>
+          <h1>Events built for learning, partnership and what comes next.</h1>
+          <p className="nt-lede">
+            Browse upcoming and past Neurotech Africa experiences, then filter by location, category or date to find the right room for you.
+          </p>
+        </div>
+        <div className="nt-page-intro-stat">
+          <strong>{filtered.length}</strong>
+          <span>{filtered.length === 1 ? "event matches" : "events match"}</span>
+        </div>
+      </div>
+
+      <div className="nt-toolbar nt-filter-bar">
         <input
           className="nt-search"
           value={query}
-          placeholder="Search events…"
+          placeholder="Search by event, theme or category…"
+          aria-label="Search events"
           onChange={(e) => {
             setQuery(e.target.value);
             setParams(e.target.value ? { q: e.target.value } : {});
@@ -63,31 +79,39 @@ export function EventsPage() {
           ))}
         </select>
       </div>
+
       {filtered.length === 0 ? (
-        <EmptyState title="No events match" body="Try another search or clear the filters." />
+        <EmptyState title="No events match" body="Try another search term or clear one of the filters." />
       ) : (
-        <div className="nt-grid events">
-          {filtered.map((event) => {
+        <div className="nt-event-grid nt-directory-grid">
+          {filtered.map((event, index) => {
+            const venue = venueOf(db, event.venueId);
             const prices = ticketsFor(db, event.id).filter((ticket) => ticket.active).map((ticket) => ticket.price);
             return (
-              <article key={event.id} className="nt-card">
-                <div style={{ position: "relative" }}>
-                  <MediaTile label={event.bannerLabel} height={172} />
-                  <span className="nt-badge ok" style={{ position: "absolute", top: 12, left: 12, background: "#111510", color: "#fff" }}>
-                    {event.bannerLabel}
-                  </span>
-                </div>
-                <h3 style={{ marginTop: 14 }}>{event.title}</h3>
-                <div className="nt-muted">
-                  {formatRange(event.startsAt, event.endsAt)} · {venueOf(db, event.venueId)?.city}
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", margin: "10px 0 12px" }}>
-                  <span style={{ color: "#2f7d34", fontWeight: 600 }}>{fromLowestPrice(prices)}</span>
-                  <StatusPill value={event.status} />
-                </div>
-                <Link to={`/events/${event.slug}`} className="nt-btn" style={{ width: "100%" }}>
-                  View
+              <article key={event.id} className="nt-event-card">
+                <Link to={`/events/${event.slug}`} className="nt-event-card-media nt-event-card-link" aria-label={`View ${event.title}`}>
+                  <img src={EVENT_IMAGES[index % EVENT_IMAGES.length]} alt="" />
+                  <span className="nt-event-status">{event.status}</span>
                 </Link>
+                <div className="nt-event-card-body">
+                  <div className="nt-event-meta">
+                    <span>{formatRange(event.startsAt, event.endsAt)}</span>
+                    <span>{venue?.city ?? "Venue TBA"}</span>
+                  </div>
+                  <h3>
+                    <Link to={`/events/${event.slug}`}>{event.title}</Link>
+                  </h3>
+                  <p className="nt-event-summary">{event.description}</p>
+                  <div className="nt-event-card-footer">
+                    <div>
+                      <span className="nt-event-price">{fromLowestPrice(prices)}</span>
+                      <StatusPill value={event.category} />
+                    </div>
+                    <Link to={`/events/${event.slug}`} className="nt-arrow-link">
+                      View event →
+                    </Link>
+                  </div>
+                </div>
               </article>
             );
           })}

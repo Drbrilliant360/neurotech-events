@@ -10,18 +10,16 @@ const NAV = [
 
 export function PublicLayout() {
   return (
-    <div className="nt-shell">
+    <div className="nt-shell nt-surface-public">
       <DemoSwitcher />
       <header className="nt-header">
         <div className="nt-container nt-header-row">
-          <div style={{ display: "flex", alignItems: "center", gap: 26, flexWrap: "wrap" }}>
+          <div className="nt-public-nav-cluster">
             <NavLink to="/" className="nt-brand" aria-label="Neurotech Events home">
               <span className="nt-mark" />
-              <span>
-                <span className="nt-brand-name" style={{ display: "block", lineHeight: 1 }}>Neurotech Events</span>
-                <span className="nt-muted" style={{ display: "block", marginTop: 3, fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase" }}>
-                  by Neurotech Africa
-                </span>
+              <span className="nt-brand-copy">
+                <span className="nt-brand-name">Neurotech Events</span>
+                <span className="nt-brand-subtitle">by Neurotech Africa</span>
               </span>
             </NavLink>
             <nav className="nt-nav" aria-label="Public navigation">
@@ -32,8 +30,8 @@ export function PublicLayout() {
               ))}
             </nav>
           </div>
-          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            <NavLink to="/app" className="nt-muted">
+          <div className="nt-public-actions">
+            <NavLink to="/app" className="nt-chip nt-account-link">
               My events
             </NavLink>
             <NavLink to="/events" className="nt-btn">
@@ -42,45 +40,45 @@ export function PublicLayout() {
           </div>
         </div>
       </header>
+
       <Outlet />
+
       <footer className="nt-footer-bar">
-        <div className="nt-container" style={{ padding: "58px 24px 34px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(240px,1.6fr) repeat(3,minmax(150px,.8fr))", gap: 34 }}>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <div className="nt-container nt-footer-inner">
+          <div className="nt-footer-grid">
+            <div className="nt-footer-intro">
+              <div className="nt-footer-brand">
                 <span className="nt-mark sm" />
-                <div style={{ font: "800 19px Manrope,sans-serif", color: "#fbfaf0" }}>Neurotech Events</div>
+                <div>
+                  <strong>Neurotech Events</strong>
+                  <span>by Neurotech Africa</span>
+                </div>
               </div>
-              <div style={{ maxWidth: 390, lineHeight: 1.6 }}>
-                Events for the people building, operating and partnering around Africa&apos;s next technology infrastructure.
-              </div>
+              <p>
+                A single place to discover Neurotech Africa events, register, keep your ticket, follow the program and build a history of the experiences you attend.
+              </p>
             </div>
             <div>
-              <div className="nt-kicker" style={{ color: "#8e9878" }}>Explore</div>
+              <div className="nt-footer-heading">Explore</div>
               <NavLink to="/events">Events</NavLink>
-              <br />
               <NavLink to="/speakers">Speakers</NavLink>
-              <br />
               <NavLink to="/schedule">Schedule</NavLink>
             </div>
             <div>
-              <div className="nt-kicker" style={{ color: "#8e9878" }}>Your account</div>
+              <div className="nt-footer-heading">Your account</div>
               <NavLink to="/app">Dashboard</NavLink>
-              <br />
               <NavLink to="/app/ticket">Tickets</NavLink>
-              <br />
               <NavLink to="/app/certificates">Certificates</NavLink>
             </div>
             <div>
-              <div className="nt-kicker" style={{ color: "#8e9878" }}>Neurotech Africa</div>
+              <div className="nt-footer-heading">Neurotech Africa</div>
               <a href="https://www.neurotech.africa" target="_blank" rel="noreferrer">Company website</a>
-              <br />
-              Dar es Salaam, Tanzania
+              <span className="nt-footer-location">Dar es Salaam, Tanzania</span>
             </div>
           </div>
-          <div style={{ marginTop: 44, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,.08)", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", fontSize: 12.5, color: "#8e9878" }}>
+          <div className="nt-footer-bottom">
             <span>Neurotech Events · Neurotech Africa</span>
-            <span>Built for discovery, registration and event continuity.</span>
+            <span>Discovery · Registration · Attendance · Event history</span>
           </div>
         </div>
       </footer>
