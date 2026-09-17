@@ -79,106 +79,98 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="nt-container nt-page" style={{ maxWidth: 880, padding: "44px 24px 90px" }}>
-      <h1>Register for {event.title}</h1>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+    <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 1080 }}>
+      <div className="nt-page-intro">
+        <div>
+          <p className="nt-kicker">Event registration</p>
+          <h1>Register for {event.title}</h1>
+          <p className="nt-lede">Choose a ticket, tell us who is attending and confirm the details before continuing to checkout.</p>
+        </div>
+      </div>
+
+      <div className="nt-stepper" aria-label="Registration progress">
         {STEPS.map((label, index) => (
-          <div key={label} className={`nt-chip ${index === step ? "is-on" : ""}`}>
-            0{index + 1} {label}
+          <div key={label} className={`nt-chip ${index === step ? "is-on" : ""}`} aria-current={index === step ? "step" : undefined}>
+            0{index + 1} · {label}
           </div>
         ))}
       </div>
-      <div className="nt-card" style={{ padding: 32 }}>
-        {step === 0 ? (
-          <div>
-            <h2>Select your ticket</h2>
-            <div className="nt-grid">
-              {tickets.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`nt-choice ${item.id === ticket?.id ? "is-on" : ""}`}
-                  onClick={() => setTicketId(item.id)}
-                >
-                  <div>
-                    <strong>{item.name}</strong>
-                    <div className="nt-muted">
-                      {item.perks} · {item.sold}/{item.capacity} sold
-                    </div>
-                  </div>
-                  <div>{formatMoney(item.price, item.currency)}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {step === 1 ? (
-          <div>
-            <h2>Attendee information</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
-              {(
-                [
-                  ["fullName", "Full name"],
-                  ["email", "Email"],
-                  ["phone", "Phone"],
-                  ["organization", "Organization"],
-                  ["jobTitle", "Role / title"],
-                  ["country", "Country"],
-                  ["dietary", "Dietary (optional)"],
-                  ["accessibility", "Accessibility (optional)"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="nt-field">
-                  <span>{label}</span>
-                  <input
-                    value={form[key]}
-                    onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                    aria-invalid={Boolean(errors[key])}
-                  />
-                  {errors[key] ? <div className="error">{errors[key]}</div> : null}
-                </label>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        {step === 2 ? (
-          <div>
-            <h2>Review</h2>
-            <p>
-              {form.fullName} · {form.email}
-              <br />
-              {ticket?.name} · {formatMoney(totals.subtotal)} + VAT {formatMoney(totals.vat)} = <strong>{formatMoney(totals.total)}</strong>
-            </p>
-            {formError ? <p className="error">{formError}</p> : null}
-          </div>
-        ) : null}
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 30 }}>
+
+      <div className="nt-form-shell">
+        <div className="nt-card nt-form-card">
           {step === 0 ? (
-            <Link to={`/events/${event.slug}`} className="nt-btn ghost">
-              Back
-            </Link>
-          ) : (
-            <button type="button" className="nt-btn ghost" onClick={() => setStep(step - 1)}>
-              Back
-            </button>
-          )}
-          {step < 2 ? (
-            <button
-              type="button"
-              className="nt-btn"
-              onClick={() => {
-                if (step === 1 && !validate()) return;
-                setStep(step + 1);
-              }}
-            >
-              Continue
-            </button>
-          ) : (
-            <button type="button" className="nt-btn" disabled={busy} onClick={submit}>
-              {busy ? "Submitting…" : "Go to checkout"}
-            </button>
-          )}
+            <div>
+              <p className="nt-kicker">Step 1</p>
+              <h2>Select your ticket</h2>
+              <p className="nt-muted">Choose the pass that best fits how you want to attend.</p>
+              <div className="nt-grid" style={{ marginTop: 20 }}>
+                {tickets.map((item) => (
+                  <button key={item.id} type="button" className={`nt-choice ${item.id === ticket?.id ? "is-on" : ""}`} onClick={() => setTicketId(item.id)}>
+                    <div>
+                      <strong>{item.name}</strong>
+                      <div className="nt-muted">{item.perks} · {item.sold}/{item.capacity} sold</div>
+                    </div>
+                    <strong>{formatMoney(item.price, item.currency)}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {step === 1 ? (
+            <div>
+              <p className="nt-kicker">Step 2</p>
+              <h2>Attendee information</h2>
+              <p className="nt-muted">These details will appear on your attendee record and event ticket.</p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16, marginTop: 20 }}>
+                {([
+                  ["fullName", "Full name"], ["email", "Email"], ["phone", "Phone"], ["organization", "Organization"],
+                  ["jobTitle", "Role / title"], ["country", "Country"], ["dietary", "Dietary (optional)"], ["accessibility", "Accessibility (optional)"],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="nt-field">
+                    <span>{label}</span>
+                    <input value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} aria-invalid={Boolean(errors[key])} />
+                    {errors[key] ? <div className="error">{errors[key]}</div> : null}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {step === 2 ? (
+            <div>
+              <p className="nt-kicker">Step 3</p>
+              <h2>Review your registration</h2>
+              <div className="nt-profile-details" style={{ marginTop: 20 }}>
+                <div className="nt-profile-detail"><span>Attendee</span><strong>{form.fullName}</strong></div>
+                <div className="nt-profile-detail"><span>Email</span><strong>{form.email}</strong></div>
+                <div className="nt-profile-detail"><span>Organization</span><strong>{form.organization}</strong></div>
+                <div className="nt-profile-detail"><span>Ticket</span><strong>{ticket?.name}</strong></div>
+              </div>
+              {formError ? <p className="error">{formError}</p> : null}
+            </div>
+          ) : null}
+
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginTop: 30 }}>
+            {step === 0 ? <Link to={`/events/${event.slug}`} className="nt-btn ghost">Back to event</Link> : <button type="button" className="nt-btn ghost" onClick={() => setStep(step - 1)}>Back</button>}
+            {step < 2 ? (
+              <button type="button" className="nt-btn" onClick={() => { if (step === 1 && !validate()) return; setStep(step + 1); }}>Continue</button>
+            ) : (
+              <button type="button" className="nt-btn" disabled={busy} onClick={submit}>{busy ? "Submitting…" : "Continue to checkout"}</button>
+            )}
+          </div>
         </div>
+
+        <aside className="nt-flow-summary">
+          <p className="nt-kicker">Registration summary</p>
+          <h3>{event.title}</h3>
+          <dl>
+            <div><dt>Ticket</dt><dd>{ticket?.name ?? "Select a ticket"}</dd></div>
+            <div><dt>Subtotal</dt><dd>{formatMoney(totals.subtotal)}</dd></div>
+            <div><dt>VAT</dt><dd>{formatMoney(totals.vat)}</dd></div>
+            <div><dt>Total</dt><dd>{formatMoney(totals.total)}</dd></div>
+          </dl>
+        </aside>
       </div>
     </div>
   );
