@@ -1,0 +1,358 @@
+.nt-public-nav-cluster,
+.nt-public-actions,
+.nt-footer-brand,
+.nt-side-brand,
+.nt-side-profile,
+.nt-admin-status {
+  display: flex;
+  align-items: center;
+}
+
+.nt-public-nav-cluster {
+  min-width: 0;
+  gap: 26px;
+}
+
+.nt-public-actions {
+  flex: 0 0 auto;
+  gap: 9px;
+}
+
+.nt-brand-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.nt-brand-copy .nt-brand-name {
+  display: block;
+  line-height: 1;
+}
+
+.nt-brand-subtitle {
+  color: #83907f;
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.nt-account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding-inline: 14px;
+}
+
+.nt-footer-inner {
+  padding-top: 58px;
+  padding-bottom: 30px;
+}
+
+.nt-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.7fr) repeat(3, minmax(130px, 0.7fr));
+  gap: 38px;
+}
+
+.nt-footer-intro p {
+  max-width: 470px;
+  margin: 18px 0 0;
+  color: #97a392;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.nt-footer-brand {
+  gap: 11px;
+}
+
+.nt-footer-brand strong {
+  display: block;
+  color: #f4f7f1;
+  font: 750 17px "Manrope", sans-serif;
+}
+
+.nt-footer-brand span:last-child {
+  display: block;
+  margin-top: 2px;
+  color: #7d8a78;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.nt-footer-heading {
+  margin-bottom: 15px;
+  color: #758170;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.nt-footer-grid > div:not(:first-child) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.nt-footer-grid a {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nt-footer-location {
+  color: #929f8d;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.nt-footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 44px;
+  padding-top: 19px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #748070;
+  font-size: 11.5px;
+}
+
+.nt-side-brand {
+  gap: 10px;
+  margin: 0 4px 18px;
+  padding: 7px 6px 15px !important;
+  border-bottom: 1px solid rgba(16, 21, 16, 0.07);
+  border-radius: 0 !important;
+}
+
+.nt-side-brand:hover {
+  background: transparent !important;
+}
+
+.nt-side-brand > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.nt-side-brand strong {
+  overflow: hidden;
+  color: #1a2119;
+  font: 750 13px "Manrope", sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nt-side-brand small {
+  color: #879283;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nt-side.admin .nt-side-brand {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+.nt-side.admin .nt-side-brand strong {
+  color: #eff4ec;
+}
+
+.nt-side.admin .nt-side-brand small {
+  color: #6f7d69;
+}
+
+.nt-side-section {
+  margin-bottom: 13px;
+}
+
+.nt-side nav > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nt-nav-count {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--nt-green-soft, #e8f5df);
+  color: #397b34;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.nt-side-footer {
+  margin-top: 20px;
+  padding: 16px 7px 4px;
+  border-top: 1px solid rgba(16, 21, 16, 0.07);
+}
+
+.nt-side.admin .nt-side-footer {
+  border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+.nt-side-explore {
+  display: inline-flex !important;
+  margin-bottom: 12px !important;
+  padding: 0 !important;
+  color: #5b8c49 !important;
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+}
+
+.nt-side-explore:hover {
+  background: transparent !important;
+  color: #2f7130 !important;
+}
+
+.nt-side.admin .nt-side-explore {
+  color: #95c77a !important;
+}
+
+.nt-side-profile,
+.nt-admin-status {
+  gap: 9px;
+  min-width: 0;
+}
+
+.nt-side-profile > span:last-child,
+.nt-admin-status > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.nt-side-profile strong,
+.nt-admin-status strong {
+  overflow: hidden;
+  color: #253024;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nt-side-profile small,
+.nt-admin-status small {
+  overflow: hidden;
+  color: #879283;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nt-admin-status strong {
+  color: #dce6d8;
+}
+
+.nt-admin-status small {
+  color: #6f7d69;
+}
+
+.nt-status-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 50%;
+  background: #8ad356;
+  box-shadow: 0 0 0 5px rgba(138, 211, 86, 0.1);
+}
+
+.nt-topbar-action {
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 1020px) {
+  .nt-public-nav-cluster {
+    gap: 15px;
+  }
+
+  .nt-brand-subtitle {
+    display: none;
+  }
+
+  .nt-footer-grid {
+    grid-template-columns: 1.4fr repeat(2, 0.8fr);
+  }
+
+  .nt-footer-grid > div:last-child {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .nt-public-nav-cluster {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .nt-public-actions {
+    margin-left: auto;
+  }
+
+  .nt-side-footer {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .nt-public-nav-cluster {
+    gap: 11px;
+  }
+
+  .nt-public-actions {
+    width: 100%;
+  }
+
+  .nt-public-actions > * {
+    flex: 1 1 0;
+  }
+
+  .nt-account-link {
+    min-height: 42px;
+  }
+
+  .nt-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 30px 22px;
+  }
+
+  .nt-footer-intro {
+    grid-column: 1 / -1;
+  }
+
+  .nt-footer-grid > div:last-child {
+    grid-column: auto;
+  }
+
+  .nt-footer-bottom {
+    flex-direction: column;
+    margin-top: 32px;
+  }
+
+  .nt-workspace-actions .nt-chip {
+    display: none;
+  }
+
+  .nt-topbar-action {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .nt-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
