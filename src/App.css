@@ -1,7 +1,8 @@
 .app-root {
   min-height: 100vh;
-  color: #1e261d;
+  color: var(--nt-ink);
   font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: transparent;
 }
 
 .skip-link {
@@ -11,11 +12,11 @@
   z-index: 10000;
   padding: 10px 14px;
   border-radius: 10px;
-  background: #101510;
+  background: var(--nt-dark);
   color: #fff !important;
   font-size: 13px;
   font-weight: 700;
-  box-shadow: 0 10px 30px rgba(8, 12, 8, 0.22);
+  box-shadow: var(--nt-shadow-md);
   transform: translateY(-170%);
   transition: transform 160ms ease;
 }
@@ -47,12 +48,17 @@
 }
 
 .app-root a {
-  color: #3e8136;
+  color: var(--nt-accent-strong);
   text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+.app-root a:hover {
+  text-decoration-color: currentColor;
 }
 
 .app-root ::placeholder {
-  color: #9aa596;
+  color: #97a093;
 }
 
 .app-root img {
@@ -60,8 +66,26 @@
 }
 
 .app-root :focus-visible {
-  outline: 3px solid rgba(79, 158, 57, 0.34);
+  outline: 3px solid rgba(78, 155, 59, 0.30);
   outline-offset: 3px;
+}
+
+.app-root input,
+.app-root select,
+.app-root textarea {
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.app-root input:focus,
+.app-root select:focus,
+.app-root textarea:focus {
+  border-color: rgba(78, 155, 59, 0.58) !important;
+  box-shadow: 0 0 0 4px rgba(119, 201, 76, 0.12);
+}
+
+.app-root button,
+.app-root a {
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
 @media (max-width: 720px) {
@@ -76,7 +100,7 @@
   .app-root button,
   .app-root input,
   .app-root select {
-    min-height: 42px;
+    min-height: 44px;
   }
 }
 
