@@ -13,62 +13,60 @@ export function PaymentPage() {
   const phase: PaymentStatus = payment?.status === "pending" ? "processing" : (payment?.status ?? "processing");
 
   if (!payment || !bundle) {
-    return (
-      <div className="nt-container" style={{ padding: 48 }}>
-        <EmptyState title="Payment not found" body="Return to checkout from your registration." />
-      </div>
-    );
+    return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Payment not found" body="Return to checkout from your registration." /></div>;
   }
 
   const current = payment;
+  function demo(outcome: "paid" | "failed" | "cancelled") { pay(current.id, current.method, outcome); }
 
-  function demo(outcome: "paid" | "failed" | "cancelled") {
-    pay(current.id, current.method, outcome);
-  }
+  const title = phase === "paid" ? "Payment received" : phase === "failed" ? "Payment not completed" : phase === "cancelled" ? "Payment cancelled" : "Waiting for approval";
+  const message = phase === "paid"
+    ? "Your registration is confirmed. Your ticket and receipt are ready."
+    : phase === "failed"
+      ? "The simulated payment did not complete. You can retry or choose another method."
+      : phase === "cancelled"
+        ? "This payment attempt was cancelled. Your registration can still be completed."
+        : "Keep this page open while the simulated payment response is processed.";
 
   return (
-    <div className="nt-container nt-page" style={{ maxWidth: 640, padding: "44px 24px 90px" }}>
-      <div className="no-print" style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 26 }}>
-        <button type="button" className="nt-chip" onClick={() => demo("paid")}>
-          Simulate success
-        </button>
-        <button type="button" className="nt-chip" onClick={() => demo("failed")}>
-          Simulate failure
-        </button>
-        <button type="button" className="nt-chip" onClick={() => demo("cancelled")}>
-          Cancel payment
-        </button>
+    <div className="nt-container nt-page nt-form-page nt-payment-page" style={{ maxWidth: 760 }}>
+      <div className="nt-demo-controls no-print">
+        <span>Demo controls</span>
+        <button type="button" className="nt-chip" onClick={() => demo("paid")}>Success</button>
+        <button type="button" className="nt-chip" onClick={() => demo("failed")}>Failure</button>
+        <button type="button" className="nt-chip" onClick={() => demo("cancelled")}>Cancel</button>
       </div>
-      <div className="nt-card" style={{ textAlign: "center", padding: 40 }}>
+
+      <article className="nt-card nt-payment-state-card">
+        <div className={`nt-payment-state-icon ${phase}`} aria-hidden="true">
+          {phase === "paid" ? "✓" : phase === "failed" ? "!" : phase === "cancelled" ? "×" : "…"}
+        </div>
         <StatusPill value={phase} />
-        <h1 style={{ marginTop: 16 }}>{phase === "paid" ? "Payment received" : phase === "failed" ? "Payment not completed" : phase === "cancelled" ? "Payment cancelled" : "Waiting for approval"}</h1>
-        <p className="nt-lede" style={{ marginInline: "auto" }}>
-          {formatMoney(payment.amount)} · {paymentMethodLabel(payment.method)}
-          <br />
-          Reference {payment.reference}
-          <br />
-          {bundle.attendee.fullName} · {bundle.event.title}
-        </p>
-        {phase === "paid" ? (
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link to="/app/ticket" className="nt-btn">
-              View ticket
-            </Link>
-            <Link to={`/receipt/${bundle.registration.id}`} className="nt-btn ghost">
-              View receipt
-            </Link>
-          </div>
-        ) : (
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            <button type="button" className="nt-btn" onClick={() => demo("paid")}>
-              Retry payment
-            </button>
-            <Link to={`/checkout/${bundle.registration.id}`} className="nt-btn ghost">
-              Change method
-            </Link>
-          </div>
-        )}
-      </div>
+        <h1>{title}</h1>
+        <p className="nt-lede">{message}</p>
+
+        <div className="nt-payment-facts">
+          <div><span>Amount</span><strong>{formatMoney(payment.amount)}</strong></div>
+          <div><span>Method</span><strong>{paymentMethodLabel(payment.method)}</strong></div>
+          <div><span>Reference</span><strong>{payment.reference}</strong></div>
+          <div><span>Attendee</span><strong>{bundle.attendee.fullName}</strong></div>
+        </div>
+
+        <div className="nt-payment-actions">
+          {phase === "paid" ? (
+            <>
+              <Link to="/app/ticket" className="nt-btn">View ticket</Link>
+              <Link to={`/receipt/${bundle.registration.id}`} className="nt-btn ghost">View receipt</Link>
+            </>
+          ) : (
+            <>
+              <button type="button" className="nt-btn" onClick={() => demo("paid")}>Retry payment</button>
+              <Link to={`/checkout/${bundle.registration.id}`} className="nt-btn ghost">Change method</Link>
+            </>
+          )}
+        </div>
+        <div className="nt-payment-event">{bundle.event.title}</div>
+      </article>
     </div>
   );
 }
