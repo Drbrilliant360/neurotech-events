@@ -4,6 +4,7 @@ import "./styles/platform.css";
 import "./styles/experience.css";
 import "./styles/revision.css";
 import "./styles/workspace.css";
+import "./styles/pages.css";
 
 export default function App() {
   return (
