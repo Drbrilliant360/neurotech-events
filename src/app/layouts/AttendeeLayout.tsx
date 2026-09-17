@@ -10,7 +10,17 @@ const NAV = [
   ["/app/notifications", "Notifications"],
   ["/app/certificates", "Certificates"],
   ["/app/profile", "Profile"],
-];
+] as const;
+
+function initials(name?: string) {
+  if (!name) return "NE";
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
 
 export function AttendeeLayout() {
   const { db, attendeeId } = usePlatform();
@@ -18,37 +28,74 @@ export function AttendeeLayout() {
   const unread = db.notifications.filter((item) => item.attendeeId === attendeeId && !item.read).length;
 
   return (
-    <div className="nt-shell">
+    <div className="nt-shell nt-surface-attendee">
       <DemoSwitcher />
       <nav className="mobile-nav" aria-label="Attendee">
         {NAV.map(([to, label]) => (
           <NavLink key={to} to={to} end={to === "/app"} className="nt-chip">
             {label}
+            {to === "/app/notifications" && unread ? ` · ${unread}` : ""}
           </NavLink>
         ))}
       </nav>
+
       <div className="nt-app">
         <aside className="nt-side">
-          <div className="nt-brand" style={{ padding: "0 8px 26px" }}>
+          <NavLink to="/" className="nt-brand nt-side-brand" aria-label="Back to Neurotech Events">
             <span className="nt-mark sm" />
-            <strong>NeuroTech</strong>
-          </div>
-          <nav aria-label="Attendee">
+            <span>
+              <strong>Neurotech Events</strong>
+              <small>Attendee workspace</small>
+            </span>
+          </NavLink>
+
+          <div className="sec">Your event space</div>
+          <nav aria-label="Attendee navigation">
             {NAV.map(([to, label]) => (
               <NavLink key={to} to={to} end={to === "/app"}>
-                {label}
-                {to === "/app/notifications" && unread ? ` (${unread})` : ""}
+                <span>{label}</span>
+                {to === "/app/notifications" && unread ? <span className="nt-nav-count">{unread}</span> : null}
               </NavLink>
             ))}
           </nav>
-          <div style={{ borderTop: "1px solid rgba(18,21,12,.08)", marginTop: 18, padding: 8 }}>
-            <div style={{ fontWeight: 600 }}>{me?.fullName}</div>
-            <div className="nt-muted">{me?.roleTitle}</div>
+
+          <div className="nt-side-footer">
+            <NavLink to="/events" className="nt-side-explore">
+              Explore more events →
+            </NavLink>
+            <div className="nt-side-profile">
+              <span className="nt-user-avatar">{initials(me?.fullName)}</span>
+              <span>
+                <strong>{me?.fullName ?? "Attendee"}</strong>
+                <small>{me?.roleTitle ?? me?.organization ?? "Neurotech attendee"}</small>
+              </span>
+            </div>
           </div>
         </aside>
-        <div className="nt-main">
-          <Outlet />
-        </div>
+
+        <main className="nt-main">
+          <div className="nt-workspace-topbar">
+            <div className="nt-workspace-heading">
+              <strong>My event workspace</strong>
+              <span>Tickets, schedules, notices and your Neurotech event history.</span>
+            </div>
+            <div className="nt-workspace-actions">
+              <NavLink to="/events" className="nt-chip">
+                Browse events
+              </NavLink>
+              <NavLink to="/app/profile" className="nt-user-chip" aria-label="Open attendee profile">
+                <span className="nt-user-avatar">{initials(me?.fullName)}</span>
+                <span>
+                  <strong>{me?.fullName ?? "Attendee"}</strong>
+                  <span>{me?.organization ?? "Neurotech Events"}</span>
+                </span>
+              </NavLink>
+            </div>
+          </div>
+          <div className="nt-workspace-content">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );
