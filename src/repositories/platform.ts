@@ -299,10 +299,16 @@ export function simulatePayment(
   payment.method = method;
   payment.status = outcome === "paid" ? "processing" : outcome;
   payment.updatedAt = new Date().toISOString();
+  const registration = db.registrations.find((item) => item.id === payment.registrationId);
   if (outcome === "paid") {
     payment.status = "paid";
-    const registration = db.registrations.find((item) => item.id === payment.registrationId);
-    if (registration) registration.status = "confirmed";
+    if (registration) {
+      if (registration.status === "cancelled") {
+        const ticket = db.ticketTypes.find((item) => item.id === registration.ticketTypeId);
+        if (ticket && ticket.sold < ticket.capacity) ticket.sold += 1;
+      }
+      registration.status = "confirmed";
+    }
     pushNotification(db, payment.attendeeId, "Payment successfully received", `${payment.reference} · ${payment.method}`, "payment");
     pushNotification(db, payment.attendeeId, "Registration confirmed", "Your ticket is ready in My ticket.", "registration");
   }
@@ -310,10 +316,11 @@ export function simulatePayment(
     pushNotification(db, payment.attendeeId, "Payment not completed", "You can retry checkout from your registration.", "payment");
   }
   if (outcome === "cancelled") {
-    const registration = db.registrations.find((item) => item.id === payment.registrationId);
-    if (registration) registration.status = "cancelled";
-    const ticket = db.ticketTypes.find((item) => item.id === registration?.ticketTypeId);
-    if (ticket && ticket.sold > 0) ticket.sold -= 1;
+    if (registration?.status !== "cancelled") {
+      if (registration) registration.status = "cancelled";
+      const ticket = db.ticketTypes.find((item) => item.id === registration?.ticketTypeId);
+      if (ticket && ticket.sold > 0) ticket.sold -= 1;
+    }
   }
   return db;
 }

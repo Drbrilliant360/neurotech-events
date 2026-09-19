@@ -7,6 +7,13 @@ import { registrationBundle } from "../../repositories/platform";
 import type { PaymentMethod } from "../../domain/types";
 
 const METHODS: PaymentMethod[] = ["mpesa", "airtel", "mixx", "halopesa", "card", "bank"];
+type DemoOutcome = "paid" | "failed" | "cancelled";
+
+const OUTCOMES: Array<{ value: DemoOutcome; title: string; body: string }> = [
+  { value: "paid", title: "Approve payment", body: "Confirm the ticket and open the receipt." },
+  { value: "failed", title: "Simulate a failure", body: "Show the retry and method-change path." },
+  { value: "cancelled", title: "Cancel the payment", body: "Release the reservation and return to checkout later." },
+];
 
 export function CheckoutPage() {
   const { registrationId = "" } = useParams();
@@ -16,6 +23,7 @@ export function CheckoutPage() {
   const [method, setMethod] = useState<PaymentMethod>(bundle?.payment?.method ?? "mpesa");
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(true);
+  const [outcome, setOutcome] = useState<DemoOutcome>("paid");
 
   if (!bundle?.payment) {
     return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Checkout not found" body="Start registration again from the event page." /></div>;
@@ -26,7 +34,7 @@ export function CheckoutPage() {
   function startPay() {
     if (!accepted || busy) return;
     setBusy(true);
-    if (payment.status !== "paid" && ticket.price > 0) pay(payment.id, method, "paid");
+    if (payment.status !== "paid" && ticket.price > 0) pay(payment.id, method, outcome);
     navigate(`/payment/${payment.id}`);
   }
 
@@ -70,6 +78,24 @@ export function CheckoutPage() {
             {isMobileMoney(method) ? <div className="nt-checkout-note">A {paymentMethodLabel(method)} prompt will be simulated for {attendee.phone}. No PIN is collected in this demo.</div> : null}
           </section>
 
+          {ticket.price > 0 ? (
+            <section className="nt-card nt-form-card nt-demo-payment-scenario">
+              <div>
+                <p className="nt-kicker">Demo payment result</p>
+                <h2>Choose what happens next.</h2>
+                <p className="nt-muted">This lets you test every payment state without charging a real account.</p>
+              </div>
+              <div className="nt-demo-outcomes" role="group" aria-label="Demo payment outcome">
+                {OUTCOMES.map((item) => (
+                  <button key={item.value} type="button" className={`nt-demo-outcome ${outcome === item.value ? "is-on" : ""}`} onClick={() => setOutcome(item.value)}>
+                    <strong>{item.title}</strong>
+                    <span>{item.body}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <label className="nt-consent-row">
             <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
             <span>I accept the event terms and understand that this local demo does not charge a real wallet, card or bank account.</span>
@@ -85,7 +111,7 @@ export function CheckoutPage() {
             <div className="nt-summary-total"><dt>Total</dt><dd>{formatMoney(payment.amount)}</dd></div>
           </dl>
           <button type="button" className="nt-btn" style={{ width: "100%", marginTop: 18 }} disabled={!accepted || busy} onClick={startPay}>
-            {busy ? "Starting…" : `Pay ${formatMoney(payment.amount)}`}
+            {busy ? "Starting…" : ticket.price === 0 ? "Confirm free registration" : outcome === "paid" ? `Pay ${formatMoney(payment.amount)}` : outcome === "failed" ? "Simulate payment failure" : "Cancel payment"}
           </button>
           <Link to={`/register/${event.id}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 9 }}>Back to registration</Link>
           <p className="nt-payment-disclaimer">Frontend simulation only · no real payment is processed.</p>
