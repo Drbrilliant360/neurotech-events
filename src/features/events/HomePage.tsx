@@ -19,6 +19,10 @@ export function HomePage() {
         <div className="nt-home-hero-grid">
           <div>
             <div className="nt-eyebrow">Neurotech Africa · Events</div>
+            <div className="nt-home-signal">
+              <span className="nt-signal-dot" aria-hidden="true" />
+              <span>{upcomingEvents.length ? `${upcomingEvents.length} upcoming experiences` : "New experiences in progress"}</span>
+            </div>
             <h1 className="nt-home-title">
               Where Africa&apos;s technology community meets <em>what&apos;s next.</em>
             </h1>
@@ -42,6 +46,11 @@ export function HomePage() {
               <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>One account across events</div>
               <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Tickets and event history</div>
               <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Schedules, notices and certificates</div>
+            </div>
+            <div className="nt-home-stats" aria-label="Neurotech Events at a glance">
+              <div><strong>{String(upcomingEvents.length).padStart(2, "0")}</strong><span>upcoming events</span></div>
+              <div><strong>{db.speakers.length}+</strong><span>voices to learn from</span></div>
+              <div><strong>01</strong><span>account for every event</span></div>
             </div>
           </div>
 
