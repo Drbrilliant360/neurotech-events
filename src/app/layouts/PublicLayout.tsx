@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { DemoSwitcher } from "./DemoSwitcher";
+import { usePlatform } from "../providers/PlatformProvider";
 
 const NAV = [
   ["/", "Home"],
@@ -10,6 +11,9 @@ const NAV = [
 ] as const;
 
 export function PublicLayout() {
+  const { role } = usePlatform();
+  const accountPath = role === "attendee" ? "/app" : "/login";
+
   return (
     <div className="nt-shell nt-surface-public">
       <DemoSwitcher />
@@ -32,8 +36,8 @@ export function PublicLayout() {
             </nav>
           </div>
           <div className="nt-public-actions">
-            <NavLink to="/app" className="nt-chip nt-account-link">
-              My events
+            <NavLink to={accountPath} className="nt-chip nt-account-link">
+              {role === "attendee" ? "My events" : "Sign in"}
             </NavLink>
             <NavLink to="/events" className="nt-btn">
               Browse events
@@ -68,7 +72,7 @@ export function PublicLayout() {
             </div>
             <div>
               <div className="nt-footer-heading">Your account</div>
-              <NavLink to="/app">Dashboard</NavLink>
+              <NavLink to={accountPath}>Dashboard</NavLink>
               <NavLink to="/app/ticket">Tickets</NavLink>
               <NavLink to="/app/certificates">Certificates</NavLink>
             </div>

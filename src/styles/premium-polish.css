@@ -303,6 +303,71 @@
   .nt-home-hero::before { right: 30px; width: 85px; height: 85px; }
 }
 
+/* Authentication demo */
+.nt-auth-page {
+  position: relative;
+  display: grid;
+  min-height: calc(100vh - 128px);
+  padding: clamp(32px, 7vw, 80px) 24px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.nt-auth-page::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 2%, rgba(138, 211, 86, 0.22), transparent 24rem);
+}
+
+.nt-auth-orbit { position: absolute; border: 1px solid rgba(91, 171, 63, 0.15); border-radius: 50%; pointer-events: none; }
+.nt-auth-orbit-one { width: 460px; height: 460px; top: -240px; left: -180px; }
+.nt-auth-orbit-two { width: 320px; height: 320px; right: -160px; bottom: -130px; box-shadow: 0 0 0 32px rgba(138, 211, 86, 0.05), 0 0 0 64px rgba(138, 211, 86, 0.025); }
+
+.nt-auth-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 500px);
+  padding: clamp(26px, 5vw, 44px);
+  border: 1px solid rgba(28, 48, 23, 0.1);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 30px 80px rgba(28, 48, 23, 0.12), 0 1px 0 rgba(255, 255, 255, 0.88) inset;
+  backdrop-filter: blur(20px);
+}
+
+.nt-auth-brand { display: inline-flex; gap: 11px; align-items: center; color: var(--nt-ink); text-decoration: none; }
+.nt-auth-brand .nt-mark { width: 38px; height: 38px; }
+.nt-auth-brand strong, .nt-auth-brand small { display: block; }
+.nt-auth-brand strong { font: 750 16px "Manrope", sans-serif; letter-spacing: -0.035em; }
+.nt-auth-brand small { margin-top: 1px; color: var(--nt-muted); font-size: 10px; }
+.nt-auth-heading { margin: 38px 0 28px; }
+.nt-auth-heading .nt-kicker { margin: 0 0 10px; }
+.nt-auth-heading h1 { margin: 0 0 12px; color: var(--nt-ink); font: 750 clamp(32px, 5vw, 45px)/1 "Manrope", sans-serif; letter-spacing: -0.06em; }
+.nt-auth-heading p { margin: 0; color: var(--nt-muted); line-height: 1.65; }
+.nt-auth-form { display: grid; gap: 17px; }
+.nt-auth-form .nt-btn { width: 100%; margin-top: 4px; }
+.nt-auth-form-row { display: flex; gap: 14px; align-items: center; justify-content: space-between; font-size: 12px; }
+.nt-auth-form-row > a, .nt-auth-switch a { color: #397d32; font-weight: 700; }
+.nt-auth-checkbox { display: flex; gap: 8px; align-items: flex-start; color: #566553; font-size: 12px; line-height: 1.45; cursor: pointer; }
+.nt-auth-checkbox input { width: 16px; height: 16px; margin: 0; accent-color: #58a63e; }
+.nt-auth-error { margin: -4px 0 0; padding: 10px 12px; border: 1px solid rgba(164, 67, 53, 0.18); border-radius: 11px; background: #fff1ee; color: #963d31; font-size: 12px; font-weight: 650; }
+.nt-auth-switch { margin: 24px 0 0; color: var(--nt-muted); font-size: 13px; text-align: center; }
+.nt-auth-note { margin: 25px 0 0; padding-top: 18px; border-top: 1px solid var(--nt-line); color: #849080; font-size: 11px; line-height: 1.55; text-align: center; }
+.nt-auth-success { display: grid; gap: 15px; padding: 22px; border: 1px solid rgba(79, 158, 57, 0.18); border-radius: 18px; background: #f3faef; }
+.nt-auth-success > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #70bd50; color: #fff; font-weight: 800; }
+.nt-auth-success strong { color: #244c20; font: 750 18px "Manrope", sans-serif; }
+.nt-auth-success p { margin: 6px 0 0; color: #587053; font-size: 13px; line-height: 1.55; }
+.nt-auth-success .nt-btn { width: fit-content; }
+
+@media (max-width: 560px) {
+  .nt-auth-page { min-height: auto; padding: 26px 16px 48px; }
+  .nt-auth-card { padding: 26px 20px; border-radius: 22px; }
+  .nt-auth-form-row { align-items: flex-start; flex-direction: column; }
+  .nt-auth-success .nt-btn { width: 100%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nt-signal-dot { animation: none; }
   .nt-feature-card:hover > img,
