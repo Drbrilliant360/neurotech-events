@@ -3,10 +3,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatRange, isPast } from "../../lib/dates";
+import { eventImage } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
-
-const EVENT_IMAGES = ["/img/event-a.png", "/img/event-b.png", "/img/cover.png"];
 
 export function EventsPage() {
   const { db } = usePlatform();
@@ -90,7 +89,7 @@ export function EventsPage() {
             return (
               <article key={event.id} className="nt-event-card">
                 <Link to={`/events/${event.slug}`} className="nt-event-card-media nt-event-card-link" aria-label={`View ${event.title}`}>
-                  <img src={EVENT_IMAGES[index % EVENT_IMAGES.length]} alt="" />
+                  <img src={eventImage(index)} alt="" />
                   <span className="nt-event-status">{event.status}</span>
                 </Link>
                 <div className="nt-event-card-body">

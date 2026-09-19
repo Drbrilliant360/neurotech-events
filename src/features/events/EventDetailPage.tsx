@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, MediaTile } from "../../components/shared/Widgets";
 import { formatRange, minutesBetween } from "../../lib/dates";
+import { MEDIA, eventImage, speakerImageById } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { eventBySlug, sessionsFor, speakersForEvent, sponsorsForEvent, ticketsFor, venueOf } from "../../repositories/platform";
 
@@ -26,7 +27,11 @@ export function EventDetailPage() {
   return (
     <div className="nt-container nt-page nt-detail-page">
       <div className="nt-detail-hero">
-        <MediaTile label={`${event.title} cover`} height={350} />
+        <MediaTile
+          label={`${event.title} cover`}
+          height={350}
+          src={eventImage(Math.abs(event.id.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)))}
+        />
       </div>
 
       <div className="nt-detail-layout">
@@ -52,7 +57,7 @@ export function EventDetailPage() {
             <div className="nt-grid cards">
               {speakers.map((speaker) => (
                 <article key={speaker.id} className="nt-card">
-                  <MediaTile label={speaker.initials} height={130} />
+                  <MediaTile label={speaker.name} height={130} src={speakerImageById(speaker.id)} />
                   <h3 style={{ marginTop: 14 }}>{speaker.name}</h3>
                   <div className="nt-muted">{speaker.role}</div>
                 </article>
@@ -119,7 +124,7 @@ export function EventDetailPage() {
             <div>
               <p className="nt-kicker">Venue</p>
               <div className="nt-card">
-                <MediaTile label={venue?.name ?? "Venue"} height={190} />
+                <MediaTile label={venue?.name ?? "Venue"} height={190} src={MEDIA.venue} />
                 <h3 style={{ marginTop: 14 }}>{venue?.name}</h3>
                 <div className="nt-muted">{venue?.address}, {venue?.city}</div>
               </div>

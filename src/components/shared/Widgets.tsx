@@ -1,7 +1,19 @@
-export function MediaTile({ label, height = 160 }: { label: string; height?: number }) {
+export function MediaTile({
+  label,
+  height = 160,
+  src,
+}: {
+  label: string;
+  height?: number;
+  src?: string;
+}) {
   return (
-    <div className="nt-media" style={{ minHeight: height, height }} aria-hidden="true">
-      {label}
+    <div
+      className={`nt-media${src ? " has-image" : ""}`}
+      style={{ minHeight: height, height }}
+      aria-hidden={src ? undefined : true}
+    >
+      {src ? <img src={src} alt={label} loading="lazy" decoding="async" /> : label}
     </div>
   );
 }

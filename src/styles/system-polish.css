@@ -88,6 +88,13 @@
   box-shadow: 0 12px 28px rgba(16, 23, 16, 0.14);
 }
 
+.nt-btn:active,
+.nt-chip:active,
+.nt-choice:active,
+.nt-arrow-link:active {
+  transform: scale(0.98);
+}
+
 .nt-btn.ghost {
   background: rgba(255, 255, 255, 0.9);
   border-color: var(--nt-line-strong);
@@ -387,5 +394,28 @@
 
   .nt-btn {
     min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nt-btn,
+  .nt-chip,
+  .nt-choice,
+  .nt-arrow-link,
+  .nt-card,
+  .nt-event-card {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+
+  .nt-btn:hover,
+  .nt-btn:active,
+  .nt-chip:active,
+  .nt-choice:active,
+  .nt-arrow-link:active,
+  .nt-grid.cards > .nt-card:hover,
+  .nt-grid.events > .nt-card:hover,
+  .nt-event-card:hover {
+    transform: none;
   }
 }
