@@ -12,6 +12,7 @@ import { RegisterPage } from "../../features/registration/RegisterPage";
 import { CheckoutPage } from "../../features/checkout/CheckoutPage";
 import { PaymentPage } from "../../features/checkout/PaymentPage";
 import { ReceiptPage } from "../../features/checkout/ReceiptPage";
+import { AboutPage, HelpPage, PartnersPage } from "../../features/public/InfoPages";
 import { AttendeeDashboardPage } from "../../features/attendees/AttendeeDashboardPage";
 import { TicketPage } from "../../features/tickets/TicketPage";
 import { AttendeeSchedulePage } from "../../features/schedule/AttendeeSchedulePage";
@@ -55,6 +56,9 @@ export function AppRouter() {
             <Route path="/events/:eventId" element={<EventDetailPage />} />
             <Route path="/speakers" element={<SpeakersPage />} />
             <Route path="/schedule" element={<PublicSchedulePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/partners" element={<PartnersPage />} />
+            <Route path="/help" element={<HelpPage />} />
             <Route path="/register/:eventId" element={<RegisterPage />} />
             <Route path="/checkout/:registrationId" element={<CheckoutPage />} />
             <Route path="/payment/:paymentId" element={<PaymentPage />} />

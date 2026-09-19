@@ -6,6 +6,7 @@ const NAV = [
   ["/events", "Events"],
   ["/speakers", "Speakers"],
   ["/schedule", "Schedule"],
+  ["/partners", "Partners"],
 ] as const;
 
 export function PublicLayout() {
@@ -63,6 +64,7 @@ export function PublicLayout() {
               <NavLink to="/events">Events</NavLink>
               <NavLink to="/speakers">Speakers</NavLink>
               <NavLink to="/schedule">Schedule</NavLink>
+              <NavLink to="/partners">Partners</NavLink>
             </div>
             <div>
               <div className="nt-footer-heading">Your account</div>
@@ -72,6 +74,8 @@ export function PublicLayout() {
             </div>
             <div>
               <div className="nt-footer-heading">Neurotech Africa</div>
+              <NavLink to="/about">About the platform</NavLink>
+              <NavLink to="/help">Help centre</NavLink>
               <a href="https://www.neurotech.africa" target="_blank" rel="noreferrer">Company website</a>
               <span className="nt-footer-location">Dar es Salaam, Tanzania</span>
             </div>

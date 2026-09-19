@@ -310,3 +310,114 @@
   .nt-history-card:hover,
   .nt-history-card:hover img { transform: none; }
 }
+
+/* Supporting public pages */
+.nt-info-page {
+  padding-top: clamp(56px, 8vw, 100px);
+  padding-bottom: 92px;
+}
+
+.nt-info-hero {
+  max-width: 820px;
+  padding: clamp(30px, 5vw, 58px);
+  border: 1px solid rgba(32, 55, 28, 0.08);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(138, 211, 86, 0.22), transparent 18rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 247, 235, 0.76));
+  box-shadow: 0 22px 56px rgba(28, 48, 23, 0.08);
+}
+
+.nt-info-hero h1 {
+  max-width: 730px;
+  margin: 0 0 16px;
+  font: 750 clamp(38px, 5vw, 66px)/0.98 "Manrope", sans-serif;
+  letter-spacing: -0.06em;
+}
+
+.nt-info-hero .nt-lede {
+  max-width: 680px;
+  margin: 0;
+}
+
+.nt-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.nt-info-grid,
+.nt-info-principles,
+.nt-partner-grid,
+.nt-help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.nt-info-grid {
+  margin: 18px 0 76px;
+}
+
+.nt-info-grid article {
+  padding: 20px;
+  border: 1px solid var(--nt-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.nt-info-grid strong,
+.nt-info-grid span { display: block; }
+.nt-info-grid strong { color: #285325; font: 750 32px/1 "Manrope", sans-serif; letter-spacing: -0.06em; }
+.nt-info-grid span { margin-top: 6px; color: var(--nt-muted); font-size: 12px; font-weight: 650; }
+
+.nt-info-story,
+.nt-partner-value,
+.nt-help-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(28px, 8vw, 104px);
+  align-items: start;
+  margin-bottom: 76px;
+  padding: 38px 0;
+  border-block: 1px solid var(--nt-line);
+}
+
+.nt-info-story h2,
+.nt-partner-value h2,
+.nt-help-contact h2 { margin: 0; font: 750 clamp(28px, 3.4vw, 46px)/1.03 "Manrope", sans-serif; letter-spacing: -0.05em; }
+.nt-info-story-copy p { max-width: 600px; margin: 0 0 16px; color: var(--nt-muted); font-size: 16px; line-height: 1.7; }
+
+.nt-info-principles { margin-top: 22px; }
+.nt-info-principles .nt-card { min-height: 205px; }
+.nt-info-index { display: inline-block; margin-bottom: 38px; color: #63ad43; font: 750 12px "DM Sans", sans-serif; letter-spacing: 0.1em; }
+
+.nt-partners-hero { max-width: 930px; background: radial-gradient(circle at 90% 15%, rgba(138, 211, 86, 0.28), transparent 19rem), linear-gradient(135deg, #142012, #294425); color: #fff; }
+.nt-partners-hero h1 { color: #fff; }
+.nt-partners-hero .nt-lede { color: rgba(240, 248, 235, 0.75); }
+.nt-partners-hero .nt-kicker { color: #a7e47f; }
+.nt-partner-value { margin-top: 48px; }
+.nt-partner-value-list { display: grid; gap: 13px; }
+.nt-partner-value-list span { padding: 15px 18px; border-radius: 14px; background: rgba(255, 255, 255, 0.62); color: #495d46; font-size: 14px; font-weight: 650; }
+.nt-partner-grid { margin-top: 6px; }
+.nt-partner-card { display: flex; gap: 16px; align-items: center; min-height: 128px; }
+.nt-partner-card h3 { margin: 0; }
+.nt-partner-card .nt-kicker { margin: 0 0 5px; }
+.nt-partner-monogram { display: grid; width: 48px; height: 48px; flex: none; place-items: center; border-radius: 15px; background: var(--nt-green-soft); color: #347932; font: 750 20px "Manrope", sans-serif; }
+
+.nt-help-page .nt-info-hero { margin-bottom: 32px; }
+.nt-help-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.nt-help-card { min-height: 178px; }
+.nt-help-card h3 { margin-top: 0; }
+.nt-help-contact { align-items: center; margin-top: 72px; margin-bottom: 0; border-bottom: 0; }
+.nt-help-contact p { max-width: 540px; color: var(--nt-muted); line-height: 1.6; }
+
+@media (max-width: 720px) {
+  .nt-info-page { padding-top: 36px; padding-bottom: 60px; }
+  .nt-info-hero { padding: 28px 22px; border-radius: 22px; }
+  .nt-info-grid, .nt-info-principles, .nt-partner-grid, .nt-help-grid, .nt-info-story, .nt-partner-value, .nt-help-contact { grid-template-columns: 1fr; }
+  .nt-info-grid { margin-bottom: 48px; }
+  .nt-info-story, .nt-partner-value { gap: 24px; margin-bottom: 48px; padding: 28px 0; }
+  .nt-help-contact { margin-top: 48px; }
+}
