@@ -1,0 +1,409 @@
+
+  <div style="display:grid;grid-template-columns:262px minmax(0,1fr);min-height:calc(100vh - 56px)">
+    <div style="background:#111510;padding:24px 14px;overflow:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 10px 24px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+        <div style="font:800 15px 'Manrope',sans-serif;color:#fbfaf0;letter-spacing:-.01em">NEUROTECH ADMIN</div>
+      </div>
+      <sc-for list="{{ adminNav }}" as="sec" hint-placeholder-count="6">
+        <div style="margin-bottom:16px">
+          <div style="font:600 10.5px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#79855f;padding:0 10px 8px">{{ sec.title }}</div>
+          <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="4">
+            <button onClick="{{ it.go }}" style="width:100%;text-align:left;border:none;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};border-radius:10px;padding:10px 12px;font:{{ it.font }};margin-bottom:2px">{{ it.label }}</button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:clamp(22px,3vw,40px);background:linear-gradient(135deg,#eaf0da,#fbf8e3)">
+      <sc-if value="{{ is.aDash }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 clamp(26px,3vw,38px)/1.05 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 6px">Admin dashboard</h1>
+        <p style="font:400 15px 'DM Sans',sans-serif;color:#5b6349;margin:0 0 28px">Good morning, Admin — here's where the summit stands today.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+          <sc-for list="{{ adminStats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:10px">{{ s.label }}</div>
+              <div style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em">{{ s.value }}</div>
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:6px">{{ s.delta }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:22px">Registration analytics</div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:190px">
+              <sc-for list="{{ chartBars }}" as="b" hint-placeholder-count="10">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%">
+                  <div style="width:100%;border-radius:7px 7px 0 0;background:{{ b.color }};height:{{ b.h }}"></div>
+                  <div style="font:500 11px 'DM Sans',sans-serif;color:#8b9377">{{ b.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:16px">Recent registrations</div>
+            <sc-for list="{{ recentRegs }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(18,21,12,.06)">
+                <div>
+                  <div style="font:600 14.5px 'DM Sans',sans-serif">{{ r.name }}</div>
+                  <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467">{{ r.ticket }}</div>
+                </div>
+                <div style="font:600 12px 'DM Sans',sans-serif;color:{{ r.color }};background:{{ r.chip }};border-radius:999px;padding:5px 11px">{{ r.status }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aEvents }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Events</h1>
+          <button onClick="{{ goCreate }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Create event</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr 1fr 90px;gap:14px;padding:16px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Event</div><div>Dates</div><div>Registrations</div><div>Status</div><div></div>
+          </div>
+          <sc-for list="{{ adminEvents }}" as="e" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr 1fr 90px;gap:14px;padding:18px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-weight:600">{{ e.title }}</div>
+              <div style="color:#5b6349">{{ e.dates }}</div>
+              <div style="color:#5b6349">{{ e.regs }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ e.color }};background:{{ e.chip }};border-radius:999px;padding:5px 11px">{{ e.status }}</span></div>
+              <div style="color:#2f7d34;font-weight:600;cursor:pointer">Manage</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aCreate }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:900px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Create event</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px">
+          <sc-for list="{{ builderSteps }}" as="s" hint-placeholder-count="8">
+            <div style="background:{{ s.bg }};border:1px solid {{ s.border }};color:{{ s.fg }};border-radius:999px;padding:8px 15px;font:600 12.5px 'DM Sans',sans-serif">{{ s.n }} {{ s.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:20px">Basic information</div>
+            <div style="display:grid;gap:15px">
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Event title</div><input value="NeuroTech Summit 2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Short description</div><input placeholder="One line for cards and search" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Description</div><textarea rows="5" placeholder="Rich text editor…" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none;resize:vertical"></textarea></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Category</div><select style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none"><option>Neurotechnology</option><option>Healthcare</option><option>AI &amp; Research</option></select></label>
+              <div><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Cover image</div><div style="height:120px"><image-slot id="create-cover" src="img/cover.png" shape="rounded" radius="13" placeholder="Drop cover image — 2400×900"></image-slot></div></div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:20px">Date &amp; venue</div>
+            <div style="display:grid;gap:15px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Start date</div><input value="20/11/2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">End date</div><input value="22/11/2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              </div>
+              <sc-for list="{{ venueFields }}" as="v" hint-placeholder-count="4">
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">{{ v }}</div><input placeholder="{{ v }}" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              </sc-for>
+              <div>
+                <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:9px">Format</div>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ formats }}" as="f" hint-placeholder-count="3">
+                    <div style="background:{{ f.bg }};border:1px solid {{ f.border }};color:{{ f.fg }};border-radius:999px;padding:10px 18px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">{{ f.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:13px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Save draft</button>
+                <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aTickets }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:760px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Ticket types</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Create ticket</button>
+        </div>
+        <sc-for list="{{ ticketAdmin }}" as="t" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+              <div>
+                <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467">{{ t.name }}</div>
+                <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-top:6px">{{ t.price }}</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:9px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:9px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;color:#8a3b2f">Delete</button>
+              </div>
+            </div>
+            <div style="font:500 13px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:9px">Sold {{ t.sold }} of {{ t.total }}</div>
+            <div style="height:8px;border-radius:999px;background:#eef1e1;overflow:hidden"><div style="height:100%;width:{{ t.pct }};background:{{ accent }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aAttendees }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 20px">Attendees</h1>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+          <input placeholder="Search attendees…" style="flex:1;min-width:220px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:12px 18px;font-size:14.5px;outline:none" />
+          <sc-for list="{{ attendeeFilters }}" as="f" hint-placeholder-count="4">
+            <select style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:12px 16px;font-size:14px;color:#3b432c;outline:none"><option>{{ f }}</option></select>
+          </sc-for>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Export</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:auto">
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) 1fr 1fr .8fr .8fr 90px;gap:14px;padding:15px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Name</div><div>Organization</div><div>Ticket</div><div>Payment</div><div>Check-in</div><div></div>
+          </div>
+          <sc-for list="{{ attendees }}" as="a" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:minmax(0,1.4fr) 1fr 1fr .8fr .8fr 90px;gap:14px;padding:16px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-weight:600">{{ a.name }}</div>
+              <div style="color:#5b6349">{{ a.org }}</div>
+              <div style="color:#5b6349">{{ a.ticket }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ a.color }};background:{{ a.chip }};border-radius:999px;padding:5px 10px">{{ a.payment }}</span></div>
+              <div style="color:{{ a.inColor }};font-weight:700">{{ a.checkin }}</div>
+              <div style="color:#2f7d34;font-weight:600;cursor:pointer">View</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aCheckin }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:860px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Check-in</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="border:2px dashed rgba(18,21,12,.18);border-radius:16px;height:250px;display:flex;align-items:center;justify-content:center;font:500 12px ui-monospace,monospace;color:#8b9377;margin-bottom:18px">[ QR scanner viewport ]</div>
+            <div style="font:500 14.5px 'DM Sans',sans-serif;color:#5b6349;text-align:center">Scan attendee ticket to check in</div>
+          </div>
+          <div style="display:grid;gap:14px;align-content:start">
+            <div style="background:#111510;border-radius:20px;padding:26px;color:#fbfaf0">
+              <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9aa583;margin-bottom:12px">Checked in today</div>
+              <div style="font:700 48px 'Manrope',sans-serif;letter-spacing:-.04em">845</div>
+            </div>
+            <sc-if value="{{ true }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+                <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467">Successful</div>
+                <div style="font:700 28px 'Manrope',sans-serif;color:#2f7d34;margin-top:6px">845</div>
+              </div>
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+                <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467">Invalid</div>
+                <div style="font:700 28px 'Manrope',sans-serif;color:#8a3b2f;margin-top:6px">12</div>
+              </div>
+            </div>
+            </sc-if>
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+              <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Last scans</div>
+              <sc-for list="{{ lastScans }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;font:500 13.5px 'DM Sans',sans-serif;padding:9px 0;border-bottom:1px solid rgba(18,21,12,.06)"><span>{{ s.name }}</span><span style="color:#7c8467">{{ s.time }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aPayments }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Payments</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:22px">
+          <sc-for list="{{ paymentStats }}" as="p" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:9px">{{ p.label }}</div>
+              <div style="font:700 28px 'Manrope',sans-serif;letter-spacing:-.03em">{{ p.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:auto">
+          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr .9fr 1fr;gap:14px;padding:15px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Transaction</div><div>Attendee</div><div>Amount</div><div>Method</div><div>Status</div><div>Date</div>
+          </div>
+          <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr .9fr 1fr;gap:14px;padding:16px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-family:ui-monospace,monospace;font-size:12.5px">{{ t.id }}</div>
+              <div style="font-weight:600">{{ t.name }}</div>
+              <div>{{ t.amount }}</div>
+              <div style="color:#5b6349">{{ t.method }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ t.color }};background:{{ t.chip }};border-radius:999px;padding:5px 10px">{{ t.status }}</span></div>
+              <div style="color:#7c8467">{{ t.date }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aSchedule }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:880px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Schedule builder</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add session</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+          <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.go }}" style="border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.fg }};border-radius:999px;padding:10px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{ dayItems }}" as="i" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:18px;align-items:center;background:#fff;border:1px solid rgba(18,21,12,.08);border-left:3px solid {{ accent }};border-radius:14px;padding:17px 20px;margin-bottom:10px">
+            <div style="font:700 16px 'Manrope',sans-serif">{{ i.time }}</div>
+            <div>
+              <div style="font:600 16px 'DM Sans',sans-serif">{{ i.title }}</div>
+              <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ i.room }} · {{ i.duration }} · {{ i.speaker }}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:8px 16px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aTimeline }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:660px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Event timeline</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add milestone</button>
+        </div>
+        <sc-for list="{{ milestones }}" as="m" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:18px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="width:14px;height:14px;border-radius:50%;background:{{ m.dot }};border:3px solid #fbfaf0;box-shadow:0 0 0 1px rgba(18,21,12,.12)"></div>
+              <div style="flex:1;width:2px;background:rgba(18,21,12,.12)"></div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:14px;padding:17px 20px;margin-bottom:12px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap">
+              <div>
+                <div style="font:600 16px 'DM Sans',sans-serif">{{ m.title }}</div>
+                <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ m.date }}</div>
+              </div>
+              <div style="font:600 12px 'DM Sans',sans-serif;color:{{ m.color }};background:{{ m.chip }};border-radius:999px;padding:5px 11px">{{ m.status }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aPoster }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 20px">Poster designer</h1>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 230px;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:16px">
+            <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Elements</div>
+            <sc-for list="{{ posterElements }}" as="e" hint-placeholder-count="7">
+              <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.08);border-radius:10px;padding:11px 13px;font:500 13.5px 'DM Sans',sans-serif;margin-bottom:7px;cursor:grab">{{ e }}</div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:18px">
+            <div style="aspect-ratio:3/4"><image-slot id="poster-canvas" src="img/poster.png" shape="rounded" radius="12" placeholder="Poster canvas — A3 portrait"></image-slot></div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px">
+              <sc-for list="{{ posterActions }}" as="a" hint-placeholder-count="4">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:10px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">{{ a }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:16px">
+            <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Properties</div>
+            <sc-for list="{{ posterProps }}" as="p" hint-placeholder-count="5">
+              <label style="display:block;margin-bottom:11px"><div style="font:500 12px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:6px">{{ p }}</div><input style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:9px;padding:10px 12px;font-size:13.5px;outline:none" /></label>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aComms }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:720px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Communications</h1>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:10px">Campaign type</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+            <sc-for list="{{ campaignTypes }}" as="c" hint-placeholder-count="3">
+              <div style="background:{{ c.bg }};border:1px solid {{ c.border }};color:{{ c.fg }};border-radius:999px;padding:10px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ c.label }}</div>
+            </sc-for>
+          </div>
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:10px">Audience</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+            <sc-for list="{{ audiences }}" as="a" hint-placeholder-count="5">
+              <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:999px;padding:10px 18px;font:500 13px 'DM Sans',sans-serif;cursor:pointer">{{ a }}</div>
+            </sc-for>
+          </div>
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:8px">Message</div>
+          <textarea rows="6" placeholder="Write your message…" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:13px;padding:14px 16px;font-size:15px;outline:none;resize:vertical;margin-bottom:18px"></textarea>
+          <div style="display:flex;gap:10px">
+            <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Send now</button>
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Schedule</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aSponsors }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Sponsors</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add sponsor</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+          <sc-for list="{{ sponsors }}" as="s" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:18px">
+              <div style="aspect-ratio:2/1;margin-bottom:14px"><image-slot id="{{ s.slot }}-adm" src="{{ s.art }}" shape="rounded" radius="12" fit="contain" placeholder="{{ s.name }} logo"></image-slot></div>
+              <div style="font:700 17px 'Manrope',sans-serif;letter-spacing:-.015em">{{ s.name }}</div>
+              <div style="font:600 12.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:4px;margin-bottom:14px">{{ s.level }}</div>
+              <button style="width:100%;border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:10px;padding:10px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aReports }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Reports</h1>
+          <div style="display:flex;gap:10px">
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Download PDF</button>
+            <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Export Excel</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:22px">
+          <sc-for list="{{ reportStats }}" as="r" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:9px">{{ r.label }}</div>
+              <div style="font:700 28px 'Manrope',sans-serif;letter-spacing:-.03em">{{ r.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Ticket sales</div>
+            <sc-for list="{{ ticketSales }}" as="t" hint-placeholder-count="3">
+              <div style="margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;font:500 13.5px 'DM Sans',sans-serif;margin-bottom:7px"><span>{{ t.label }}</span><span style="color:#7c8467">{{ t.count }}</span></div>
+                <div style="height:9px;border-radius:999px;background:#eef1e1;overflow:hidden"><div style="height:100%;width:{{ t.pct }};background:{{ t.color }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Top countries</div>
+            <sc-for list="{{ countries }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;font:500 14.5px 'DM Sans',sans-serif;padding:11px 0;border-bottom:1px solid rgba(18,21,12,.06)"><span>{{ c.name }}</span><span style="font-weight:700">{{ c.count }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  

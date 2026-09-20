@@ -96,7 +96,7 @@
               <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Short description</div><input placeholder="One line for cards and search" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
               <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Description</div><textarea rows="5" placeholder="Rich text editor…" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none;resize:vertical"></textarea></label>
               <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Category</div><select style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none"><option>Neurotechnology</option><option>Healthcare</option><option>AI &amp; Research</option></select></label>
-              <div><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Cover image</div><div style="height:120px"><image-slot id="create-cover" src="img/cover.png" shape="rounded" radius="13" placeholder="Drop cover image — 2400×900"></image-slot></div></div>
+              <div><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Cover image</div><div style="height:120px"><image-slot id="create-cover" src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&h=1000&q=80" shape="rounded" radius="13" placeholder="Drop cover image — 2400×900"></image-slot></div></div>
             </div>
           </div>
           <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
@@ -306,7 +306,7 @@
             </sc-for>
           </div>
           <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:18px">
-            <div style="aspect-ratio:3/4"><image-slot id="poster-canvas" src="img/poster.png" shape="rounded" radius="12" placeholder="Poster canvas — A3 portrait"></image-slot></div>
+            <div style="aspect-ratio:3/4"><image-slot id="poster-canvas" src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=900&h=1200&q=80" shape="rounded" radius="12" placeholder="Poster canvas — A3 portrait"></image-slot></div>
             <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px">
               <sc-for list="{{ posterActions }}" as="a" hint-placeholder-count="4">
                 <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:10px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">{{ a }}</button>

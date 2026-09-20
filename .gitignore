@@ -16,6 +16,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+.claude/settings.local.json
+neurotech-events
+neurotech-events.pub
 
 # Editor directories and files
 .vscode/*

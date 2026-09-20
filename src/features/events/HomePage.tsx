@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { formatRange } from "../../lib/dates";
+import { MEDIA, eventImage, sceneImage } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
-
-const EVENT_IMAGES = ["/img/event-a.png", "/img/event-b.png", "/img/cover.png"];
-const HISTORY_IMAGES = ["/img/scene-1.png", "/img/scene-2.png", "/img/scene-3.png"];
 
 export function HomePage() {
   const { db } = usePlatform();
@@ -21,6 +19,10 @@ export function HomePage() {
         <div className="nt-home-hero-grid">
           <div>
             <div className="nt-eyebrow">Neurotech Africa · Events</div>
+            <div className="nt-home-signal">
+              <span className="nt-signal-dot" aria-hidden="true" />
+              <span>{upcomingEvents.length ? `${upcomingEvents.length} upcoming experiences` : "New experiences in progress"}</span>
+            </div>
             <h1 className="nt-home-title">
               Where Africa&apos;s technology community meets <em>what&apos;s next.</em>
             </h1>
@@ -45,10 +47,15 @@ export function HomePage() {
               <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Tickets and event history</div>
               <div className="nt-proof-item"><span className="nt-proof-icon">✓</span>Schedules, notices and certificates</div>
             </div>
+            <div className="nt-home-stats" aria-label="Neurotech Events at a glance">
+              <div><strong>{String(upcomingEvents.length).padStart(2, "0")}</strong><span>upcoming events</span></div>
+              <div><strong>{db.speakers.length}+</strong><span>voices to learn from</span></div>
+              <div><strong>01</strong><span>account for every event</span></div>
+            </div>
           </div>
 
           <div className="nt-feature-card" aria-label="Featured Neurotech event">
-            <img src="/img/cover.png" alt="Neurotech Africa event audience" />
+            <img src={MEDIA.cover} alt="Neurotech Africa event audience" />
             <div className="nt-feature-card-content">
               {featured ? (
                 <>
@@ -89,7 +96,7 @@ export function HomePage() {
                 return (
                   <Link key={event.id} to={`/events/${event.slug}`} className="nt-event-card">
                     <div className="nt-event-card-media">
-                      <img src={EVENT_IMAGES[index % EVENT_IMAGES.length]} alt="" />
+                      <img src={eventImage(index)} alt="" />
                       <span className="nt-event-status">Upcoming</span>
                     </div>
                     <div className="nt-event-card-body">
@@ -152,7 +159,7 @@ export function HomePage() {
           <div className="nt-history-strip">
             {(pastEvents.length ? pastEvents.slice(0, 3) : visibleEvents.slice(0, 3)).map((event, index) => (
               <Link key={event.id} to={`/events/${event.slug}`} className="nt-history-card">
-                <img src={HISTORY_IMAGES[index % HISTORY_IMAGES.length]} alt="" />
+                <img src={sceneImage(index)} alt="" />
                 <div className="nt-history-card-content">
                   <small>{event.status === "completed" ? "Past event" : "Neurotech event"} · {formatRange(event.startsAt, event.endsAt)}</small>
                   <h3>{event.title}</h3>

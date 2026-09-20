@@ -158,7 +158,15 @@ function nodeToReact(node: Node, ctx: Ctx, key: number | string): ReactNode {
     const radius = el.getAttribute("radius") || "12";
     const fit = el.getAttribute("fit") || "cover";
     const placeholder = interpolate(el.getAttribute("placeholder") || "", ctx);
-    const resolved = src.startsWith("img/") ? `/${src}` : src.startsWith("/") ? src : src ? `/${src}` : "";
+    const resolved = /^https?:\/\//i.test(src)
+      ? src
+      : src.startsWith("img/")
+        ? `/${src}`
+        : src.startsWith("/")
+          ? src
+          : src
+            ? `/${src}`
+            : "";
     return (
       <div
         key={key}

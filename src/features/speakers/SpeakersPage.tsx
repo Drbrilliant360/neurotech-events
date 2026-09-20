@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { MediaTile } from "../../components/shared/Widgets";
+import { speakerImageById } from "../../lib/media";
 
 export function SpeakersPage() {
   const { db } = usePlatform();
@@ -39,7 +40,7 @@ export function SpeakersPage() {
       <div className="nt-grid nt-speaker-grid">
         {list.map((speaker) => (
           <article key={speaker.id} className="nt-card nt-speaker-card">
-            <MediaTile label={speaker.initials} height={200} />
+            <MediaTile label={speaker.name} height={200} src={speakerImageById(speaker.id)} />
             <h3>{speaker.name}</h3>
             <div className="nt-speaker-role">{speaker.role}</div>
             <div className="nt-muted">{speaker.organization}</div>

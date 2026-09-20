@@ -1,0 +1,177 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+}
+
+.app-root {
+  min-height: 100vh;
+  background: #fafaf8;
+  font-family: "DM Sans", sans-serif;
+  color: #12150c;
+  line-height: 1.6;
+}
+
+.app-root button,
+.app-root input,
+.app-root select,
+.app-root textarea {
+  font-family: "DM Sans", sans-serif;
+}
+
+.app-root a {
+  color: #2f7d34;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.app-root a:hover {
+  color: #111510;
+}
+
+.app-root ::placeholder {
+  color: #9aa287;
+}
+
+/* Subtle entrance for media */
+.app-root img {
+  animation: mediaIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  display: block;
+}
+
+@keyframes mediaIn {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Button styling */
+.app-root button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.app-root button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(18, 21, 12, 0.1);
+}
+
+.app-root button:active {
+  transform: translateY(0px);
+}
+
+/* Form elements */
+.app-root input,
+.app-root select,
+.app-root textarea {
+  border-radius: 8px;
+  border: 1px solid rgba(18, 21, 12, 0.1);
+  padding: 10px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.app-root input:focus,
+.app-root select:focus,
+.app-root textarea:focus {
+  outline: none;
+  border-color: #2f7d34;
+  box-shadow: 0 0 0 3px rgba(47, 125, 52, 0.1);
+}
+
+/* Scrollbar styling */
+.app-root ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.app-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-root ::-webkit-scrollbar-thumb {
+  background: #d0d5c8;
+  border-radius: 4px;
+}
+
+.app-root ::-webkit-scrollbar-thumb:hover {
+  background: #b8bfad;
+}
+
+/* Improved spacing and layout */
+.app-root > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Typography improvements */
+.app-root h1 {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.app-root h2 {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+.app-root h3 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.app-root h4 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.app-root h5,
+.app-root h6 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Card and container styling */
+.app-root [style*="border-radius"]:not(button) {
+  overflow: hidden;
+}
+
+/* Badge/chip styling */
+.app-root [style*="pill"],
+.app-root [style*="chip"] {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+/* Shadow improvements */
+.app-root [style*="shadow"] {
+  box-shadow: 0 1px 3px rgba(18, 21, 12, 0.12),
+              0 4px 8px rgba(18, 21, 12, 0.06) !important;
+}

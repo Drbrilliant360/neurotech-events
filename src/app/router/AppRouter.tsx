@@ -12,6 +12,8 @@ import { RegisterPage } from "../../features/registration/RegisterPage";
 import { CheckoutPage } from "../../features/checkout/CheckoutPage";
 import { PaymentPage } from "../../features/checkout/PaymentPage";
 import { ReceiptPage } from "../../features/checkout/ReceiptPage";
+import { CreateAccountPage, ForgotPasswordPage, LoginPage } from "../../features/auth/AuthPages";
+import { AboutPage, HelpPage, PartnersPage } from "../../features/public/InfoPages";
 import { AttendeeDashboardPage } from "../../features/attendees/AttendeeDashboardPage";
 import { TicketPage } from "../../features/tickets/TicketPage";
 import { AttendeeSchedulePage } from "../../features/schedule/AttendeeSchedulePage";
@@ -55,6 +57,12 @@ export function AppRouter() {
             <Route path="/events/:eventId" element={<EventDetailPage />} />
             <Route path="/speakers" element={<SpeakersPage />} />
             <Route path="/schedule" element={<PublicSchedulePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/partners" element={<PartnersPage />} />
+            <Route path="/help" element={<HelpPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<CreateAccountPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/register/:eventId" element={<RegisterPage />} />
             <Route path="/checkout/:registrationId" element={<CheckoutPage />} />
             <Route path="/payment/:paymentId" element={<PaymentPage />} />

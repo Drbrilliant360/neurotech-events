@@ -234,17 +234,20 @@
   font: 400 13.5px "DM Sans", sans-serif;
 }
 
-.nt-media {
-  border-radius: 13px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #dfe8c4, #eef2dc 42%, #c5d89a);
-  display: grid;
-  place-items: center;
-  color: #3b432c;
-  font: 600 13px "DM Sans", sans-serif;
-  text-align: center;
-  padding: 12px;
-  min-height: 120px;
+.nt-media.has-image {
+  padding: 0;
+  color: transparent;
+}
+
+.nt-media.has-image::after {
+  display: none;
+}
+
+.nt-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .nt-pill {

@@ -1,0 +1,1589 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin:0; padding:0; background:#f4f5e2; }
+  * { box-sizing:border-box; }
+  a { color:#2f7d34; text-decoration:none; }
+  a:hover { color:#111510; }
+  input, select, textarea, button { font-family:'DM Sans', sans-serif; }
+  ::placeholder { color:#9aa287; }
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<div style="min-height:100vh;background:linear-gradient(135deg,#e4eed0 0%,#eef2dc 38%,#fbf8e3 100%);font-family:'DM Sans',sans-serif;color:#12150c">
+
+  <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+  <div style="position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);background:rgba(250,251,238,.82);border-bottom:1px solid rgba(18,21,12,.08)">
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-right:6px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+        <div style="font:800 17px 'Manrope',sans-serif;letter-spacing:-.02em">NeuroTech</div>
+      </div>
+      <div style="display:flex;gap:6px;background:rgba(18,21,12,.05);padding:4px;border-radius:999px">
+        <sc-for list="{{ groupTabs }}" as="g" hint-placeholder-count="3">
+          <button onClick="{{ g.go }}" style="border:none;cursor:pointer;border-radius:999px;padding:8px 16px;font:600 13px 'DM Sans',sans-serif;background:{{ g.bg }};color:{{ g.fg }}">{{ g.label }}</button>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0">
+        <sc-for list="{{ screenChips }}" as="s" hint-placeholder-count="6">
+          <button onClick="{{ s.go }}" style="border:1px solid {{ s.border }};cursor:pointer;border-radius:999px;padding:7px 13px;font:500 12.5px 'DM Sans',sans-serif;background:{{ s.bg }};color:{{ s.fg }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ══════════════════ PUBLIC SITE ══════════════════ -->
+  <sc-if value="{{ is.public }}" hint-placeholder-val="{{ true }}">
+  <div>
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:18px 24px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+          <div style="font:800 21px 'Manrope',sans-serif;letter-spacing:-.025em">NeuroTech Summit</div>
+        </div>
+        <div style="display:flex;gap:4px;background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:999px;padding:5px">
+          <sc-for list="{{ siteNav }}" as="n" hint-placeholder-count="5">
+            <button onClick="{{ n.go }}" style="border:none;background:{{ n.bg }};color:{{ n.fg }};border-radius:999px;padding:9px 16px;font:500 14px 'DM Sans',sans-serif;cursor:pointer">{{ n.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <button style="border:none;background:none;font:600 14px 'DM Sans',sans-serif;color:#12150c;cursor:pointer">Login</button>
+        <button onClick="{{ goRegister }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer" style-hover="background:#2f8f3c">Get Started</button>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <sc-if value="{{ is.home }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:40px 24px 80px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:56px;align-items:center">
+        <div>
+          <div style="display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:999px;padding:7px 14px 7px 8px;font:600 12.5px 'DM Sans',sans-serif;color:#37502b;margin-bottom:26px">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ accent }}"></span>20–22 November 2026 · Dar es Salaam
+          </div>
+          <h1 style="font:700 clamp(42px,5.6vw,76px)/1.02 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 24px;text-wrap:pretty">Connecting Minds With <span style="font-weight:800">Future</span> Technology</h1>
+          <p style="font:400 18px/1.55 'DM Sans',sans-serif;color:#5b6349;max-width:520px;margin:0 0 32px">Explore the future of neuroscience, AI, brain–computer interfaces and healthcare technology at East Africa's leading neurotechnology gathering.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:44px">
+            <button onClick="{{ goRegister }}" style="display:inline-flex;align-items:center;gap:12px;border:none;background:#111510;color:#fff;border-radius:999px;padding:15px 16px 15px 26px;font:600 15px 'DM Sans',sans-serif;cursor:pointer">Register Now <span style="width:30px;height:30px;border-radius:50%;background:{{ accent }};display:inline-flex;align-items:center;justify-content:center;color:#0d1a09;font-size:15px">→</span></button>
+            <button onClick="{{ goEvents }}" style="border:1px solid rgba(18,21,12,.16);background:#fff;color:#12150c;border-radius:999px;padding:15px 26px;font:600 15px 'DM Sans',sans-serif;cursor:pointer">Explore Events</button>
+          </div>
+          <div style="display:flex;gap:40px;flex-wrap:wrap">
+            <sc-for list="{{ heroStats }}" as="s" hint-placeholder-count="3">
+              <div>
+                <div style="font:700 30px 'Manrope',sans-serif;letter-spacing:-.02em">{{ s.value }}</div>
+                <div style="font:500 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:4px">{{ s.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ showCollage }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;min-width:0">
+          <div style="display:grid;gap:16px;padding-top:34px;min-width:0">
+            <sc-for list="{{ collageA }}" as="c" hint-placeholder-count="2">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.07);border-radius:14px;padding:10px;min-width:0;box-shadow:0 12px 30px rgba(18,21,12,.05)">
+                <div style="height:150px"><image-slot id="{{ c.slot }}" src="{{ c.art }}" shape="rounded" radius="9" placeholder="{{ c.label }} photo"></image-slot></div>
+                <div style="font:500 13px 'DM Sans',sans-serif;padding:11px 4px 3px;color:#3b432c">{{ c.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;gap:16px;min-width:0">
+            <sc-for list="{{ collageB }}" as="c" hint-placeholder-count="2">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.07);border-radius:14px;padding:10px;min-width:0;box-shadow:0 12px 30px rgba(18,21,12,.05)">
+                <div style="height:150px"><image-slot id="{{ c.slot }}" src="{{ c.art }}" shape="rounded" radius="9" placeholder="{{ c.label }} photo"></image-slot></div>
+                <div style="font:500 13px 'DM Sans',sans-serif;padding:11px 4px 3px;color:#3b432c">{{ c.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+
+      <div style="background:#fbfaf0;border-top:1px solid rgba(18,21,12,.07);border-bottom:1px solid rgba(18,21,12,.07)">
+        <div style="width:100%;max-width:1320px;margin:0 auto;padding:64px 24px">
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 22px">Featured event</p>
+          <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:center">
+            <div style="height:340px"><image-slot id="summit-cover" src="img/cover.png" shape="rounded" radius="20" placeholder="Summit cover — JNICC main hall"></image-slot></div>
+            <div>
+              <h2 style="font:700 clamp(30px,3.4vw,46px)/1.05 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 18px">NeuroTech Summit 2026</h2>
+              <p style="font:400 16px/1.6 'DM Sans',sans-serif;color:#5b6349;margin:0 0 26px">Three days of keynotes, workshops and clinical demos bringing together researchers, engineers, clinicians and investors working on the brain.</p>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:28px">
+                <sc-for list="{{ featureStats }}" as="s" hint-placeholder-count="3">
+                  <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:14px;padding:16px">
+                    <div style="font:700 22px 'Manrope',sans-serif">{{ s.value }}</div>
+                    <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ s.label }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <button onClick="{{ goEvent }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:14px 26px;font:600 15px 'DM Sans',sans-serif;cursor:pointer">View Event</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:72px 24px">
+        <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 22px">Explore by interest</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <sc-for list="{{ categories }}" as="c" hint-placeholder-count="7">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:999px;padding:14px 24px;font:600 15px 'DM Sans',sans-serif;cursor:pointer" style-hover="border-color:#2f8f3c;color:#2f7d34">{{ c }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:0 24px 72px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:24px;flex-wrap:wrap">
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0">Featured speakers</p>
+          <button onClick="{{ goSpeakers }}" style="border:1px solid rgba(18,21,12,.16);background:transparent;border-radius:999px;padding:9px 18px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">All speakers</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px">
+          <sc-for list="{{ featuredSpeakers }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:12px">
+              <div style="height:200px"><image-slot id="{{ s.slot }}" src="{{ s.art }}" shape="rounded" radius="13" placeholder="Portrait"></image-slot></div>
+              <div style="padding:16px 8px 8px">
+                <div style="font:700 17px 'Manrope',sans-serif;letter-spacing:-.015em">{{ s.name }}</div>
+                <div style="font:500 13.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:4px">{{ s.role }}</div>
+                <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:2px">{{ s.org }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fbfaf0;border-top:1px solid rgba(18,21,12,.07)">
+        <div style="width:100%;max-width:1320px;margin:0 auto;padding:72px 24px">
+          <h2 style="font:700 clamp(28px,3vw,40px)/1.1 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 34px">Why attend?</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;background:rgba(18,21,12,.08)">
+            <sc-for list="{{ whyAttend }}" as="w" hint-placeholder-count="5">
+              <div style="background:#fbfaf0;padding:26px 22px 30px">
+                <div style="font:600 13px 'DM Sans',sans-serif;color:{{ accent }};margin-bottom:22px">{{ w.n }}</div>
+                <div style="font:700 21px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:8px">{{ w.title }}</div>
+                <div style="font:400 14px/1.5 'DM Sans',sans-serif;color:#6b7358">{{ w.body }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:72px 24px">
+        <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 22px">Sponsors &amp; partners</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px">
+          <sc-for list="{{ sponsorLogos }}" as="s" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:14px;height:92px;padding:10px"><image-slot id="{{ s.slot }}" src="{{ s.art }}" shape="rounded" radius="8" fit="contain" placeholder="{{ s.name }} logo"></image-slot></div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:0 24px 80px">
+        <div style="background:#111510;border-radius:26px;padding:clamp(36px,5vw,72px);display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap">
+          <h2 style="font:700 clamp(30px,3.8vw,54px)/1.05 'Manrope',sans-serif;letter-spacing:-.035em;color:#fbfaf0;margin:0;max-width:640px">Ready to join the future?</h2>
+          <button onClick="{{ goRegister }}" style="border:none;background:{{ accent }};color:#0d1a09;border-radius:999px;padding:17px 32px;font:700 16px 'DM Sans',sans-serif;cursor:pointer">Register for the Summit</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- EVENTS -->
+    <sc-if value="{{ is.events }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:44px 24px 90px">
+      <h1 style="font:700 clamp(36px,4.4vw,58px)/1.03 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 28px">Events</h1>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:30px">
+        <input placeholder="Search events…" style="flex:1;min-width:240px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:14px 20px;font-size:15px;outline:none" />
+        <sc-for list="{{ eventFilters }}" as="f" hint-placeholder-count="4">
+          <select style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:14px 18px;font-size:14px;color:#3b432c;outline:none">
+            <option>{{ f }}</option>
+          </select>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px">
+        <sc-for list="{{ events }}" as="e" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:12px;display:flex;flex-direction:column" style-hover="box-shadow:0 16px 34px rgba(18,21,12,.08)">
+            <div style="position:relative;height:172px">
+              <image-slot id="{{ e.slot }}" src="{{ e.art }}" shape="rounded" radius="14" placeholder="Event photo"></image-slot>
+              <span style="position:absolute;top:12px;left:12px;pointer-events:none;background:#111510;color:#fff;border-radius:999px;padding:6px 12px;font:600 11px 'DM Sans',sans-serif">{{ e.tag }}</span>
+            </div>
+            <div style="padding:16px 8px 10px;flex:1">
+              <div style="font:700 19px/1.25 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:10px">{{ e.title }}</div>
+              <div style="font:500 13.5px 'DM Sans',sans-serif;color:#6b7358">{{ e.date }} · {{ e.city }}</div>
+              <div style="font:600 14px 'DM Sans',sans-serif;color:#2f7d34;margin-top:8px">{{ e.price }}</div>
+            </div>
+            <button onClick="{{ goEvent }}" style="border:none;background:#111510;color:#fff;border-radius:12px;padding:13px;font:600 14px 'DM Sans',sans-serif;cursor:pointer;margin:6px 6px 4px">View</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- EVENT DETAIL -->
+    <sc-if value="{{ is.event }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:36px 24px 90px">
+      <div style="height:clamp(220px,32vw,400px);margin-bottom:34px"><image-slot id="event-cover" src="img/cover.png" shape="rounded" radius="24" placeholder="Event cover — 2400×900"></image-slot></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:44px;align-items:start">
+        <div>
+          <h1 style="font:700 clamp(34px,4.4vw,58px)/1.02 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 14px">NeuroTech Summit 2026</h1>
+          <div style="font:500 16px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:38px">20–22 November 2026 · Julius Nyerere Convention Centre, Dar es Salaam</div>
+
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">About the event</p>
+          <p style="font:400 16px/1.65 'DM Sans',sans-serif;color:#454d38;margin:0 0 38px;max-width:680px">The NeuroTech Summit brings together the region's neuroscience researchers, machine-learning engineers, clinicians, regulators and investors for three days of keynotes, hands-on BCI workshops and clinical demonstrations. The 2026 edition focuses on translating research into deployable neurohealth care.</p>
+
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">Event highlights</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px">
+            <sc-for list="{{ highlights }}" as="h" hint-placeholder-count="5">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:999px;padding:11px 18px;font:500 14px 'DM Sans',sans-serif">{{ h }}</div>
+            </sc-for>
+          </div>
+
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">Speakers</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:42px">
+            <sc-for list="{{ featuredSpeakers }}" as="s" hint-placeholder-count="4">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:16px;padding:10px">
+                <div style="height:120px"><image-slot id="{{ s.slot }}-sm" src="{{ s.art }}" shape="rounded" radius="11" placeholder="Portrait"></image-slot></div>
+                <div style="font:700 15px 'Manrope',sans-serif;margin:12px 4px 2px">{{ s.name }}</div>
+                <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467;margin:0 4px 6px">{{ s.role }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">Schedule</p>
+          <div style="display:flex;gap:6px;margin-bottom:18px">
+            <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+              <button onClick="{{ d.go }}" style="border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.fg }};border-radius:999px;padding:9px 18px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">{{ d.label }}</button>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;overflow:hidden;margin-bottom:42px">
+            <sc-for list="{{ dayItems }}" as="i" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:18px;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(18,21,12,.06)">
+                <div style="font:600 15px 'Manrope',sans-serif;color:#2f7d34">{{ i.time }}</div>
+                <div>
+                  <div style="font:600 16px 'DM Sans',sans-serif">{{ i.title }}</div>
+                  <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ i.speaker }} · {{ i.room }}</div>
+                </div>
+                <div style="font:600 11.5px 'DM Sans',sans-serif;color:#5b6349;background:#f2f4e4;border-radius:999px;padding:6px 12px">{{ i.type }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:42px">
+            <div>
+              <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">Venue</p>
+              <div style="height:190px"><image-slot id="venue" src="img/venue.png" shape="rounded" radius="16" placeholder="Venue map or photo"></image-slot></div>
+              <div style="font:500 14px/1.6 'DM Sans',sans-serif;color:#454d38;margin-top:12px">Julius Nyerere Convention Centre<br />Shaaban Robert St, Dar es Salaam</div>
+            </div>
+            <div>
+              <p style="font:600 12px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467;margin:0 0 14px">FAQ</p>
+              <sc-for list="{{ faqs }}" as="f" hint-placeholder-count="4">
+                <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:12px;padding:15px 18px;margin-bottom:8px;display:flex;justify-content:space-between;gap:14px;font:500 14.5px 'DM Sans',sans-serif">{{ f }}<span style="color:#7c8467">+</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:sticky;top:96px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:22px;padding:24px;box-shadow:0 18px 40px rgba(18,21,12,.06)">
+          <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:6px">NeuroTech Summit 2026</div>
+          <div style="font:500 13px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:20px">Registration closes 15 Nov</div>
+          <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467">From</div>
+          <div style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:20px">TZS 20,000</div>
+          <div style="display:grid;gap:10px;font:500 14px 'DM Sans',sans-serif;color:#454d38;padding-bottom:20px;border-bottom:1px solid rgba(18,21,12,.08);margin-bottom:20px">
+            <div>20–22 November 2026</div>
+            <div>Dar es Salaam, Tanzania</div>
+            <div>1,200+ attendees expected</div>
+          </div>
+          <button onClick="{{ goRegister }}" style="width:100%;border:none;background:#111510;color:#fff;border-radius:14px;padding:16px;font:700 15px 'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px">Register Now</button>
+          <button style="width:100%;border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:14px;padding:14px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Add to calendar</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- SPEAKERS -->
+    <sc-if value="{{ is.speakers }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:1320px;margin:0 auto;padding:44px 24px 90px">
+      <h1 style="font:700 clamp(36px,4.4vw,58px)/1.03 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 12px">Speakers</h1>
+      <p style="font:400 17px 'DM Sans',sans-serif;color:#5b6349;margin:0 0 30px">50+ researchers, clinicians and founders across three days.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px">
+        <sc-for list="{{ speakerFilters }}" as="f" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:10px 18px;font:500 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ f }}</div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px">
+        <sc-for list="{{ speakers }}" as="s" hint-placeholder-count="8">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:12px">
+            <div style="height:190px"><image-slot id="{{ s.slot }}-lg" src="{{ s.art }}" shape="rounded" radius="13" placeholder="Portrait"></image-slot></div>
+            <div style="padding:15px 8px 6px">
+              <div style="font:700 17px 'Manrope',sans-serif;letter-spacing:-.015em">{{ s.name }}</div>
+              <div style="font:500 13.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:4px">{{ s.role }}</div>
+              <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:2px;margin-bottom:12px">{{ s.org }}</div>
+              <button style="width:100%;border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:10px;padding:11px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">View Profile</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- PUBLIC SCHEDULE -->
+    <sc-if value="{{ is.schedule }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:1100px;margin:0 auto;padding:44px 24px 90px">
+      <h1 style="font:700 clamp(36px,4.4vw,58px)/1.03 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 24px">Schedule</h1>
+      <div style="display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap">
+        <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+          <button onClick="{{ d.go }}" style="border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.fg }};border-radius:999px;padding:11px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">{{ d.label }} · {{ d.date }}</button>
+        </sc-for>
+      </div>
+      <sc-for list="{{ dayItems }}" as="i" hint-placeholder-count="6">
+        <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:24px;padding:22px 0;border-top:1px solid rgba(18,21,12,.12)">
+          <div style="font:700 18px 'Manrope',sans-serif;letter-spacing:-.02em">{{ i.time }}</div>
+          <div>
+            <div style="font:600 19px 'DM Sans',sans-serif;margin-bottom:6px">{{ i.title }}</div>
+            <div style="font:400 14px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:12px">{{ i.speaker }} · {{ i.room }} · {{ i.type }}</div>
+            <button style="border:1px solid rgba(18,21,12,.14);background:#fff;border-radius:999px;padding:9px 16px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">♡ Add to my schedule</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- REGISTRATION WIZARD -->
+    <sc-if value="{{ is.register }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:880px;margin:0 auto;padding:44px 24px 90px">
+      <h1 style="font:700 clamp(32px,3.8vw,48px)/1.05 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 30px">Register for NeuroTech Summit 2026</h1>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:32px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:9px;background:{{ s.bg }};border:1px solid {{ s.border }};color:{{ s.fg }};border-radius:999px;padding:9px 16px;font:600 13px 'DM Sans',sans-serif">{{ s.n }} {{ s.label }}</div>
+        </sc-for>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:22px;padding:clamp(22px,3vw,38px)">
+        <sc-if value="{{ wz.s1 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font:700 24px 'Manrope',sans-serif;letter-spacing:-.025em;margin-bottom:24px">Create account</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+            <sc-for list="{{ fields1 }}" as="f" hint-placeholder-count="4">
+              <label style="display:block">
+                <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">{{ f }}</div>
+                <input placeholder="{{ f }}" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:14px 16px;font-size:15px;outline:none" />
+              </label>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ wz.s2 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font:700 24px 'Manrope',sans-serif;letter-spacing:-.025em;margin-bottom:24px">Personal information</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+            <sc-for list="{{ fields2 }}" as="f" hint-placeholder-count="5">
+              <label style="display:block">
+                <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">{{ f }}</div>
+                <input placeholder="{{ f }}" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:14px 16px;font-size:15px;outline:none" />
+              </label>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ wz.s3 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font:700 24px 'Manrope',sans-serif;letter-spacing:-.025em;margin-bottom:24px">Select your ticket</div>
+          <div style="display:grid;gap:12px">
+            <sc-for list="{{ ticketOptions }}" as="t" hint-placeholder-count="3">
+              <div onClick="{{ t.pick }}" style="display:flex;justify-content:space-between;align-items:center;gap:18px;border:2px solid {{ t.border }};background:{{ t.bg }};border-radius:16px;padding:20px 22px;cursor:pointer">
+                <div>
+                  <div style="font:700 18px 'Manrope',sans-serif;letter-spacing:-.02em">{{ t.name }}</div>
+                  <div style="font:400 13.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:4px">{{ t.perks }}</div>
+                </div>
+                <div style="font:700 20px 'Manrope',sans-serif;white-space:nowrap">{{ t.price }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ wz.s4 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font:700 24px 'Manrope',sans-serif;letter-spacing:-.025em;margin-bottom:24px">Payment</div>
+          <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.09);border-radius:16px;padding:20px;margin-bottom:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:14px">Order summary</div>
+            <div style="display:flex;justify-content:space-between;font:500 15px 'DM Sans',sans-serif;padding-bottom:12px;border-bottom:1px solid rgba(18,21,12,.08)"><span>{{ chosenTicket }} ticket</span><span>{{ chosenPrice }}</span></div>
+            <div style="display:flex;justify-content:space-between;font:700 19px 'Manrope',sans-serif;padding-top:14px"><span>Total</span><span>{{ chosenPrice }}</span></div>
+          </div>
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:10px">Payment method</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+            <sc-for list="{{ payMethods }}" as="p" hint-placeholder-count="3">
+              <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:14px;padding:18px;font:600 15px 'DM Sans',sans-serif">{{ p.name }}<div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:4px">{{ p.detail }}</div></div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ wz.s5 }}" hint-placeholder-val="{{ true }}">
+        <div style="text-align:center;padding:20px 0">
+          <div style="width:62px;height:62px;border-radius:50%;background:{{ accent }};margin:0 auto 22px;display:flex;align-items:center;justify-content:center;font:700 26px 'Manrope',sans-serif;color:#0d1a09">✓</div>
+          <div style="font:700 30px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:10px">Registration successful</div>
+          <div style="font:400 16px/1.6 'DM Sans',sans-serif;color:#5b6349;margin-bottom:28px">You're officially registered for NeuroTech Summit 2026.<br />Ticket NTS-000234 has been emailed to you.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onClick="{{ goTicket }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">View Ticket</button>
+            <button onClick="{{ goUserSchedule }}" style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">View Schedule</button>
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Add to Calendar</button>
+          </div>
+        </div>
+        </sc-if>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-top:30px">
+          <button onClick="{{ stepBack }}" style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:14px 26px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Back</button>
+          <button onClick="{{ stepNext }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:14px 30px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">{{ nextLabel }}</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+
+    <!-- CHECKOUT -->
+    <sc-if value="{{ is.checkout }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:1160px;margin:0 auto;padding:44px 24px 90px">
+      <h1 style="font:700 clamp(32px,3.8vw,48px)/1.05 'Manrope',sans-serif;letter-spacing:-.035em;margin:0 0 8px">Checkout</h1>
+      <p style="font:400 16px 'DM Sans',sans-serif;color:#5b6349;margin:0 0 30px">Order NTS-2026-000234 · held for 15 minutes</p>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;align-items:start">
+        <div style="display:grid;gap:18px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:18px">Attendee</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Full name</div><input value="Bryan Kachocho" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Email</div><input value="bryan@neurolab.co.tz" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Phone</div><input value="+255 712 345 678" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Organisation</div><input value="NeuroLab Tanzania" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font-size:15px;outline:none" /></label>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:18px">Payment method</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:22px">
+              <sc-for list="{{ payMethods2 }}" as="m" hint-placeholder-count="6">
+                <div onClick="{{ m.pick }}" style="background:{{ m.bg }};border:2px solid {{ m.border }};border-radius:14px;padding:16px 18px;cursor:pointer">
+                  <div style="font:600 15px 'DM Sans',sans-serif">{{ m.name }}</div>
+                  <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:4px">{{ m.detail }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ isMomo }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.09);border-radius:14px;padding:20px">
+              <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:9px">Mobile money number</div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <div style="background:#fff;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font:600 15px 'DM Sans',sans-serif;color:#3b432c">+255</div>
+                <input value="712 345 678" style="flex:1;min-width:160px;background:#fff;border:1px solid rgba(18,21,12,.12);border-radius:12px;padding:13px 15px;font-size:15px;outline:none" />
+              </div>
+              <div style="font:400 13px/1.6 'DM Sans',sans-serif;color:#7c8467;margin-top:12px">You will receive a {{ payMethod }} prompt on this number. Enter your PIN to authorise the payment.</div>
+            </div>
+            </sc-if>
+          </div>
+
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:20px;padding:26px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <div style="width:18px;height:18px;border-radius:5px;border:2px solid #2f8f3c;background:#2f8f3c;display:flex;align-items:center;justify-content:center;color:#fff;font:700 11px 'DM Sans',sans-serif;flex:none;margin-top:2px">✓</div>
+              <div style="font:400 14px/1.6 'DM Sans',sans-serif;color:#454d38">I accept the summit terms, the refund policy (full refund until 30 October 2026) and the processing of my details for badge and certificate issuing.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="position:sticky;top:96px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:22px;padding:26px;box-shadow:0 18px 40px rgba(18,21,12,.06)">
+          <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Order summary</div>
+          <sc-for list="{{ orderLines }}" as="l" hint-placeholder-count="3">
+            <div style="display:flex;justify-content:space-between;gap:14px;font:500 14.5px 'DM Sans',sans-serif;padding:10px 0;border-bottom:1px solid rgba(18,21,12,.06)">
+              <span style="color:#454d38">{{ l.label }}</span><span style="white-space:nowrap">{{ l.value }}</span>
+            </div>
+          </sc-for>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:18px 0 22px">
+            <span style="font:600 14px 'DM Sans',sans-serif;color:#5b6349">Total</span>
+            <span style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em">{{ orderTotal }}</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:18px">
+            <input placeholder="Promo code" style="flex:1;min-width:0;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:12px 14px;font-size:14px;outline:none" />
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:11px;padding:12px 16px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">Apply</button>
+          </div>
+          <button onClick="{{ startPayment }}" style="width:100%;border:none;background:#111510;color:#fff;border-radius:14px;padding:16px;font:700 15px 'DM Sans',sans-serif;cursor:pointer;margin-bottom:10px">Pay {{ orderTotal }}</button>
+          <div style="font:400 12.5px/1.6 'DM Sans',sans-serif;color:#7c8467;text-align:center">Secured by DPO Pay · VAT invoice issued instantly</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- PAYMENT STATUS -->
+    <sc-if value="{{ is.payment }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:640px;margin:0 auto;padding:44px 24px 90px">
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:26px">
+        <sc-for list="{{ payStatusTabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.go }}" style="border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};border-radius:999px;padding:8px 16px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:24px;padding:clamp(28px,4vw,44px);text-align:center">
+        <sc-if value="{{ pay.processing }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="width:66px;height:66px;border-radius:50%;border:5px solid #e6ebd7;border-top-color:#2f8f3c;margin:0 auto 24px"></div>
+          <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:12px">Waiting for your approval</div>
+          <div style="font:400 16px/1.6 'DM Sans',sans-serif;color:#5b6349;margin-bottom:26px">Check your phone. Enter your {{ payMethod }} PIN to authorise <strong>{{ orderTotal }}</strong> to NeuroTech Summit.</div>
+          <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.08);border-radius:14px;padding:16px;font:500 13.5px 'DM Sans',sans-serif;color:#454d38;margin-bottom:26px">Reference NTS-2026-000234 · expires in 04:32</div>
+          <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Cancel payment</button>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pay.success }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="width:66px;height:66px;border-radius:50%;background:{{ accent }};margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font:700 28px 'Manrope',sans-serif;color:#0d1a09">✓</div>
+          <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:12px">Payment received</div>
+          <div style="font:400 16px/1.6 'DM Sans',sans-serif;color:#5b6349;margin-bottom:26px">{{ orderTotal }} paid by {{ payMethod }}. Your ticket and VAT invoice are on their way to bryan@neurolab.co.tz.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onClick="{{ goTicket }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">View ticket</button>
+            <button onClick="{{ goReceipt }}" style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">View receipt</button>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ pay.failed }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="width:66px;height:66px;border-radius:50%;background:#f6e5e0;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font:700 28px 'Manrope',sans-serif;color:#8a3b2f">✕</div>
+          <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:12px">Payment not completed</div>
+          <div style="font:400 16px/1.6 'DM Sans',sans-serif;color:#5b6349;margin-bottom:26px">The {{ payMethod }} request timed out or was declined. Your ticket is still held for 09:12 — try again or pick another method.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onClick="{{ startPayment }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Try again</button>
+            <button onClick="{{ goCheckout }}" style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:14px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Change method</button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- RECEIPT -->
+    <sc-if value="{{ is.receipt }}" hint-placeholder-val="{{ true }}">
+    <div style="width:100%;max-width:760px;margin:0 auto;padding:44px 24px 90px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Receipt</h1>
+        <div style="display:flex;gap:10px">
+          <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Email copy</button>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Download PDF</button>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid rgba(18,21,12,.09);border-radius:22px;padding:clamp(24px,3.5vw,40px)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(18,21,12,.1)">
+          <div style="display:flex;align-items:center;gap:11px">
+            <div style="width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+            <div>
+              <div style="font:800 17px 'Manrope',sans-serif;letter-spacing:-.02em">NeuroTech Summit</div>
+              <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467">TIN 123-456-789 · Dar es Salaam</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467">Tax invoice</div>
+            <div style="font:600 15px 'DM Sans',sans-serif;margin-top:5px">INV-2026-000234</div>
+            <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:2px">14 September 2026</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:24px 0;border-bottom:1px solid rgba(18,21,12,.1)">
+          <div>
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:8px">Billed to</div>
+            <div style="font:500 14.5px/1.7 'DM Sans',sans-serif;color:#454d38">Bryan Kachocho<br />NeuroLab Tanzania<br />bryan@neurolab.co.tz<br />+255 712 345 678</div>
+          </div>
+          <div>
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:8px">Payment</div>
+            <div style="font:500 14.5px/1.7 'DM Sans',sans-serif;color:#454d38">Vodacom M-Pesa<br />Txn TXN-90231<br />Status: <span style="color:#2f7d34;font-weight:700">PAID</span></div>
+          </div>
+        </div>
+        <div style="padding:20px 0">
+          <sc-for list="{{ receiptLines }}" as="l" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 60px 120px;gap:12px;align-items:center;font:500 14.5px 'DM Sans',sans-serif;padding:12px 0;border-bottom:1px solid rgba(18,21,12,.06)">
+              <span style="color:#454d38">{{ l.label }}</span>
+              <span style="color:#7c8467">{{ l.qty }}</span>
+              <span style="text-align:right">{{ l.value }}</span>
+            </div>
+          </sc-for>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:12px;align-items:baseline;padding-top:20px">
+            <span style="font:600 14px 'DM Sans',sans-serif;color:#5b6349">Total paid</span>
+            <span style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;text-align:right">{{ orderTotal }}</span>
+          </div>
+        </div>
+        <div style="font:400 12.5px/1.6 'DM Sans',sans-serif;color:#7c8467;border-top:1px solid rgba(18,21,12,.1);padding-top:18px">Amounts in Tanzanian Shillings and inclusive of 18% VAT. Refunds available until 30 October 2026 under the summit refund policy.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <div style="background:#111510;color:#cfd6bd;margin-top:10px">
+      <div style="width:100%;max-width:1320px;margin:0 auto;padding:56px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:34px">
+        <div>
+          <div style="font:800 19px 'Manrope',sans-serif;color:#fbfaf0;margin-bottom:10px">NeuroTech Summit</div>
+          <div style="font:400 13.5px/1.6 'DM Sans',sans-serif">Connecting minds with future technology. Dar es Salaam, Tanzania.</div>
+        </div>
+        <sc-for list="{{ footerCols }}" as="c" hint-placeholder-count="3">
+          <div>
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8e9878;margin-bottom:14px">{{ c.title }}</div>
+            <sc-for list="{{ c.items }}" as="i" hint-placeholder-count="4">
+              <div style="font:400 14px 'DM Sans',sans-serif;margin-bottom:9px">{{ i }}</div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ══════════════════ USER DASHBOARD ══════════════════ -->
+  <sc-if value="{{ is.user }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:268px minmax(0,1fr);min-height:calc(100vh - 56px)">
+    <div style="background:#fbfaf0;border-right:1px solid rgba(18,21,12,.08);padding:26px 18px">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 8px 26px">
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+        <div style="font:800 17px 'Manrope',sans-serif;letter-spacing:-.02em">NeuroTech</div>
+      </div>
+      <sc-for list="{{ userNav }}" as="n" hint-placeholder-count="7">
+        <button onClick="{{ n.go }}" style="width:100%;text-align:left;border:none;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};border-radius:12px;padding:12px 14px;font:{{ n.font }};margin-bottom:4px">{{ n.label }}</button>
+      </sc-for>
+      <div style="border-top:1px solid rgba(18,21,12,.08);margin:18px 0 0;padding-top:18px">
+        <div style="display:flex;align-items:center;gap:11px;padding:8px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#e4ebd4;display:flex;align-items:center;justify-content:center;font:700 13px 'Manrope',sans-serif;color:#3b432c;flex:none">BK</div>
+          <div>
+            <div style="font:600 14px 'DM Sans',sans-serif">Bryan Kachocho</div>
+            <div style="font:400 12px 'DM Sans',sans-serif;color:#7c8467">Professional</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:clamp(24px,3vw,44px)">
+      <sc-if value="{{ is.uDash }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 clamp(28px,3.2vw,42px)/1.05 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 8px">Good morning, Bryan</h1>
+        <p style="font:400 16px 'DM Sans',sans-serif;color:#5b6349;margin:0 0 30px">Welcome back to NeuroTech Summit.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:34px">
+          <sc-for list="{{ userStats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em">{{ s.value }}</div>
+              <div style="font:500 13.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:5px">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+          <div style="background:#111510;border-radius:22px;padding:30px;color:#fbfaf0">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9aa583;margin-bottom:18px">Your next event</div>
+            <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-bottom:16px">NeuroTech Summit 2026</div>
+            <div style="font:400 14.5px/1.7 'DM Sans',sans-serif;color:#cfd6bd;margin-bottom:26px">20 November 2026<br />Julius Nyerere Convention Centre, Dar es Salaam</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button onClick="{{ goEvent }}" style="border:none;background:{{ accent }};color:#0d1a09;border-radius:999px;padding:12px 22px;font:700 13.5px 'DM Sans',sans-serif;cursor:pointer">View Event</button>
+              <button onClick="{{ goTicket }}" style="border:1px solid rgba(251,250,240,.25);background:transparent;color:#fbfaf0;border-radius:999px;padding:12px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">My Ticket</button>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:22px;padding:30px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Upcoming session</div>
+            <div style="font:700 30px 'Manrope',sans-serif;color:#2f7d34;margin-bottom:8px">14:00</div>
+            <div style="font:700 22px 'Manrope',sans-serif;letter-spacing:-.025em;margin-bottom:6px">Brain Computer Interfaces</div>
+            <div style="font:400 14px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:24px">Hall B · Workshop · Dr. Juma Kibwana</div>
+            <button onClick="{{ goUserSchedule }}" style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:12px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">View Schedule</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.uTicket }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:440px">
+        <h1 style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 26px">My ticket</h1>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:24px;overflow:hidden;box-shadow:0 20px 44px rgba(18,21,12,.08)">
+          <div style="background:#111510;padding:26px;color:#fbfaf0">
+            <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#9aa583">NeuroTech Summit 2026</div>
+            <div style="font:700 24px 'Manrope',sans-serif;letter-spacing:-.025em;margin-top:10px">Bryan Kachocho</div>
+            <div style="font:500 13.5px 'DM Sans',sans-serif;color:{{ accent }};margin-top:4px">Professional pass</div>
+          </div>
+          <div style="padding:28px;text-align:center">
+            <div style="width:180px;height:180px;margin:0 auto;border-radius:14px;background:repeating-conic-gradient(#111510 0 25%,#fff 0 50%) 0 0/16px 16px"></div>
+            <div style="font:500 12px ui-monospace,monospace;color:#8b9377;margin-top:12px">Scan at entry</div>
+          </div>
+          <div style="border-top:1px dashed rgba(18,21,12,.18);padding:22px 28px;display:grid;gap:10px">
+            <div style="display:flex;justify-content:space-between;font:500 14px 'DM Sans',sans-serif"><span style="color:#7c8467">Ticket</span><span>NTS-000234</span></div>
+            <div style="display:flex;justify-content:space-between;font:500 14px 'DM Sans',sans-serif"><span style="color:#7c8467">Status</span><span style="color:#2f7d34;font-weight:700">PAID</span></div>
+            <div style="display:flex;justify-content:space-between;font:500 14px 'DM Sans',sans-serif"><span style="color:#7c8467">Date</span><span>20–22 Nov 2026</span></div>
+          </div>
+          <div style="padding:0 28px 28px">
+            <button style="width:100%;border:none;background:#111510;color:#fff;border-radius:14px;padding:15px;font:700 14.5px 'DM Sans',sans-serif;cursor:pointer">Download ticket</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.uSchedule }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:820px">
+        <h1 style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">My schedule</h1>
+        <div style="display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap">
+          <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.go }}" style="border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.fg }};border-radius:999px;padding:10px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{ dayItems }}" as="i" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:20px;align-items:center;background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:16px;padding:18px 20px;margin-bottom:10px">
+            <div style="font:700 16px 'Manrope',sans-serif;color:#2f7d34">{{ i.time }}</div>
+            <div>
+              <div style="font:600 16.5px 'DM Sans',sans-serif">{{ i.title }}</div>
+              <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ i.room }} · {{ i.speaker }}</div>
+            </div>
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:9px 15px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;white-space:nowrap">♡ Save</button>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.uNetwork }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 20px">Discover people</h1>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px">
+          <input placeholder="Search attendees…" style="flex:1;min-width:220px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:13px 20px;font-size:15px;outline:none" />
+          <sc-for list="{{ interestChips }}" as="c" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:12px 18px;font:500 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ c }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px">
+          <sc-for list="{{ attendeesNetwork }}" as="a" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+              <div style="width:52px;height:52px;border-radius:50%;background:#e4ebd4;display:flex;align-items:center;justify-content:center;font:700 17px 'Manrope',sans-serif;color:#3b432c;margin-bottom:14px">{{ a.initials }}</div>
+              <div style="font:700 17px 'Manrope',sans-serif;letter-spacing:-.015em">{{ a.name }}</div>
+              <div style="font:500 13px 'DM Sans',sans-serif;color:#2f7d34;margin-top:3px">{{ a.role }}</div>
+              <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:2px">{{ a.org }}</div>
+              <div style="font:500 12px 'DM Sans',sans-serif;color:#5b6349;margin:14px 0 16px">{{ a.tags }}</div>
+              <button style="width:100%;border:none;background:#111510;color:#fff;border-radius:11px;padding:11px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">Connect</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.uNotify }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:700px">
+        <h1 style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Notifications</h1>
+        <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="5">
+          <div style="display:flex;gap:16px;align-items:flex-start;background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:16px;padding:18px 20px;margin-bottom:10px">
+            <div style="width:9px;height:9px;border-radius:50%;background:{{ n.dot }};margin-top:7px;flex:none"></div>
+            <div>
+              <div style="font:600 15.5px 'DM Sans',sans-serif">{{ n.title }}</div>
+              <div style="font:400 13.5px 'DM Sans',sans-serif;color:#7c8467;margin-top:4px">{{ n.body }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.uCert }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:760px">
+        <h1 style="font:700 34px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">My certificates</h1>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:22px;padding:26px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+            <div>
+              <div style="font:700 22px 'Manrope',sans-serif;letter-spacing:-.02em">NeuroTech Summit 2026</div>
+              <div style="font:500 13.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:4px">Status: Verified</div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:11px 20px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">View</button>
+              <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:11px 20px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">Download PDF</button>
+            </div>
+          </div>
+          <div style="height:300px"><image-slot id="certificate" src="img/certificate.png" shape="rounded" radius="16" placeholder="Certificate preview — A4 landscape"></image-slot></div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ══════════════════ ADMIN ══════════════════ -->
+  <sc-if value="{{ is.admin }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:262px minmax(0,1fr);min-height:calc(100vh - 56px)">
+    <div style="background:#111510;padding:24px 14px;overflow:auto">
+      <div style="display:flex;align-items:center;gap:10px;padding:0 10px 24px">
+        <div style="width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#8ad356,#2f8f3c)"></div>
+        <div style="font:800 15px 'Manrope',sans-serif;color:#fbfaf0;letter-spacing:-.01em">NEUROTECH ADMIN</div>
+      </div>
+      <sc-for list="{{ adminNav }}" as="sec" hint-placeholder-count="6">
+        <div style="margin-bottom:16px">
+          <div style="font:600 10.5px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#79855f;padding:0 10px 8px">{{ sec.title }}</div>
+          <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="4">
+            <button onClick="{{ it.go }}" style="width:100%;text-align:left;border:none;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};border-radius:10px;padding:10px 12px;font:{{ it.font }};margin-bottom:2px">{{ it.label }}</button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:clamp(22px,3vw,40px);background:linear-gradient(135deg,#eaf0da,#fbf8e3)">
+      <sc-if value="{{ is.aDash }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 clamp(26px,3vw,38px)/1.05 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 6px">Admin dashboard</h1>
+        <p style="font:400 15px 'DM Sans',sans-serif;color:#5b6349;margin:0 0 28px">Good morning, Admin — here's where the summit stands today.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px">
+          <sc-for list="{{ adminStats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:10px">{{ s.label }}</div>
+              <div style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em">{{ s.value }}</div>
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:6px">{{ s.delta }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:22px">Registration analytics</div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:190px">
+              <sc-for list="{{ chartBars }}" as="b" hint-placeholder-count="10">
+                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%">
+                  <div style="width:100%;border-radius:7px 7px 0 0;background:{{ b.color }};height:{{ b.h }}"></div>
+                  <div style="font:500 11px 'DM Sans',sans-serif;color:#8b9377">{{ b.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:16px">Recent registrations</div>
+            <sc-for list="{{ recentRegs }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(18,21,12,.06)">
+                <div>
+                  <div style="font:600 14.5px 'DM Sans',sans-serif">{{ r.name }}</div>
+                  <div style="font:400 12.5px 'DM Sans',sans-serif;color:#7c8467">{{ r.ticket }}</div>
+                </div>
+                <div style="font:600 12px 'DM Sans',sans-serif;color:{{ r.color }};background:{{ r.chip }};border-radius:999px;padding:5px 11px">{{ r.status }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aEvents }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Events</h1>
+          <button onClick="{{ goCreate }}" style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Create event</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr 1fr 90px;gap:14px;padding:16px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Event</div><div>Dates</div><div>Registrations</div><div>Status</div><div></div>
+          </div>
+          <sc-for list="{{ adminEvents }}" as="e" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr 1fr 90px;gap:14px;padding:18px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-weight:600">{{ e.title }}</div>
+              <div style="color:#5b6349">{{ e.dates }}</div>
+              <div style="color:#5b6349">{{ e.regs }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ e.color }};background:{{ e.chip }};border-radius:999px;padding:5px 11px">{{ e.status }}</span></div>
+              <div style="color:#2f7d34;font-weight:600;cursor:pointer">Manage</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aCreate }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:900px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Create event</h1>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px">
+          <sc-for list="{{ builderSteps }}" as="s" hint-placeholder-count="8">
+            <div style="background:{{ s.bg }};border:1px solid {{ s.border }};color:{{ s.fg }};border-radius:999px;padding:8px 15px;font:600 12.5px 'DM Sans',sans-serif">{{ s.n }} {{ s.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:20px">Basic information</div>
+            <div style="display:grid;gap:15px">
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Event title</div><input value="NeuroTech Summit 2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Short description</div><input placeholder="One line for cards and search" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Description</div><textarea rows="5" placeholder="Rich text editor…" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none;resize:vertical"></textarea></label>
+              <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Category</div><select style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none"><option>Neurotechnology</option><option>Healthcare</option><option>AI &amp; Research</option></select></label>
+              <div><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Cover image</div><div style="height:120px"><image-slot id="create-cover" src="img/cover.png" shape="rounded" radius="13" placeholder="Drop cover image — 2400×900"></image-slot></div></div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+            <div style="font:700 19px 'Manrope',sans-serif;letter-spacing:-.02em;margin-bottom:20px">Date &amp; venue</div>
+            <div style="display:grid;gap:15px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">Start date</div><input value="20/11/2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">End date</div><input value="22/11/2026" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              </div>
+              <sc-for list="{{ venueFields }}" as="v" hint-placeholder-count="4">
+                <label style="display:block"><div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:7px">{{ v }}</div><input placeholder="{{ v }}" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:11px;padding:13px 15px;font-size:15px;outline:none" /></label>
+              </sc-for>
+              <div>
+                <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:9px">Format</div>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ formats }}" as="f" hint-placeholder-count="3">
+                    <div style="background:{{ f.bg }};border:1px solid {{ f.border }};color:{{ f.fg }};border-radius:999px;padding:10px 18px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">{{ f.label }}</div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:6px">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:13px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Save draft</button>
+                <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Continue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aTickets }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:760px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Ticket types</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Create ticket</button>
+        </div>
+        <sc-for list="{{ ticketAdmin }}" as="t" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+              <div>
+                <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#7c8467">{{ t.name }}</div>
+                <div style="font:700 26px 'Manrope',sans-serif;letter-spacing:-.03em;margin-top:6px">{{ t.price }}</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:9px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:9px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;color:#8a3b2f">Delete</button>
+              </div>
+            </div>
+            <div style="font:500 13px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:9px">Sold {{ t.sold }} of {{ t.total }}</div>
+            <div style="height:8px;border-radius:999px;background:#eef1e1;overflow:hidden"><div style="height:100%;width:{{ t.pct }};background:{{ accent }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aAttendees }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 20px">Attendees</h1>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+          <input placeholder="Search attendees…" style="flex:1;min-width:220px;background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:12px 18px;font-size:14.5px;outline:none" />
+          <sc-for list="{{ attendeeFilters }}" as="f" hint-placeholder-count="4">
+            <select style="background:#fff;border:1px solid rgba(18,21,12,.1);border-radius:999px;padding:12px 16px;font-size:14px;color:#3b432c;outline:none"><option>{{ f }}</option></select>
+          </sc-for>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 22px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Export</button>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:auto">
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) 1fr 1fr .8fr .8fr 90px;gap:14px;padding:15px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Name</div><div>Organization</div><div>Ticket</div><div>Payment</div><div>Check-in</div><div></div>
+          </div>
+          <sc-for list="{{ attendees }}" as="a" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:minmax(0,1.4fr) 1fr 1fr .8fr .8fr 90px;gap:14px;padding:16px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-weight:600">{{ a.name }}</div>
+              <div style="color:#5b6349">{{ a.org }}</div>
+              <div style="color:#5b6349">{{ a.ticket }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ a.color }};background:{{ a.chip }};border-radius:999px;padding:5px 10px">{{ a.payment }}</span></div>
+              <div style="color:{{ a.inColor }};font-weight:700">{{ a.checkin }}</div>
+              <div style="color:#2f7d34;font-weight:600;cursor:pointer">View</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aCheckin }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:860px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Check-in</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="border:2px dashed rgba(18,21,12,.18);border-radius:16px;height:250px;display:flex;align-items:center;justify-content:center;font:500 12px ui-monospace,monospace;color:#8b9377;margin-bottom:18px">[ QR scanner viewport ]</div>
+            <div style="font:500 14.5px 'DM Sans',sans-serif;color:#5b6349;text-align:center">Scan attendee ticket to check in</div>
+          </div>
+          <div style="display:grid;gap:14px;align-content:start">
+            <div style="background:#111510;border-radius:20px;padding:26px;color:#fbfaf0">
+              <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9aa583;margin-bottom:12px">Checked in today</div>
+              <div style="font:700 48px 'Manrope',sans-serif;letter-spacing:-.04em">845</div>
+            </div>
+            <sc-if value="{{ true }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+                <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467">Successful</div>
+                <div style="font:700 28px 'Manrope',sans-serif;color:#2f7d34;margin-top:6px">845</div>
+              </div>
+              <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+                <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467">Invalid</div>
+                <div style="font:700 28px 'Manrope',sans-serif;color:#8a3b2f;margin-top:6px">12</div>
+              </div>
+            </div>
+            </sc-if>
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:20px">
+              <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Last scans</div>
+              <sc-for list="{{ lastScans }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex;justify-content:space-between;font:500 13.5px 'DM Sans',sans-serif;padding:9px 0;border-bottom:1px solid rgba(18,21,12,.06)"><span>{{ s.name }}</span><span style="color:#7c8467">{{ s.time }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aPayments }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Payments</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:22px">
+          <sc-for list="{{ paymentStats }}" as="p" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:9px">{{ p.label }}</div>
+              <div style="font:700 28px 'Manrope',sans-serif;letter-spacing:-.03em">{{ p.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;overflow:auto">
+          <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr .9fr 1fr;gap:14px;padding:15px 22px;background:#fbfaf0;font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7c8467">
+            <div>Transaction</div><div>Attendee</div><div>Amount</div><div>Method</div><div>Status</div><div>Date</div>
+          </div>
+          <sc-for list="{{ transactions }}" as="t" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr 1.1fr .9fr 1fr;gap:14px;padding:16px 22px;border-top:1px solid rgba(18,21,12,.06);align-items:center;font:500 14px 'DM Sans',sans-serif">
+              <div style="font-family:ui-monospace,monospace;font-size:12.5px">{{ t.id }}</div>
+              <div style="font-weight:600">{{ t.name }}</div>
+              <div>{{ t.amount }}</div>
+              <div style="color:#5b6349">{{ t.method }}</div>
+              <div><span style="font:600 12px 'DM Sans',sans-serif;color:{{ t.color }};background:{{ t.chip }};border-radius:999px;padding:5px 10px">{{ t.status }}</span></div>
+              <div style="color:#7c8467">{{ t.date }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aSchedule }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:880px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Schedule builder</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add session</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+          <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.go }}" style="border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.fg }};border-radius:999px;padding:10px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <sc-for list="{{ dayItems }}" as="i" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:18px;align-items:center;background:#fff;border:1px solid rgba(18,21,12,.08);border-left:3px solid {{ accent }};border-radius:14px;padding:17px 20px;margin-bottom:10px">
+            <div style="font:700 16px 'Manrope',sans-serif">{{ i.time }}</div>
+            <div>
+              <div style="font:600 16px 'DM Sans',sans-serif">{{ i.title }}</div>
+              <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ i.room }} · {{ i.duration }} · {{ i.speaker }}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:8px 16px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aTimeline }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:660px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Event timeline</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add milestone</button>
+        </div>
+        <sc-for list="{{ milestones }}" as="m" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:18px">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div style="width:14px;height:14px;border-radius:50%;background:{{ m.dot }};border:3px solid #fbfaf0;box-shadow:0 0 0 1px rgba(18,21,12,.12)"></div>
+              <div style="flex:1;width:2px;background:rgba(18,21,12,.12)"></div>
+            </div>
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:14px;padding:17px 20px;margin-bottom:12px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap">
+              <div>
+                <div style="font:600 16px 'DM Sans',sans-serif">{{ m.title }}</div>
+                <div style="font:400 13px 'DM Sans',sans-serif;color:#7c8467;margin-top:3px">{{ m.date }}</div>
+              </div>
+              <div style="font:600 12px 'DM Sans',sans-serif;color:{{ m.color }};background:{{ m.chip }};border-radius:999px;padding:5px 11px">{{ m.status }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aPoster }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 20px">Poster designer</h1>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 230px;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:16px">
+            <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Elements</div>
+            <sc-for list="{{ posterElements }}" as="e" hint-placeholder-count="7">
+              <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.08);border-radius:10px;padding:11px 13px;font:500 13.5px 'DM Sans',sans-serif;margin-bottom:7px;cursor:grab">{{ e }}</div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:18px">
+            <div style="aspect-ratio:3/4"><image-slot id="poster-canvas" src="img/poster.png" shape="rounded" radius="12" placeholder="Poster canvas — A3 portrait"></image-slot></div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:16px">
+              <sc-for list="{{ posterActions }}" as="a" hint-placeholder-count="4">
+                <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:10px 18px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer">{{ a }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:16px">
+            <div style="font:600 11.5px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:12px">Properties</div>
+            <sc-for list="{{ posterProps }}" as="p" hint-placeholder-count="5">
+              <label style="display:block;margin-bottom:11px"><div style="font:500 12px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:6px">{{ p }}</div><input style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:9px;padding:10px 12px;font-size:13.5px;outline:none" /></label>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aComms }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:720px">
+        <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0 0 22px">Communications</h1>
+        <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:26px">
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:10px">Campaign type</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+            <sc-for list="{{ campaignTypes }}" as="c" hint-placeholder-count="3">
+              <div style="background:{{ c.bg }};border:1px solid {{ c.border }};color:{{ c.fg }};border-radius:999px;padding:10px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">{{ c.label }}</div>
+            </sc-for>
+          </div>
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:10px">Audience</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px">
+            <sc-for list="{{ audiences }}" as="a" hint-placeholder-count="5">
+              <div style="background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:999px;padding:10px 18px;font:500 13px 'DM Sans',sans-serif;cursor:pointer">{{ a }}</div>
+            </sc-for>
+          </div>
+          <div style="font:600 12.5px 'DM Sans',sans-serif;color:#5b6349;margin-bottom:8px">Message</div>
+          <textarea rows="6" placeholder="Write your message…" style="width:100%;background:#fbfaf0;border:1px solid rgba(18,21,12,.12);border-radius:13px;padding:14px 16px;font-size:15px;outline:none;resize:vertical;margin-bottom:18px"></textarea>
+          <div style="display:flex;gap:10px">
+            <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Send now</button>
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:13px 24px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">Schedule</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aSponsors }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Sponsors</h1>
+          <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:13px 22px;font:600 14px 'DM Sans',sans-serif;cursor:pointer">+ Add sponsor</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px">
+          <sc-for list="{{ sponsors }}" as="s" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:18px">
+              <div style="aspect-ratio:2/1;margin-bottom:14px"><image-slot id="{{ s.slot }}-adm" src="{{ s.art }}" shape="rounded" radius="12" fit="contain" placeholder="{{ s.name }} logo"></image-slot></div>
+              <div style="font:700 17px 'Manrope',sans-serif;letter-spacing:-.015em">{{ s.name }}</div>
+              <div style="font:600 12.5px 'DM Sans',sans-serif;color:#2f7d34;margin-top:4px;margin-bottom:14px">{{ s.level }}</div>
+              <button style="width:100%;border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:10px;padding:10px;font:600 13px 'DM Sans',sans-serif;cursor:pointer">Edit</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ is.aReports }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+          <h1 style="font:700 32px 'Manrope',sans-serif;letter-spacing:-.03em;margin:0">Reports</h1>
+          <div style="display:flex;gap:10px">
+            <button style="border:1px solid rgba(18,21,12,.14);background:transparent;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Download PDF</button>
+            <button style="border:none;background:#111510;color:#fff;border-radius:999px;padding:12px 20px;font:600 13.5px 'DM Sans',sans-serif;cursor:pointer">Export Excel</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:22px">
+          <sc-for list="{{ reportStats }}" as="r" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:18px;padding:22px">
+              <div style="font:500 12.5px 'DM Sans',sans-serif;color:#7c8467;margin-bottom:9px">{{ r.label }}</div>
+              <div style="font:700 28px 'Manrope',sans-serif;letter-spacing:-.03em">{{ r.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Ticket sales</div>
+            <sc-for list="{{ ticketSales }}" as="t" hint-placeholder-count="3">
+              <div style="margin-bottom:16px">
+                <div style="display:flex;justify-content:space-between;font:500 13.5px 'DM Sans',sans-serif;margin-bottom:7px"><span>{{ t.label }}</span><span style="color:#7c8467">{{ t.count }}</span></div>
+                <div style="height:9px;border-radius:999px;background:#eef1e1;overflow:hidden"><div style="height:100%;width:{{ t.pct }};background:{{ t.color }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid rgba(18,21,12,.08);border-radius:20px;padding:24px">
+            <div style="font:600 12px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7c8467;margin-bottom:18px">Top countries</div>
+            <sc-for list="{{ countries }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;font:500 14.5px 'DM Sans',sans-serif;padding:11px 0;border-bottom:1px solid rgba(18,21,12,.06)"><span>{{ c.name }}</span><span style="font-weight:700">{{ c.count }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{"showPrototypeNav":{"editor":"boolean","default":true,"tsType":"boolean","section":"Prototype"},"startScreen":{"editor":"enum","default":"home","options":["home","events","event","speakers","schedule","register","checkout","payment","receipt","u-dash","u-ticket","u-schedule","u-network","u-notify","u-cert","a-dash","a-events","a-create","a-tickets","a-attendees","a-checkin","a-schedule","a-timeline","a-poster","a-comms","a-sponsors","a-payments","a-reports"],"tsType":"string","section":"Prototype"},"showHeroCollage":{"editor":"boolean","default":true,"tsType":"boolean","section":"Home"},"accentColor":{"editor":"color","default":"#8ad356","options":["#8ad356","#5fc16a","#c9de4a","#2f8f3c"],"tsType":"string","section":"Theme"}}">
+class Component extends DCLogic {
+  state = { screen: null, step: 1, ticket: 'Professional', day: 0, payMethod: 'M-Pesa', payStatus: 'processing' };
+
+  get screen() { return this.state.screen ?? (this.props.startScreen || 'home'); }
+  set(screen) { this.setState({ screen }); }
+
+  renderVals() {
+    const accent = this.props.accentColor ?? '#8ad356';
+    const screen = this.screen;
+    const go = (id) => () => this.set(id);
+
+    const PUB = [['home','Home'],['events','Events'],['event','Event detail'],['speakers','Speakers'],['schedule','Schedule'],['register','Registration'],['checkout','Checkout'],['payment','Payment status'],['receipt','Receipt']];
+    const USR = [['u-dash','Dashboard'],['u-ticket','My ticket'],['u-schedule','My schedule'],['u-network','Networking'],['u-notify','Notifications'],['u-cert','Certificates']];
+    const ADM = [
+      { title:'Overview', items:[['a-dash','Dashboard']] },
+      { title:'Event management', items:[['a-events','Events'],['a-create','Create event'],['a-tickets','Tickets']] },
+      { title:'Registration', items:[['a-attendees','Attendees'],['a-checkin','Check-in']] },
+      { title:'Program', items:[['a-schedule','Schedule builder'],['a-timeline','Timeline']] },
+      { title:'Marketing', items:[['a-poster','Poster designer'],['a-comms','Communications'],['a-sponsors','Sponsors']] },
+      { title:'Finance & data', items:[['a-payments','Payments'],['a-reports','Reports']] }
+    ];
+
+    const group = screen.startsWith('u-') ? 'user' : screen.startsWith('a-') ? 'admin' : 'public';
+    const is = {
+      public: group === 'public', user: group === 'user', admin: group === 'admin',
+      home: screen==='home', events: screen==='events', event: screen==='event',
+      speakers: screen==='speakers', schedule: screen==='schedule', register: screen==='register',
+      checkout: screen==='checkout', payment: screen==='payment', receipt: screen==='receipt',
+      uDash: screen==='u-dash', uTicket: screen==='u-ticket', uSchedule: screen==='u-schedule',
+      uNetwork: screen==='u-network', uNotify: screen==='u-notify', uCert: screen==='u-cert',
+      aDash: screen==='a-dash', aEvents: screen==='a-events', aCreate: screen==='a-create',
+      aTickets: screen==='a-tickets', aAttendees: screen==='a-attendees', aCheckin: screen==='a-checkin',
+      aSchedule: screen==='a-schedule', aTimeline: screen==='a-timeline', aPoster: screen==='a-poster',
+      aComms: screen==='a-comms', aSponsors: screen==='a-sponsors', aPayments: screen==='a-payments',
+      aReports: screen==='a-reports'
+    };
+
+    const groupTabs = [['public','Public site','home'],['user','Attendee','u-dash'],['admin','Admin','a-dash']].map(([id,label,first]) => ({
+      label, go: go(first),
+      bg: group===id ? '#111510' : 'transparent',
+      fg: group===id ? '#fbfaf0' : '#5b6349'
+    }));
+
+    const chipSource = group==='public' ? PUB : group==='user' ? USR : ADM.flatMap(s => s.items);
+    const screenChips = chipSource.map(([id,label]) => ({
+      label, go: go(id),
+      bg: screen===id ? '#fff' : 'transparent',
+      fg: screen===id ? '#12150c' : '#6b7358',
+      border: screen===id ? 'rgba(18,21,12,.2)' : 'rgba(18,21,12,.09)'
+    }));
+
+    const siteNav = [['home','Home'],['events','Events'],['speakers','Speakers'],['schedule','Schedule'],['event','About']].map(([id,label]) => ({
+      label, go: go(id),
+      bg: screen===id ? '#f2f4e4' : 'transparent',
+      fg: screen===id ? '#12150c' : '#5b6349'
+    }));
+
+    const userNav = USR.map(([id,label]) => ({
+      label, go: go(id),
+      bg: screen===id ? '#111510' : 'transparent',
+      fg: screen===id ? '#fbfaf0' : '#454d38',
+      font: (screen===id ? '600' : '500') + " 14.5px 'DM Sans', sans-serif"
+    }));
+
+    const adminNav = ADM.map(sec => ({
+      title: sec.title,
+      items: sec.items.map(([id,label]) => ({
+        label, go: go(id),
+        bg: screen===id ? 'rgba(138,211,86,.16)' : 'transparent',
+        fg: screen===id ? '#c9e8a6' : '#a7b28d',
+        font: (screen===id ? '600' : '500') + " 13.5px 'DM Sans', sans-serif"
+      }))
+    }));
+
+    const DAYS = [
+      { label:'Day 1', date:'20 Nov', items:[
+        { time:'09:00', title:'Opening ceremony', speaker:'Summit committee', room:'Main Hall', type:'Ceremony', duration:'30 min' },
+        { time:'10:00', title:'Keynote: The decade of the brain', speaker:'Dr. Neema Mwakalinga', room:'Main Hall', type:'Keynote', duration:'45 min' },
+        { time:'11:30', title:'Panel: AI and neuroscience', speaker:'4 panellists', room:'Hall A', type:'Panel', duration:'60 min' },
+        { time:'14:00', title:'Brain computer interfaces', speaker:'Dr. Juma Kibwana', room:'Hall B', type:'Workshop', duration:'90 min' },
+        { time:'16:30', title:'Neurohealth in primary care', speaker:'Dr. Amina Salum', room:'Hall A', type:'Session', duration:'45 min' }
+      ]},
+      { label:'Day 2', date:'21 Nov', items:[
+        { time:'09:30', title:'Research showcase', speaker:'12 teams', room:'Main Hall', type:'Showcase', duration:'60 min' },
+        { time:'11:00', title:'Neural signal processing lab', speaker:'Eng. Baraka Msangi', room:'Lab 1', type:'Workshop', duration:'120 min' },
+        { time:'14:00', title:'Investor roundtable', speaker:'Moderated · CRDB & Sahara Ventures', room:'Hall C', type:'Roundtable', duration:'75 min' },
+        { time:'16:00', title:'Startup pitch finals', speaker:'8 startups', room:'Main Hall', type:'Pitch', duration:'90 min' }
+      ]},
+      { label:'Day 3', date:'22 Nov', items:[
+        { time:'09:00', title:'Regulation and neuro-ethics', speaker:'Prof. Grace Kimaro', room:'Hall A', type:'Session', duration:'45 min' },
+        { time:'11:00', title:'Clinical demo: assistive BCI', speaker:'Muhimbili National Hospital team', room:'Demo Floor', type:'Demo', duration:'90 min' },
+        { time:'14:30', title:'Closing keynote', speaker:'Dr. Neema Mwakalinga', room:'Main Hall', type:'Keynote', duration:'45 min' },
+        { time:'16:00', title:'Awards and closing', speaker:'Summit committee', room:'Main Hall', type:'Ceremony', duration:'60 min' }
+      ]}
+    ];
+    const day = this.state.day;
+    const dayTabs = DAYS.map((d,i) => ({
+      label: d.label, date: d.date,
+      go: () => this.setState({ day: i }),
+      bg: i===day ? '#111510' : '#fff',
+      fg: i===day ? '#fbfaf0' : '#5b6349',
+      border: i===day ? '#111510' : 'rgba(18,21,12,.12)'
+    }));
+
+    const TICKETS = [
+      { name:'Student', price:'TZS 20,000', perks:'All keynotes and sessions · Student ID required' },
+      { name:'Professional', price:'TZS 100,000', perks:'All sessions, workshops, lunch and certificate' },
+      { name:'VIP', price:'TZS 300,000', perks:'Front seating, speaker dinner, investor roundtable' }
+    ];
+    const chosen = TICKETS.find(t => t.name === this.state.ticket) || TICKETS[1];
+    const step = this.state.step;
+
+    const stepLabels = ['Account','Personal info','Ticket','Payment','Confirmation'];
+
+    return {
+      accent,
+      showNav: this.props.showPrototypeNav !== false,
+      showCollage: this.props.showHeroCollage !== false,
+      is, groupTabs, screenChips, siteNav, userNav, adminNav, dayTabs,
+      dayItems: DAYS[day].items,
+
+      goRegister: go('register'), goEvents: go('events'), goEvent: go('event'),
+      goSpeakers: go('speakers'), goTicket: go('u-ticket'), goUserSchedule: go('u-schedule'),
+      goCreate: go('a-create'),
+
+      heroStats: [
+        { value:'1,200+', label:'Attendees' }, { value:'50+', label:'Speakers' }, { value:'30+', label:'Sessions' }
+      ],
+      featureStats: [
+        { value:'1,200+', label:'Attendees' }, { value:'50+', label:'Speakers' }, { value:'30+', label:'Sessions' }
+      ],
+      collageA: [
+        { slot:'collage-1', art:'img/scene-1.png', label:'Keynote stage' },
+        { slot:'collage-2', art:'img/scene-4.png', label:'BCI workshop' }
+      ],
+      collageB: [
+        { slot:'collage-3', art:'img/scene-2.png', label:'Research showcase' },
+        { slot:'collage-4', art:'img/scene-3.png', label:'Networking lounge' }
+      ],
+      categories: ['Neuroscience','AI & Brain Technology','Brain Computer Interface','Neurohealth','Research','Innovation','Investment'],
+      whyAttend: [
+        { n:'01', title:'Learn', body:'Three tracks of research, clinical and engineering content.' },
+        { n:'02', title:'Network', body:'Meet 1,200 peers across the region and beyond.' },
+        { n:'03', title:'Innovate', body:'Hands-on labs with real BCI and imaging hardware.' },
+        { n:'04', title:'Invest', body:'Roundtables with funds active in African health tech.' },
+        { n:'05', title:'Collaborate', body:'Find co-authors, clinical partners and pilot sites.' }
+      ],
+      sponsorLogos: [
+        { slot:'spo-1', art:'img/spo-1.png', name:'Vodacom Tanzania' },
+        { slot:'spo-2', art:'img/spo-2.png', name:'MUHAS' },
+        { slot:'spo-3', art:'img/spo-3.png', name:'CRDB Bank' },
+        { slot:'spo-4', art:'img/spo-4.png', name:'COSTECH' },
+        { slot:'spo-5', art:'img/spo-5.png', name:'Yas Tanzania' },
+        { slot:'spo-6', art:'img/spo-6.png', name:'Ministry of Health' }
+      ],
+      footerCols: [
+        { title:'Summit', items:['Events','Speakers','Schedule','Sponsors'] },
+        { title:'Participate', items:['Become a speaker','Become a sponsor','Volunteer','Press'] },
+        { title:'Contact', items:['hello@neurotech.co.tz','+255 22 212 3456','JNICC, Dar es Salaam','Support'] }
+      ],
+      featuredSpeakers: [
+        { slot:'spk-1', art:'img/spk-1.png', initials:'NM', name:'Dr. Neema Mwakalinga', role:'Neuroscientist', org:'MUHAS, Dar es Salaam' },
+        { slot:'spk-2', art:'img/spk-2.png', name:'Dr. Juma Kibwana', role:'BCI Researcher', org:'Muhimbili National Hospital' },
+        { slot:'spk-3', art:'img/spk-3.png', name:'Prof. Grace Kimaro', role:'Neuro-ethics', org:'University of Dar es Salaam' },
+        { slot:'spk-4', art:'img/spk-4.png', name:'Eng. Baraka Msangi', role:'ML Engineer', org:'NM-AIST, Arusha' }
+      ],
+      speakers: [
+        { slot:'spk-1', art:'img/spk-1.png', initials:'NM', name:'Dr. Neema Mwakalinga', role:'Neuroscientist', org:'MUHAS, Dar es Salaam' },
+        { slot:'spk-2', art:'img/spk-2.png', name:'Dr. Juma Kibwana', role:'BCI Researcher', org:'Muhimbili National Hospital' },
+        { slot:'spk-3', art:'img/spk-3.png', name:'Prof. Grace Kimaro', role:'Neuro-ethics', org:'University of Dar es Salaam' },
+        { slot:'spk-4', art:'img/spk-4.png', name:'Eng. Baraka Msangi', role:'ML Engineer', org:'NM-AIST, Arusha' },
+        { slot:'spk-5', art:'img/spk-5.png', name:'Dr. Amina Salum', role:'Neurologist', org:'Mnazi Mmoja Hospital, Zanzibar' },
+        { slot:'spk-6', art:'img/spk-6.png', initials:'EK', name:'Dr. Elias Kilonzo', role:'Biomedical Eng.', org:'KCMC, Moshi' },
+        { slot:'spk-7', art:'img/spk-7.png', initials:'LM', name:'Dr. Lucy Mtei', role:'Public Health', org:'Ifakara Health Institute' },
+        { slot:'spk-8', art:'img/spk-8.png', initials:'JN', name:'Joseph Nyerere', role:'Founder', org:'NeuroLab Tanzania' }
+      ],
+      speakerFilters: ['All tracks','Neuroscience','BCI','Neurohealth','Investment'],
+      eventFilters: ['Category','Date','Location','Event type'],
+      events: [
+        { slot:'ev-1', art:'img/event-a.png', title:'NeuroTech Summit 2026', date:'20 Nov 2026', city:'Dar es Salaam', price:'From TZS 20,000', tag:'Summit' },
+        { slot:'ev-2', art:'img/event-b.png', title:'BCI Hands-on Workshop', date:'10 Dec 2026', city:'Arusha', price:'TZS 60,000', tag:'Workshop' },
+        { slot:'ev-3', art:'img/event-a.png', title:'AI in Healthcare Conference', date:'15 Jan 2027', city:'Dodoma', price:'TZS 80,000', tag:'Conference' },
+        { slot:'ev-4', art:'img/event-b.png', title:'Neurohealth Clinical Forum', date:'02 Feb 2027', city:'Mwanza', price:'TZS 45,000', tag:'Forum' },
+        { slot:'ev-5', art:'img/event-a.png', title:'Research Methods Bootcamp', date:'18 Feb 2027', city:'Online', price:'Free', tag:'Bootcamp' },
+        { slot:'ev-6', art:'img/event-b.png', title:'Zanzibar Neuro Innovation Day', date:'05 Mar 2027', city:'Zanzibar', price:'Invite only', tag:'Investor' }
+      ],
+      highlights: ['Neuroscience','Artificial Intelligence','Brain Computer Interface','Healthcare','Startups'],
+      faqs: ['Is the ticket transferable?','Do students get a discount?','Will sessions be recorded?','Is there airport transport?'],
+
+      steps: stepLabels.map((label,i) => ({
+        n: '0' + (i+1), label,
+        bg: step===i+1 ? '#111510' : '#fff',
+        fg: step===i+1 ? '#fbfaf0' : (step>i+1 ? '#2f7d34' : '#7c8467'),
+        border: step===i+1 ? '#111510' : 'rgba(18,21,12,.1)'
+      })),
+      wz: { s1: step===1, s2: step===2, s3: step===3, s4: step===4, s5: step===5 },
+      fields1: ['Full name','Email','Phone','Password'],
+      fields2: ['Organization','Job title','Country','Profession','Areas of interest'],
+      ticketOptions: TICKETS.map(t => ({
+        ...t,
+        pick: () => this.setState({ ticket: t.name }),
+        border: this.state.ticket===t.name ? '#2f8f3c' : 'rgba(18,21,12,.1)',
+        bg: this.state.ticket===t.name ? '#f4f8ea' : '#fbfaf0'
+      })),
+      payMethods: [
+        { name:'Mobile Money', detail:'M-Pesa, Airtel Money, Mixx by Yas, HaloPesa' },
+        { name:'Card', detail:'Visa, Mastercard — CRDB & NMB' },
+        { name:'Bank transfer', detail:'CRDB, NMB, Exim' }
+      ],
+      chosenTicket: chosen.name,
+      chosenPrice: chosen.price,
+      nextLabel: step===4 ? 'Go to checkout' : step===5 ? 'Go to dashboard' : 'Continue',
+      stepNext: () => step===5 ? this.set('u-dash') : step===4 ? this.set('checkout') : this.setState({ step: Math.min(5, step+1) }),
+      stepBack: () => this.setState({ step: Math.max(1, step-1) }),
+
+      userStats: [
+        { value:'01', label:'Upcoming events' }, { value:'03', label:'Saved sessions' },
+        { value:'01', label:'Tickets' }, { value:'00', label:'Certificates' }
+      ],
+      interestChips: ['AI','BCI','Neuroscience','Investment'],
+      attendeesNetwork: [
+        { slot:'spk-1', art:'img/spk-1.png', initials:'NM', name:'Dr. Neema Mwakalinga', role:'Neuroscientist', org:'MUHAS, Dar es Salaam', tags:'AI · BCI · Research' },
+        { slot:'spk-8', art:'img/spk-8.png', initials:'JN', name:'Joseph Nyerere', role:'Founder', org:'NeuroLab Tanzania', tags:'Startups · Hardware' },
+        { initials:'AS', name:'Aisha Salim', role:'PhD Candidate', org:'University of Dodoma', tags:'Imaging · Research' },
+        { slot:'spk-6', art:'img/spk-6.png', initials:'EK', name:'Dr. Elias Kilonzo', role:'Biomedical Eng.', org:'KCMC, Moshi', tags:'Devices · Clinical' },
+        { initials:'GM', name:'Grace Mollel', role:'Investment Analyst', org:'Sahara Ventures', tags:'Investment · Health' },
+        { slot:'spk-7', art:'img/spk-7.png', initials:'LM', name:'Dr. Lucy Mtei', role:'Public Health', org:'Ifakara Health Institute', tags:'Neurohealth · Policy' }
+      ],
+      notifications: [
+        { title:'Your BCI session starts in 30 minutes', body:'Hall B · 14:00 · Dr. John Doe', dot: accent },
+        { title:'Room changed', body:'BCI Workshop moved to Hall B', dot:'#c9a227' },
+        { title:'New speaker added', body:'Dr. John Doe joins the Day 1 panel', dot: accent },
+        { title:'Payment successfully received', body:'TZS 100,000 · Mobile Money', dot:'#2f7d34' },
+        { title:'Registration confirmed', body:'Ticket NTS-000234 issued', dot:'#2f7d34' }
+      ],
+
+      adminStats: [
+        { label:'Registrants', value:'1,245', delta:'+38 today' },
+        { label:'Paid', value:'1,180', delta:'94.8% conversion' },
+        { label:'Revenue', value:'TZS 42.5M', delta:'+TZS 3.1M this week' },
+        { label:'Checked in', value:'845', delta:'71.6% of paid' }
+      ],
+      chartBars: ['Aug','Sep','Oct 1','Oct 2','Oct 3','Oct 4','Nov 1','Nov 2','Nov 3','Nov 4']
+        .map((label,i) => ({ label, h: [22,34,41,52,48,63,71,78,88,96][i] + '%', color: i>7 ? '#111510' : accent })),
+      recentRegs: [
+        { name:'Juma Msumari', ticket:'Student', status:'Paid', color:'#2f7d34', chip:'#eaf3e0' },
+        { name:'Zainab Komba', ticket:'VIP', status:'Paid', color:'#2f7d34', chip:'#eaf3e0' },
+        { name:'Emmanuel Lema', ticket:'Professional', status:'Pending', color:'#8a6b1f', chip:'#f6f0dc' },
+        { name:'Neema Joseph', ticket:'Student', status:'Paid', color:'#2f7d34', chip:'#eaf3e0' },
+        { name:'Bryan Kachocho', ticket:'Professional', status:'Paid', color:'#2f7d34', chip:'#eaf3e0' }
+      ],
+      adminEvents: [
+        { title:'NeuroTech Summit 2026', dates:'20–22 Nov 2026', regs:'1,245', status:'Published', color:'#2f7d34', chip:'#eaf3e0' },
+        { title:'BCI Hands-on Workshop', dates:'10 Dec 2026', regs:'86', status:'Published', color:'#2f7d34', chip:'#eaf3e0' },
+        { title:'AI in Healthcare Conference', dates:'15 Jan 2027', regs:'12', status:'Draft', color:'#5b6349', chip:'#eef1e1' },
+        { title:'Neurohealth Clinical Forum', dates:'02 Feb 2027', regs:'0', status:'Draft', color:'#5b6349', chip:'#eef1e1' },
+        { title:'Investor Day: Neuro Startups', dates:'05 Mar 2027', regs:'24', status:'Invite', color:'#8a6b1f', chip:'#f6f0dc' }
+      ],
+      builderSteps: ['Basic information','Date & venue','Tickets','Speakers','Schedule','Registration','Poster','Publish'].map((label,i) => ({
+        n: '0' + (i+1), label,
+        bg: i===0 ? '#111510' : '#fff',
+        fg: i===0 ? '#fbfaf0' : '#7c8467',
+        border: i===0 ? '#111510' : 'rgba(18,21,12,.1)'
+      })),
+      venueFields: ['Venue name','Address','City / Region','Country'],
+      formats: ['Physical','Online','Hybrid'].map((label,i) => ({
+        label,
+        bg: i===0 ? '#111510' : '#fbfaf0',
+        fg: i===0 ? '#fbfaf0' : '#5b6349',
+        border: i===0 ? '#111510' : 'rgba(18,21,12,.12)'
+      })),
+      ticketAdmin: [
+        { name:'Student', price:'TZS 20,000', sold:'327', total:'500', pct:'65%' },
+        { name:'Professional', price:'TZS 100,000', sold:'410', total:'500', pct:'82%' },
+        { name:'VIP', price:'TZS 300,000', sold:'62', total:'100', pct:'62%' }
+      ],
+      attendeeFilters: ['Ticket','Payment','Check-in','Country'],
+      attendees: [
+        { name:'Bryan Kachocho', org:'NeuroLab Tanzania', ticket:'Professional', payment:'Paid', color:'#2f7d34', chip:'#eaf3e0', checkin:'✓', inColor:'#2f7d34' },
+        { name:'Zainab Komba', org:'MUHAS', ticket:'VIP', payment:'Paid', color:'#2f7d34', chip:'#eaf3e0', checkin:'✓', inColor:'#2f7d34' },
+        { name:'Juma Msumari', org:'University of Dar es Salaam', ticket:'Student', payment:'Pending', color:'#8a6b1f', chip:'#f6f0dc', checkin:'✕', inColor:'#8a3b2f' },
+        { name:'Neema Joseph', org:'Muhimbili National Hospital', ticket:'Student', payment:'Paid', color:'#2f7d34', chip:'#eaf3e0', checkin:'✓', inColor:'#2f7d34' },
+        { name:'Emmanuel Lema', org:'Ministry of Health', ticket:'Professional', payment:'Pending', color:'#8a6b1f', chip:'#f6f0dc', checkin:'✕', inColor:'#8a3b2f' },
+        { name:'Grace Mollel', org:'Sahara Ventures', ticket:'VIP', payment:'Paid', color:'#2f7d34', chip:'#eaf3e0', checkin:'✓', inColor:'#2f7d34' },
+        { name:'Aisha Salim', org:'University of Dodoma', ticket:'Student', payment:'Paid', color:'#2f7d34', chip:'#eaf3e0', checkin:'✓', inColor:'#2f7d34' },
+        { name:'Elias Kilonzo', org:'KCMC, Moshi', ticket:'Professional', payment:'Refunded', color:'#8a3b2f', chip:'#f6e5e0', checkin:'✕', inColor:'#8a3b2f' }
+      ],
+      lastScans: [
+        { name:'Zainab Komba', time:'09:42' }, { name:'Bryan Kachocho', time:'09:41' },
+        { name:'Neema Joseph', time:'09:39' }, { name:'Aisha Salim', time:'09:36' }
+      ],
+      paymentStats: [
+        { label:'Revenue', value:'TZS 42.5M' }, { label:'Successful', value:'1,180' },
+        { label:'Pending', value:'35' }, { label:'Failed', value:'30' }
+      ],
+      transactions: [
+        { id:'TXN-90231', name:'Bryan Kachocho', amount:'TZS 100,000', method:'M-Pesa', status:'Success', color:'#2f7d34', chip:'#eaf3e0', date:'14 Sep 2026' },
+        { id:'TXN-90230', name:'Zainab Komba', amount:'TZS 300,000', method:'CRDB card', status:'Success', color:'#2f7d34', chip:'#eaf3e0', date:'14 Sep 2026' },
+        { id:'TXN-90229', name:'Juma Msumari', amount:'TZS 20,000', method:'Airtel Money', status:'Pending', color:'#8a6b1f', chip:'#f6f0dc', date:'13 Sep 2026' },
+        { id:'TXN-90228', name:'Elias Kilonzo', amount:'TZS 100,000', method:'NMB transfer', status:'Refunded', color:'#8a3b2f', chip:'#f6e5e0', date:'13 Sep 2026' },
+        { id:'TXN-90227', name:'Grace Mollel', amount:'TZS 300,000', method:'Mixx by Yas', status:'Success', color:'#2f7d34', chip:'#eaf3e0', date:'12 Sep 2026' },
+        { id:'TXN-90226', name:'Neema Joseph', amount:'TZS 20,000', method:'HaloPesa', status:'Success', color:'#2f7d34', chip:'#eaf3e0', date:'12 Sep 2026' }
+      ],
+      milestones: [
+        { title:'Registration opens', date:'01 September 2026', status:'Done', color:'#2f7d34', chip:'#eaf3e0', dot:'#2f7d34' },
+        { title:'Early bird ends', date:'30 September 2026', status:'Live', color:'#2f7d34', chip:'#eaf3e0', dot: accent },
+        { title:'Speaker announcement', date:'10 October 2026', status:'Scheduled', color:'#5b6349', chip:'#eef1e1', dot:'#c3ccb0' },
+        { title:'Programme released', date:'01 November 2026', status:'Scheduled', color:'#5b6349', chip:'#eef1e1', dot:'#c3ccb0' },
+        { title:'Event begins', date:'20 November 2026', status:'Scheduled', color:'#5b6349', chip:'#eef1e1', dot:'#c3ccb0' }
+      ],
+      posterElements: ['Text','Image','Logo','Speaker card','Date block','QR code','Button'],
+      posterActions: ['Save','Preview','Download PNG','Download PDF'],
+      posterProps: ['Font','Size','Position','Alignment','Colour'],
+      campaignTypes: ['Email','SMS','Push notification'].map((label,i) => ({
+        label,
+        bg: i===0 ? '#111510' : '#fbfaf0',
+        fg: i===0 ? '#fbfaf0' : '#5b6349',
+        border: i===0 ? '#111510' : 'rgba(18,21,12,.12)'
+      })),
+      audiences: ['All attendees','Paid attendees','Student tickets','VIP','Checked-in'],
+      sponsors: [
+        { slot:'spo-1', art:'img/spo-1.png', name:'Vodacom Tanzania', level:'Title sponsor' },
+        { slot:'spo-2', art:'img/spo-2.png', name:'MUHAS', level:'Platinum' },
+        { slot:'spo-3', art:'img/spo-3.png', name:'CRDB Bank', level:'Platinum' },
+        { slot:'spo-4', art:'img/spo-4.png', name:'COSTECH', level:'Gold' },
+        { slot:'spo-5', art:'img/spo-5.png', name:'Yas Tanzania', level:'Silver' },
+        { slot:'spo-6', art:'img/spo-6.png', name:'Ministry of Health', level:'Partner' }
+      ],
+      reportStats: [
+        { label:'Registrations', value:'1,245' }, { label:'Paid', value:'1,180' },
+        { label:'Attendance', value:'845' }, { label:'Revenue', value:'TZS 42.5M' }
+      ],
+      ticketSales: [
+        { label:'Student', count:'327', pct:'55%', color: accent },
+        { label:'Professional', count:'410', pct:'82%', color:'#111510' },
+        { label:'VIP', count:'62', pct:'24%', color:'#2f8f3c' }
+      ],
+      goCheckout: go('checkout'), goReceipt: go('receipt'),
+      payMethods2: [
+        { id:'M-Pesa', name:'Vodacom M-Pesa', detail:'USSD push to your phone' },
+        { id:'Airtel Money', name:'Airtel Money', detail:'Approve in the Airtel menu' },
+        { id:'Mixx by Yas', name:'Mixx by Yas', detail:'Formerly Tigo Pesa' },
+        { id:'HaloPesa', name:'HaloPesa', detail:'Halotel wallet' },
+        { id:'Card', name:'Card', detail:'Visa / Mastercard via CRDB' },
+        { id:'Bank', name:'Bank transfer', detail:'CRDB, NMB, Exim' }
+      ].map(m => ({ ...m,
+        pick: () => this.setState({ payMethod: m.id }),
+        bg: this.state.payMethod===m.id ? '#f4f8ea' : '#fbfaf0',
+        border: this.state.payMethod===m.id ? '#2f8f3c' : 'rgba(18,21,12,.1)'
+      })),
+      payMethod: this.state.payMethod,
+      isMomo: ['M-Pesa','Airtel Money','Mixx by Yas','HaloPesa'].indexOf(this.state.payMethod) > -1,
+      orderLines: [
+        { label: chosen.name + ' pass × 1', value: chosen.price },
+        { label: 'Workshop add-on: BCI lab', value: 'TZS 15,000' },
+        { label: 'VAT 18%', value: 'TZS 20,700' }
+      ],
+      orderTotal: 'TZS 135,700',
+      payStatusTabs: [['processing','Processing'],['success','Success'],['failed','Failed']].map(([id,label]) => ({
+        label, go: () => this.setState({ payStatus: id }),
+        bg: this.state.payStatus===id ? '#111510' : '#fff',
+        fg: this.state.payStatus===id ? '#fbfaf0' : '#5b6349',
+        border: this.state.payStatus===id ? '#111510' : 'rgba(18,21,12,.12)'
+      })),
+      pay: { processing: this.state.payStatus==='processing', success: this.state.payStatus==='success', failed: this.state.payStatus==='failed' },
+      startPayment: () => this.setState({ screen: 'payment', payStatus: 'processing' }),
+      receiptLines: [
+        { label:'Professional pass × 1', qty:'1', value:'TZS 100,000' },
+        { label:'Workshop add-on: BCI lab', qty:'1', value:'TZS 15,000' },
+        { label:'VAT 18%', qty:'—', value:'TZS 20,700' }
+      ],
+      countries: [
+        { name:'Tanzania', count:'850' }, { name:'Kenya', count:'120' },
+        { name:'Uganda', count:'85' }, { name:'Rwanda', count:'70' },
+        { name:'Zambia', count:'62' }, { name:'Burundi', count:'58' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
+
