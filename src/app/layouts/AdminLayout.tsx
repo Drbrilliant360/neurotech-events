@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
 
 const SECTIONS = [
@@ -44,8 +44,14 @@ const SECTIONS = [
 ] as const;
 
 export function AdminLayout() {
-  const { db } = usePlatform();
+  const { db, logout } = usePlatform();
+  const navigate = useNavigate();
   const activeEvent = db.events.find((event) => event.featured && event.status !== "completed") ?? db.events.find((event) => event.status !== "completed");
+
+  function handleLogout() {
+    logout();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <div className="nt-shell nt-surface-admin">
@@ -113,6 +119,9 @@ export function AdminLayout() {
                   <span>Event operations</span>
                 </span>
               </div>
+              <button type="button" className="nt-chip" onClick={handleLogout}>
+                Log out
+              </button>
             </div>
           </div>
           <div className="nt-workspace-content">
