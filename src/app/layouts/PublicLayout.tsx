@@ -1,5 +1,4 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { DemoSwitcher } from "./DemoSwitcher";
 import { usePlatform } from "../providers/PlatformProvider";
 
 const NAV = [
@@ -16,7 +15,6 @@ export function PublicLayout() {
 
   return (
     <div className="nt-shell nt-surface-public">
-      <DemoSwitcher />
       <header className="nt-header">
         <div className="nt-container nt-header-row">
           <div className="nt-public-nav-cluster">

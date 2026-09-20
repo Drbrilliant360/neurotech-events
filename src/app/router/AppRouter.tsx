@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
 import { PlatformProvider, usePlatform } from "../providers/PlatformProvider";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { AttendeeLayout } from "../layouts/AttendeeLayout";
@@ -46,6 +47,11 @@ function RoleHome() {
   return <HomePage />;
 }
 
+function RoleRoute({ role, children }: { role: "admin" | "attendee"; children: ReactNode }) {
+  const currentRole = usePlatform().role;
+  return currentRole === role ? children : <Navigate to="/" replace />;
+}
+
 export function AppRouter() {
   return (
     <PlatformProvider>
@@ -68,7 +74,7 @@ export function AppRouter() {
             <Route path="/payment/:paymentId" element={<PaymentPage />} />
             <Route path="/receipt/:registrationId" element={<ReceiptPage />} />
           </Route>
-          <Route path="/app" element={<AttendeeLayout />}>
+          <Route path="/app" element={<RoleRoute role="attendee"><AttendeeLayout /></RoleRoute>}>
             <Route index element={<AttendeeDashboardPage />} />
             <Route path="ticket" element={<TicketPage />} />
             <Route path="schedule" element={<AttendeeSchedulePage />} />
@@ -77,7 +83,7 @@ export function AppRouter() {
             <Route path="certificates" element={<CertificatesPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<RoleRoute role="admin"><AdminLayout /></RoleRoute>}>
             <Route index element={<AdminDashboardPage />} />
             <Route path="events" element={<AdminEventsPage />} />
             <Route path="events/new" element={<AdminEventNewPage />} />

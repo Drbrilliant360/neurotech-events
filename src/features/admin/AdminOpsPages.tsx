@@ -692,7 +692,7 @@ export function AdminReportsPage() {
 }
 
 export function AdminSettingsPage() {
-  const { db, updateSettings, resetDemo } = usePlatform();
+  const { db, updateSettings } = usePlatform();
   const [settings, setSettings] = useState(db.settings);
   return (
     <div style={{ maxWidth: 640 }}>
@@ -719,9 +719,6 @@ export function AdminSettingsPage() {
       </label>
       <button type="button" className="nt-btn" onClick={() => updateSettings(settings)}>
         Save settings
-      </button>
-      <button type="button" className="nt-btn ghost" onClick={resetDemo}>
-        Reset demo data
       </button>
     </div>
   );

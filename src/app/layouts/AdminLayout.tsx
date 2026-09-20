@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
-import { DemoSwitcher } from "./DemoSwitcher";
 
 const SECTIONS = [
   { title: "Overview", items: [["/admin", "Dashboard"]] },
@@ -50,7 +49,6 @@ export function AdminLayout() {
 
   return (
     <div className="nt-shell nt-surface-admin">
-      <DemoSwitcher />
       <nav className="mobile-nav" aria-label="Admin">
         {SECTIONS.flatMap((sec) =>
           sec.items.map(([to, label]) => (
