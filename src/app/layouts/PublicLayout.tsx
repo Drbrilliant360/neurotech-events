@@ -71,8 +71,8 @@ export function PublicLayout() {
             <div>
               <div className="nt-footer-heading">Your account</div>
               <NavLink to={accountPath}>Dashboard</NavLink>
-              <NavLink to="/app/ticket">Tickets</NavLink>
-              <NavLink to="/app/certificates">Certificates</NavLink>
+              <NavLink to={role === "attendee" ? "/app/ticket" : "/login"}>Tickets</NavLink>
+              <NavLink to={role === "attendee" ? "/app/certificates" : "/login"}>Certificates</NavLink>
             </div>
             <div>
               <div className="nt-footer-heading">Neurotech Africa</div>

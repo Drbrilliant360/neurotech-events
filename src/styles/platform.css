@@ -589,3 +589,24 @@
     background: #fff;
   }
 }
+
+/* Print: never print the application shell around tickets, receipts, posters or certificates. */
+@media print {
+  .nt-side,
+  .nt-workspace-topbar,
+  .mobile-nav,
+  .nt-demo-controls,
+  .nt-toolbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .nt-app,
+  .nt-main,
+  .nt-workspace-content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+}

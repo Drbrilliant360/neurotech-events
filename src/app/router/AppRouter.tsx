@@ -21,6 +21,8 @@ import { AttendeeSchedulePage } from "../../features/schedule/AttendeeSchedulePa
 import { NetworkingPage } from "../../features/networking/NetworkingPage";
 import { NotificationsPage } from "../../features/notifications/NotificationsPage";
 import { CertificatesPage } from "../../features/certificates/CertificatesPage";
+import { CertificateVerifyPage } from "../../features/certificates/CertificateVerifyPage";
+import { accountPathFor } from "../../lib/routes";
 import { ProfilePage } from "../../features/attendees/ProfilePage";
 import { AdminDashboardPage } from "../../features/admin/AdminDashboardPage";
 import { AdminEventsPage } from "../../features/admin/AdminEventsPage";
@@ -50,7 +52,9 @@ function RoleHome() {
 
 function RoleRoute({ role, children }: { role: "admin" | "attendee"; children: ReactNode }) {
   const currentRole = usePlatform().role;
-  return currentRole === role ? children : <Navigate to="/" replace />;
+  if (currentRole === role) return children;
+  // Visitors are asked to sign in; signed-in people land in their own workspace.
+  return <Navigate to={currentRole === "visitor" ? "/login" : accountPathFor(currentRole)} replace />;
 }
 
 export function AppRouter() {
@@ -74,6 +78,7 @@ export function AppRouter() {
             <Route path="/checkout/:registrationId" element={<CheckoutPage />} />
             <Route path="/payment/:paymentId" element={<PaymentPage />} />
             <Route path="/receipt/:registrationId" element={<ReceiptPage />} />
+            <Route path="/verify/:certificateId" element={<CertificateVerifyPage />} />
           </Route>
           <Route path="/app" element={<RoleRoute role="attendee"><AttendeeLayout /></RoleRoute>}>
             <Route index element={<AttendeeDashboardPage />} />

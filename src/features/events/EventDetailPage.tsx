@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, MediaTile } from "../../components/shared/Widgets";
 import { formatRange, minutesBetween } from "../../lib/dates";
+import { downloadIcs } from "../../lib/calendar";
 import { MEDIA, eventImage, speakerImageById } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { eventBySlug, sessionsFor, speakersForEvent, sponsorsForEvent, ticketsFor, venueOf } from "../../repositories/platform";
@@ -141,7 +142,7 @@ export function EventDetailPage() {
                   aria-expanded={openFaq === index}
                 >
                   <strong>{faq} {openFaq === index ? "–" : "+"}</strong>
-                  {openFaq === index ? <div className="nt-muted" style={{ marginTop: 8 }}>Details will be confirmed closer to the event. Contact hello@neurotech.co.tz for specifics.</div> : null}
+                  {openFaq === index ? <div className="nt-muted" style={{ marginTop: 8 }}>Details will be confirmed closer to the event. Contact {db.settings.contactEmail} for specifics.</div> : null}
                 </button>
               ))}
             </div>
@@ -163,7 +164,24 @@ export function EventDetailPage() {
           ) : (
             <p className="nt-muted">Registration is not open for this event.</p>
           )}
-          <a className="nt-btn ghost" style={{ width: "100%" }} href={`/events/${event.slug}`}>Add to calendar</a>
+          <button
+            type="button"
+            className="nt-btn ghost"
+            style={{ width: "100%" }}
+            onClick={() =>
+              downloadIcs(event.slug, {
+                uid: `${event.slug}@neurotech-events`,
+                title: event.title,
+                description: event.subtitle,
+                location: venue ? [venue.name, venue.city, venue.country].filter(Boolean).join(", ") : undefined,
+                url: window.location.href,
+                startsAt: event.startsAt,
+                endsAt: event.endsAt,
+              })
+            }
+          >
+            Add to calendar (.ics)
+          </button>
         </aside>
       </div>
     </div>
