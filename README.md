@@ -122,6 +122,8 @@ postman/
   *.json        FastAPI contract-first collection and local environment
 ```
 
+Frontend and backend connect through `src/services/` (a shared API client plus auth, payments and catalogue modules). With the API configured, sign-in and account creation use the backend, the profile page saves to the account, checkout shows the server-verified price and starts a real mobile-money payment, the payment page polls the server until Snippe confirms, admins publish the event and ticket catalogue to the payments server from the Tickets page, and platform admins see every transaction under Finance. Without it the site runs as a local demo.
+
 Live payments: copy `.env.example` to `.env` and set `VITE_API_BASE_URL` to the running backend (default `http://localhost:8000`). Checkout then offers mobile money only and the payment page polls the server, which verifies each payment with Snippe before a ticket is issued. Leave the variable unset to keep the local demo checkout. The admin **All transactions** page needs the backend's `ADMIN_API_TOKEN`.
 
 The backend will be added under `backend/` as a separately deployable FastAPI application while remaining in this monorepo. Production work should move toward the explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating business logic in the current frontend prototype model.

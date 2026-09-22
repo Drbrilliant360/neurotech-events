@@ -269,6 +269,10 @@ GET  /api/v1/admin/payments           every payment this platform created, with 
 GET  /api/v1/admin/payments/provider  every transaction on the Snippe account, including other apps
 GET  /api/v1/admin/payments/balance   live provider balance
 POST /api/v1/admin/payments/{id}/verify  force a provider status check
+GET  /api/v1/events                   published, ongoing and completed events (public)
+GET  /api/v1/events/{slug}            event detail with ticket types and sold counts (public)
+GET  /api/v1/events/{slug}/tickets/{code}/quote  exact server price for a ticket (public)
+PUT  /api/v1/admin/catalogue          upsert the admin console's events and ticket types
 ```
 
 Layout: `app/integrations/payments/snippe.py` (gateway adapter + `PaymentGateway` protocol),
@@ -288,6 +292,12 @@ Rules enforced:
 
 Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
 build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.
+
+The admin console publishes its catalogue with `PUT /api/v1/admin/catalogue` (button on the
+Tickets page when `VITE_API_BASE_URL` is set). Events are matched by slug and tickets by code, so
+repeated publishes update in place; tickets no longer listed are deactivated, never deleted.
+Checkout fetches the ticket quote first and refuses to start a payment for a ticket the server
+does not know or cannot sell.
 
 Seed the demo catalogue the API prices against (idempotent):
 
