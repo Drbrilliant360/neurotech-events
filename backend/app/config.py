@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     database_url: str = "sqlite:///./neurotech-events.db"
     debug: bool = False
+    jwt_secret_key: str = "unsafe-development-secret-change-me-32"
+    access_token_expire_minutes: int = 30
 
     model_config = SettingsConfigDict(env_file=".env", env_prefix="", extra="ignore")
 
