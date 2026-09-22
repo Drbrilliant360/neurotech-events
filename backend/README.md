@@ -9,7 +9,7 @@ The repository is intentionally being evolved as a monorepo:
 - both applications share product documentation and are validated through GitHub Actions;
 - deployment can scale each application independently without splitting the repository prematurely.
 
-No backend implementation is included yet. This document is the implementation contract for the agents and contributors who will build it in phases.
+Phase 0 now contains only service scaffolding: configuration, health/versioned routing, database infrastructure, migration configuration, smoke tests and CI validation. Business domains are intentionally deferred to later phases. This document is the implementation contract for the agents and contributors who will build them incrementally.
 
 ## Backend objectives
 

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurotech-events-backend"
+version = "0.1.0"
+description = "FastAPI backend for Neurotech Events"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.15,<2",
+  "fastapi>=0.115,<1",
+  "pydantic-settings>=2.7,<3",
+  "sqlalchemy>=2.0,<3",
+  "uvicorn[standard]>=0.34,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28,<1",
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
