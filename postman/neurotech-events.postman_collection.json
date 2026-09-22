@@ -1,0 +1,702 @@
+{
+  "info": {
+    "_postman_id": "7c4f1f36-8d42-4d07-9c55-neurotech-events",
+    "name": "Neurotech Events API",
+    "description": "Contract-first collection for the planned FastAPI backend. Import the companion environment and set base_url if the API runs elsewhere. Requests are grouped by product surface and domain. Authentication and ID-capture scripts are included for local development.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "api_prefix", "value": "/api/v1" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health"
+          }
+        },
+        {
+          "name": "OpenAPI schema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/openapi.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "List published events",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events" }
+        },
+        {
+          "name": "Get event by slug",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events/{{event_slug}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('event_id', body.id || body.event?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List event sessions",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events/{{event_id}}/sessions" }
+        },
+        {
+          "name": "List event speakers",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events/{{event_id}}/speakers" }
+        },
+        {
+          "name": "List event ticket types",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events/{{event_id}}/tickets" }
+        },
+        {
+          "name": "List event sponsors",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/events/{{event_id}}/sponsors" }
+        },
+        {
+          "name": "List speakers",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/speakers" }
+        },
+        {
+          "name": "List public schedule",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/schedule" }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register attendee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"full_name\": \"Demo Attendee\",\n  \"phone\": \"+255700000000\",\n  \"organization\": \"Neurotech Africa\",\n  \"job_title\": \"Researcher\",\n  \"country\": \"Tanzania\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/auth/register"
+          }
+        },
+        {
+          "name": "Login attendee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('access_token', body.access_token || body.token || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('admin_access_token', body.access_token || body.token || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh token",
+          "request": { "method": "POST", "header": [], "url": "{{base_url}}{{api_prefix}}/auth/refresh" }
+        },
+        {
+          "name": "Get current user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/me"
+          }
+        },
+        {
+          "name": "Update current profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"organization\": \"Neurotech Africa\",\n  \"job_title\": \"Senior Researcher\",\n  \"interests\": [\"neuroscience\", \"BCI\"]\n}" },
+            "url": "{{base_url}}{{api_prefix}}/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}{{api_prefix}}/auth/logout"
+          }
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{user_email}}\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/auth/forgot-password"
+          }
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"replace-with-reset-token\",\n  \"password\": \"NewChangeMe123!\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/auth/reset-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendee - Registration and ticketing",
+      "item": [
+        {
+          "name": "Create registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"ticket_type_id\": \"{{ticket_type_id}}\",\n  \"dietary\": \"None\",\n  \"accessibility\": \"None\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/events/{{event_id}}/registrations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  const registration = body.registration || body;",
+                  "  pm.environment.set('registration_id', registration.id || '');",
+                  "  pm.environment.set('payment_id', body.payment?.id || '');",
+                  "  pm.environment.set('ticket_id', body.ticket?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List my registrations",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/registrations" }
+        },
+        {
+          "name": "Get registration",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/registrations/{{registration_id}}" }
+        },
+        {
+          "name": "Cancel registration",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/registrations/{{registration_id}}/cancel" }
+        },
+        {
+          "name": "List my tickets",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/tickets" }
+        },
+        {
+          "name": "Get ticket",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/tickets/{{ticket_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "Attendee - Payments",
+      "item": [
+        {
+          "name": "Create payment intent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"method\": \"mpesa\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/registrations/{{registration_id}}/payment-intents"
+          }
+        },
+        {
+          "name": "Get payment",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/payments/{{payment_id}}" }
+        },
+        {
+          "name": "Retry payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"method\": \"mpesa\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/payments/{{payment_id}}/retry"
+          }
+        },
+        {
+          "name": "Get receipt",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/registrations/{{registration_id}}/receipt" }
+        },
+        {
+          "name": "List my payments",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/payments" }
+        }
+      ]
+    },
+    {
+      "name": "Attendee - Schedule, networking, notifications and certificates",
+      "item": [
+        {
+          "name": "Get my schedule",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/schedule" }
+        },
+        {
+          "name": "Save session",
+          "request": { "method": "PUT", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}" }
+        },
+        {
+          "name": "Remove saved session",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}" }
+        },
+        {
+          "name": "Get networking profiles",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/networking" }
+        },
+        {
+          "name": "Connect with attendee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"attendee_id\": \"replace-with-attendee-id\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/me/networking/connections"
+          }
+        },
+        {
+          "name": "Disconnect attendee",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/networking/connections/replace-with-attendee-id" }
+        },
+        {
+          "name": "List notifications",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/notifications" }
+        },
+        {
+          "name": "Mark notification read",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/notifications/{{notification_id}}/read" }
+        },
+        {
+          "name": "Mark all notifications read",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/notifications/read-all" }
+        },
+        {
+          "name": "List certificates",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }], "url": "{{base_url}}{{api_prefix}}/me/certificates" }
+        },
+        {
+          "name": "Verify certificate",
+          "request": { "method": "GET", "header": [], "url": "{{base_url}}{{api_prefix}}/certificates/{{certificate_id}}/verify" }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Events and program",
+      "item": [
+        {
+          "name": "List admin events",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events" }
+        },
+        {
+          "name": "Create event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"New Neurotech Event\",\n  \"slug\": \"new-neurotech-event\",\n  \"subtitle\": \"A new Neurotech Africa experience\",\n  \"description\": \"Event description\",\n  \"category\": \"Summit\",\n  \"format\": \"physical\",\n  \"starts_at\": \"2027-06-01T08:00:00+03:00\",\n  \"ends_at\": \"2027-06-02T17:00:00+03:00\",\n  \"venue_id\": \"replace-with-venue-id\",\n  \"capacity\": 300\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('event_id', body.id || body.event?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get admin event",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}" }
+        },
+        {
+          "name": "Update event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"subtitle\": \"Updated event subtitle\",\n  \"capacity\": 350\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}"
+          }
+        },
+        {
+          "name": "Publish event",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/publish" }
+        },
+        {
+          "name": "Close registration",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/close-registration" }
+        },
+        {
+          "name": "Cancel event",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/cancel" }
+        },
+        {
+          "name": "Duplicate event",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/duplicate" }
+        },
+        {
+          "name": "Delete event",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}" }
+        },
+        {
+          "name": "List admin sessions",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions" }
+        },
+        {
+          "name": "Create session",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Opening keynote\",\n  \"day_index\": 0,\n  \"date\": \"2027-06-01\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"09:45\",\n  \"room\": \"Main Hall\",\n  \"type\": \"keynote\",\n  \"speaker_id\": \"replace-with-speaker-id\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('session_id', body.id || body.session?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update session",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"room\": \"Hall A\",\n  \"description\": \"Updated session description\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/sessions/{{session_id}}"
+          }
+        },
+        {
+          "name": "Delete session",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/sessions/{{session_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Tickets and attendees",
+      "item": [
+        {
+          "name": "List ticket types",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types" }
+        },
+        {
+          "name": "Create ticket type",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Professional\",\n  \"tier\": \"professional\",\n  \"price\": 100000,\n  \"currency\": \"TZS\",\n  \"capacity\": 100,\n  \"perks\": \"All sessions and certificate\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('ticket_type_id', body.id || body.ticket_type?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update ticket type",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"price\": 120000,\n  \"capacity\": 150\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/ticket-types/{{ticket_type_id}}"
+          }
+        },
+        {
+          "name": "Activate ticket type",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/ticket-types/{{ticket_type_id}}/activate" }
+        },
+        {
+          "name": "Deactivate ticket type",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/ticket-types/{{ticket_type_id}}/deactivate" }
+        },
+        {
+          "name": "Delete ticket type",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/ticket-types/{{ticket_type_id}}" }
+        },
+        {
+          "name": "List event attendees",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/attendees?page=1&page_size=25" }
+        },
+        {
+          "name": "Get registration as admin",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/registrations/{{registration_id}}" }
+        },
+        {
+          "name": "Export attendees",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/attendees/export" }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Check-in",
+      "item": [
+        {
+          "name": "Check in attendee",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"ticket_number\": \"replace-with-ticket-number\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('check_in_id', body.id || body.check_in?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List check-ins",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins" }
+        },
+        {
+          "name": "Undo check-in",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/check-ins/{{check_in_id}}/undo" }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Communications, sponsors, reports and settings",
+      "item": [
+        {
+          "name": "List communications",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications" }
+        },
+        {
+          "name": "Create communication",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"channel\": \"email\",\n  \"audience\": \"all\",\n  \"subject\": \"Event update\",\n  \"body\": \"Your event update goes here.\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('communication_id', body.id || body.communication?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send communication",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/communications/{{communication_id}}/send" }
+        },
+        {
+          "name": "List sponsors",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/sponsors" }
+        },
+        {
+          "name": "Create sponsor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Sponsor\",\n  \"tier\": \"partner\",\n  \"website\": \"https://example.com\",\n  \"contact\": \"contact@example.com\",\n  \"event_ids\": [\"{{event_id}}\"]\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const body = pm.response.json();",
+                  "  pm.environment.set('sponsor_id', body.id || body.sponsor?.id || '');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update sponsor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"active\": true\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}"
+          }
+        },
+        {
+          "name": "Delete sponsor",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}" }
+        },
+        {
+          "name": "Event overview report",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/reports/overview" }
+        },
+        {
+          "name": "Registration report",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/reports/registrations" }
+        },
+        {
+          "name": "Payment report",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/reports/payments" }
+        },
+        {
+          "name": "Check-in report",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/reports/check-ins" }
+        },
+        {
+          "name": "Get admin settings",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{admin_access_token}}" }], "url": "{{base_url}}{{api_prefix}}/admin/settings" }
+        },
+        {
+          "name": "Update admin settings",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"organization_name\": \"Neurotech Africa\",\n  \"brand_name\": \"Neurotech Events\",\n  \"default_currency\": \"TZS\",\n  \"default_city\": \"Dar es Salaam\",\n  \"default_country\": \"Tanzania\",\n  \"vat_percent\": 18\n}" },
+            "url": "{{base_url}}{{api_prefix}}/admin/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Payment provider webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Webhook-Signature", "value": "replace-with-provider-signature" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"event_id\": \"provider-event-id\",\n  \"type\": \"payment.succeeded\",\n  \"payment_reference\": \"replace-with-payment-reference\",\n  \"provider_transaction_id\": \"provider-transaction-id\"\n}" },
+            "url": "{{base_url}}{{api_prefix}}/webhooks/mpesa/payments"
+          }
+        }
+      ]
+    }
+  ]
+}
