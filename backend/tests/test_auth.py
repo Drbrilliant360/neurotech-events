@@ -1,7 +1,12 @@
 def test_register_login_and_current_user(client) -> None:
     registration = client.post(
         "/api/v1/auth/register",
-        json={"email": "Demo@Example.com", "password": "ChangeMe123!", "full_name": "Demo Attendee"},
+        json={
+            "email": "Demo@Example.com",
+            "password": "ChangeMe123!",
+            "full_name": "Demo Attendee",
+            "profile": {"organization": "Neurotech Africa", "interests": ["BCI", "AI"]},
+        },
     )
     assert registration.status_code == 201
     token = registration.json()["access_token"]
@@ -21,6 +26,16 @@ def test_register_login_and_current_user(client) -> None:
     me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     assert me.json()["email"] == "demo@example.com"
+    assert me.json()["profile"]["organization"] == "Neurotech Africa"
+
+    update = client.patch(
+        "/api/v1/me",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"full_name": "Updated Attendee", "job_title": "Researcher"},
+    )
+    assert update.status_code == 200
+    assert update.json()["full_name"] == "Updated Attendee"
+    assert update.json()["profile"]["job_title"] == "Researcher"
 
 
 def test_invalid_login_is_rejected(client) -> None:

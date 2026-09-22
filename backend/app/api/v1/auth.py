@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import database_session
 from app.db.models import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, ProfileUpdateRequest, RegisterRequest, TokenResponse, UserResponse
 from app.services.auth import (
     AuthenticationError,
     RegistrationConflictError,
@@ -12,6 +12,7 @@ from app.services.auth import (
     create_access_token,
     get_user_from_token,
     register_user,
+    update_profile,
 )
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -63,3 +64,12 @@ def current_user(
 @router.get("/me", response_model=UserResponse)
 def me(user: User = Depends(current_user)) -> User:
     return user
+
+
+@router.patch("/me", response_model=UserResponse)
+def update_current_profile(
+    payload: ProfileUpdateRequest,
+    user: User = Depends(current_user),
+    db: Session = Depends(database_session),
+) -> User:
+    return update_profile(db, user, payload)
