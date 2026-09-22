@@ -9,6 +9,7 @@ import "./styles/workspace.css";
 import "./styles/revision.css";
 import "./styles/system-polish.css";
 import "./styles/premium-polish.css";
+import "./styles/mobile.css";
 
 export default function App() {
   return (

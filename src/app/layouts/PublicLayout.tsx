@@ -1,5 +1,8 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
+import { Icon } from "../../components/shared/Icon";
+import { MobileDrawer, useDrawer } from "../../components/shared/MobileNav";
+import { accountPathFor } from "../../lib/routes";
 
 const NAV = [
   ["/", "Home"],
@@ -11,7 +14,9 @@ const NAV = [
 
 export function PublicLayout() {
   const { role } = usePlatform();
-  const accountPath = role === "attendee" ? "/app" : "/login";
+  const accountPath = accountPathFor(role);
+  const accountLabel = role === "attendee" ? "My events" : role === "admin" ? "Admin console" : "Sign in";
+  const drawer = useDrawer();
 
   return (
     <div className="nt-shell nt-surface-public">
@@ -35,14 +40,70 @@ export function PublicLayout() {
           </div>
           <div className="nt-public-actions">
             <NavLink to={accountPath} className="nt-chip nt-account-link">
-              {role === "attendee" ? "My events" : "Sign in"}
+              {accountLabel}
             </NavLink>
             <NavLink to="/events" className="nt-btn">
               Browse events
             </NavLink>
+            <button
+              type="button"
+              className="nt-icon-btn nt-menu-btn"
+              aria-expanded={drawer.open}
+              aria-controls="nt-mobile-drawer"
+              aria-label={drawer.open ? "Close menu" : "Open menu"}
+              onClick={drawer.toggle}
+            >
+              <Icon name={drawer.open ? "close" : "menu"} />
+            </button>
           </div>
         </div>
       </header>
+
+      <MobileDrawer
+        open={drawer.open}
+        onClose={drawer.close}
+        heading="Neurotech Events"
+        sections={[
+          {
+            title: "Explore",
+            items: [
+              { to: "/", label: "Home", icon: "home", end: true },
+              { to: "/events", label: "Events", icon: "calendar" },
+              { to: "/speakers", label: "Speakers", icon: "mic" },
+              { to: "/schedule", label: "Schedule", icon: "grid" },
+              { to: "/partners", label: "Partners", icon: "handshake" },
+            ],
+          },
+          {
+            title: "Your account",
+            items:
+              role === "attendee"
+                ? [
+                    { to: "/app", label: "Dashboard", icon: "user", end: true },
+                    { to: "/app/ticket", label: "My ticket", icon: "ticket" },
+                    { to: "/app/certificates", label: "Certificates", icon: "award" },
+                  ]
+                : role === "admin"
+                  ? [{ to: "/admin", label: "Admin console", icon: "cog", end: true }]
+                  : [
+                      { to: "/login", label: "Sign in", icon: "user" },
+                      { to: "/register", label: "Create an account", icon: "spark" },
+                    ],
+          },
+          {
+            title: "Neurotech Africa",
+            items: [
+              { to: "/about", label: "About the platform", icon: "info" },
+              { to: "/help", label: "Help centre", icon: "search" },
+            ],
+          },
+        ]}
+        footer={
+          <NavLink to="/events" className="nt-btn" onClick={drawer.close}>
+            Browse events
+          </NavLink>
+        }
+      />
 
       <Outlet />
 
@@ -70,7 +131,7 @@ export function PublicLayout() {
             </div>
             <div>
               <div className="nt-footer-heading">Your account</div>
-              <NavLink to={accountPath}>Dashboard</NavLink>
+              <NavLink to={accountPath}>{role === "admin" ? "Admin console" : "Dashboard"}</NavLink>
               <NavLink to={role === "attendee" ? "/app/ticket" : "/login"}>Tickets</NavLink>
               <NavLink to={role === "attendee" ? "/app/certificates" : "/login"}>Certificates</NavLink>
             </div>

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, MediaTile } from "../../components/shared/Widgets";
 import { formatRange, minutesBetween } from "../../lib/dates";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
 import { downloadIcs } from "../../lib/calendar";
 import { MEDIA, eventImage, speakerImageById } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
@@ -27,6 +28,7 @@ export function EventDetailPage() {
 
   return (
     <div className="nt-container nt-page nt-detail-page">
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: event.title }]} />
       <div className="nt-detail-hero">
         <MediaTile
           label={`${event.title} cover`}
@@ -183,6 +185,18 @@ export function EventDetailPage() {
             Add to calendar (.ics)
           </button>
         </aside>
+      </div>
+
+      <div className="nt-mobile-cta" aria-label="Registration">
+        <div>
+          <span className="nt-muted">{fromLowestPrice(tickets.map((ticket) => ticket.price))}</span>
+          <strong>{event.title}</strong>
+        </div>
+        {canRegister ? (
+          <Link to={`/register/${event.id}`} className="nt-btn">Register</Link>
+        ) : (
+          <span className="nt-badge neutral">Registration closed</span>
+        )}
       </div>
     </div>
   );

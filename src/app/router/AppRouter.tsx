@@ -23,6 +23,7 @@ import { NotificationsPage } from "../../features/notifications/NotificationsPag
 import { CertificatesPage } from "../../features/certificates/CertificatesPage";
 import { CertificateVerifyPage } from "../../features/certificates/CertificateVerifyPage";
 import { accountPathFor } from "../../lib/routes";
+import { ScrollToTop } from "../../components/shared/ScrollToTop";
 import { ProfilePage } from "../../features/attendees/ProfilePage";
 import { AdminDashboardPage } from "../../features/admin/AdminDashboardPage";
 import { AdminEventsPage } from "../../features/admin/AdminEventsPage";
@@ -61,6 +62,7 @@ export function AppRouter() {
   return (
     <PlatformProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<RoleHome />} />

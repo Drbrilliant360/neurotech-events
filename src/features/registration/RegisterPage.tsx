@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState } from "../../components/shared/Widgets";
 import { formatMoney } from "../../lib/money";
@@ -80,6 +81,7 @@ export function RegisterPage() {
 
   return (
     <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 1080 }}>
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: event.title, to: `/events/${event.slug}` }, { label: "Register" }]} />
       <div className="nt-page-intro">
         <div>
           <p className="nt-kicker">Event registration</p>

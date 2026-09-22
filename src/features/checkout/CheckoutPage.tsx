@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState } from "../../components/shared/Widgets";
 import { formatMoney, isMobileMoney, paymentMethodLabel } from "../../lib/money";
@@ -132,6 +133,7 @@ export function CheckoutPage() {
 
   return (
     <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 1080 }}>
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: event.title, to: `/events/${event.slug}` }, { label: "Checkout" }]} />
       <div className="nt-page-intro">
         <div>
           <p className="nt-kicker">{LIVE ? "Secure checkout · Mobile money via Snippe" : "Secure checkout · Demo environment"}</p>

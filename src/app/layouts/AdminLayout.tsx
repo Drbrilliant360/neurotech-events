@@ -1,71 +1,85 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
+import { Icon } from "../../components/shared/Icon";
+import { BottomNav, MobileDrawer, MobileTopBar, useDrawer, type NavItem, type NavSection } from "../../components/shared/MobileNav";
 import { isLivePaymentsEnabled } from "../../services/payments";
 
-const SECTIONS = [
-  { title: "Overview", items: [["/admin", "Dashboard"]] },
+const SECTIONS: NavSection[] = [
+  { title: "Overview", items: [{ to: "/admin", label: "Dashboard", icon: "grid", end: true }] },
   {
     title: "Event management",
     items: [
-      ["/admin/events", "Events"],
-      ["/admin/events/new", "Create event"],
-      ["/admin/tickets", "Tickets"],
+      { to: "/admin/events", label: "Events", icon: "calendar", end: true },
+      { to: "/admin/events/new", label: "Create event", icon: "spark" },
+      { to: "/admin/tickets", label: "Tickets", icon: "ticket" },
     ],
   },
   {
     title: "Registration",
     items: [
-      ["/admin/attendees", "Attendees"],
-      ["/admin/check-in", "Check-in"],
+      { to: "/admin/attendees", label: "Attendees", icon: "people" },
+      { to: "/admin/check-in", label: "Check-in", icon: "scan" },
     ],
   },
   {
     title: "Program",
     items: [
-      ["/admin/schedule", "Schedule builder"],
-      ["/admin/timeline", "Timeline"],
+      { to: "/admin/schedule", label: "Schedule builder", icon: "calendar" },
+      { to: "/admin/timeline", label: "Timeline", icon: "chart" },
     ],
   },
   {
     title: "Marketing",
     items: [
-      ["/admin/poster", "Poster designer"],
-      ["/admin/communications", "Communications"],
-      ["/admin/sponsors", "Sponsors"],
+      { to: "/admin/poster", label: "Poster designer", icon: "spark" },
+      { to: "/admin/communications", label: "Communications", icon: "bell" },
+      { to: "/admin/sponsors", label: "Sponsors", icon: "handshake" },
     ],
   },
   {
     title: "Finance & data",
     items: [
-      ["/admin/payments", "Payments"],
-      ...(isLivePaymentsEnabled() ? [["/admin/transactions", "All transactions"] as const] : []),
-      ["/admin/reports", "Reports"],
-      ["/admin/settings", "Settings"],
+      { to: "/admin/payments", label: "Payments", icon: "card" },
+      ...(isLivePaymentsEnabled() ? [{ to: "/admin/transactions", label: "All transactions", icon: "card" } as NavItem] : []),
+      { to: "/admin/reports", label: "Reports", icon: "chart" },
+      { to: "/admin/settings", label: "Settings", icon: "cog" },
     ],
   },
-] as const;
+];
+
+const PRIMARY: NavItem[] = [
+  { to: "/admin", label: "Dashboard", icon: "grid", end: true },
+  { to: "/admin/events", label: "Events", icon: "calendar" },
+  { to: "/admin/attendees", label: "Attendees", icon: "people" },
+  { to: "/admin/check-in", label: "Check-in", icon: "scan" },
+];
 
 export function AdminLayout() {
   const { db, logout } = usePlatform();
   const navigate = useNavigate();
+  const drawer = useDrawer();
   const activeEvent = db.events.find((event) => event.featured && event.status !== "completed") ?? db.events.find((event) => event.status !== "completed");
 
   function handleLogout() {
+    drawer.close();
     logout();
     navigate("/login", { replace: true });
   }
 
   return (
     <div className="nt-shell nt-surface-admin">
-      <nav className="mobile-nav" aria-label="Admin">
-        {SECTIONS.flatMap((sec) =>
-          sec.items.map(([to, label]) => (
-            <NavLink key={to} to={to} end={to === "/admin"} className="nt-chip">
-              {label}
-            </NavLink>
-          )),
-        )}
-      </nav>
+      <MobileTopBar
+        title="Neurotech Events"
+        subtitle="Operations console"
+        homeTo="/admin"
+        menuOpen={drawer.open}
+        onMenu={drawer.toggle}
+        right={
+          <NavLink to="/admin/events/new" className="nt-icon-btn" aria-label="Create event">
+            <Icon name="spark" />
+          </NavLink>
+        }
+      />
 
       <div className="nt-app">
         <aside className="nt-side admin">
@@ -81,9 +95,9 @@ export function AdminLayout() {
             <div key={sec.title} className="nt-side-section">
               <div className="sec">{sec.title}</div>
               <nav aria-label={sec.title}>
-                {sec.items.map(([to, label]) => (
-                  <NavLink key={to} to={to} end={to === "/admin"}>
-                    {label}
+                {sec.items.map((item) => (
+                  <NavLink key={item.to} to={item.to} end={item.end}>
+                    {item.label}
                   </NavLink>
                 ))}
               </nav>
@@ -98,7 +112,7 @@ export function AdminLayout() {
               <span className="nt-status-dot" />
               <span>
                 <strong>Operations workspace</strong>
-                <small>Frontend demo environment</small>
+                <small>{isLivePaymentsEnabled() ? "Connected to the API" : "Frontend demo environment"}</small>
               </span>
             </div>
           </div>
@@ -131,6 +145,27 @@ export function AdminLayout() {
           </div>
         </main>
       </div>
+
+      <BottomNav items={PRIMARY} moreOpen={drawer.open} onMore={drawer.toggle} />
+      <MobileDrawer
+        open={drawer.open}
+        onClose={drawer.close}
+        heading="Operations console"
+        sections={SECTIONS}
+        footer={
+          <>
+            <NavLink to="/admin/events/new" className="nt-btn accent" onClick={drawer.close}>
+              Create event
+            </NavLink>
+            <NavLink to="/events" className="nt-chip" onClick={drawer.close}>
+              View public site
+            </NavLink>
+            <button type="button" className="nt-chip" onClick={handleLogout}>
+              <Icon name="logout" size={16} /> Log out
+            </button>
+          </>
+        }
+      />
     </div>
   );
 }

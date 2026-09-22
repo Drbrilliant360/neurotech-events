@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatDateTime } from "../../lib/dates";
@@ -16,6 +17,7 @@ export function ReceiptPage() {
 
   return (
     <div className="nt-container nt-page nt-form-page nt-receipt-page" style={{ maxWidth: 820 }}>
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: event.title, to: `/events/${event.slug}` }, { label: "Receipt" }]} />
       <div className="nt-receipt-toolbar no-print">
         <div>
           <p className="nt-kicker">Payment record</p>

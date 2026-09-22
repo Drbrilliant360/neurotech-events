@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatMoney, paymentMethodLabel } from "../../lib/money";
@@ -72,6 +73,7 @@ export function PaymentPage() {
 
   return (
     <div className="nt-container nt-page nt-form-page nt-payment-page" style={{ maxWidth: 760 }}>
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: bundle.event.title, to: `/events/${bundle.event.slug}` }, { label: "Payment" }]} />
       {!LIVE ? (
         <div className="nt-demo-controls no-print">
           <span>Demo controls</span>
