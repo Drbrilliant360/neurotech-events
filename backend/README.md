@@ -366,6 +366,16 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
+### Connecting to PostgreSQL (Neon)
+
+The default `.env` points at a local SQLite file. To use a managed PostgreSQL database such as Neon, set `DATABASE_URL` in `.env` to the connection string using the `postgresql+psycopg://` scheme with TLS required:
+
+```bash
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DBNAME?sslmode=require&channel_binding=require
+```
+
+The `psycopg` (v3) driver is installed with the project dependencies. `.env` is gitignored; never commit a real connection string. Neon's pooled endpoint (the `-pooler` host) is suitable for the running API. Neon recommends the direct endpoint for migration tooling if the pooler causes session-level issues.
+
 The frontend should continue to run separately:
 
 ```bash
