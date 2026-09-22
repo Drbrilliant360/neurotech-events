@@ -193,6 +193,50 @@ Production requirements:
 
 Payment integrations must use provider verification and signed webhooks. The frontend must never determine whether a payment succeeded.
 
+## Database schema
+
+The persistence layer lives in `app/db/models/` and is applied through Alembic. The baseline
+migration `0e5f3e6a33fc_create_core_platform_tables` creates 21 tables that mirror the frontend
+domain in `src/domain/types.ts` plus the Phase 1 identity models.
+
+| Domain | Tables |
+| --- | --- |
+| Identity | `organizations`, `users`, `attendees` |
+| Events and programme | `venues`, `events`, `speakers`, `sessions`, `timeline_milestones` |
+| Ticketing and money | `ticket_types`, `registrations`, `payments`, `payment_events`, `check_ins`, `certificates` |
+| Attendee engagement | `notifications`, `communications`, `networking_profiles`, `connections`, `saved_sessions` |
+| Sponsors | `sponsors`, `sponsor_events` |
+
+Conventions:
+
+- UUID primary keys, timezone-aware timestamps, `Numeric(12, 2)` for money, ISO currency codes;
+- enumerations are stored as strings with CHECK constraints (no native PostgreSQL enums), so
+  adding a value is a plain migration;
+- list fields (`highlights`, `faqs`, `interests`) are JSONB on PostgreSQL and JSON on SQLite;
+- constraint and index names follow the naming convention in `app/db/base.py`, so Alembic diffs stay stable;
+- every foreign key declares an explicit `ondelete` rule.
+
+Deliberate departures from the frontend model:
+
+- `ticket_types.tier` is an open string, not a closed enum, so organisers can add products without a deploy;
+- there is no stored `sold` counter. Quantity sold is derived from `registrations` inside a transaction;
+- `organizations` absorbs the frontend `OrganizationSettings` (VAT, currency, defaults, notification flags);
+- `sponsor_events` replaces the `eventIds` array on sponsors;
+- `payment_events` is an append-only audit trail of payment status transitions.
+
+Migration workflow:
+
+```bash
+alembic upgrade head                                   # apply pending migrations
+alembic revision --autogenerate -m "describe change"   # after editing models
+alembic downgrade -1                                   # roll back one revision
+```
+
+New model modules must be imported in `app/db/models/__init__.py` or autogenerate will not see them.
+Review every generated migration before applying it: Alembic does not add the
+`from sqlalchemy.dialects import postgresql` import that JSONB variants need, and it does not
+detect later changes to CHECK constraints.
+
 ## Phased delivery plan
 
 ### Phase 0 — Contract and scaffolding
