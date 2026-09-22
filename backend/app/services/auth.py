@@ -6,8 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.db.models import User
-from app.schemas.auth import LoginRequest, RegisterRequest
+from app.db.models import AttendeeProfile, User
+from app.schemas.auth import LoginRequest, ProfileUpdateRequest, RegisterRequest
 
 password_hash = PasswordHash.recommended()
 
@@ -30,8 +30,27 @@ def register_user(db: Session, payload: RegisterRequest) -> User:
     if existing:
         raise RegistrationConflictError("An account with this email already exists.")
 
-    user = User(email=email, password_hash=password_hash.hash(payload.password), full_name=payload.full_name.strip())
+    user = User(
+        email=email,
+        password_hash=password_hash.hash(payload.password),
+        full_name=payload.full_name.strip(),
+        profile=AttendeeProfile(**payload.profile.model_dump()),
+    )
     db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_profile(db: Session, user: User, payload: ProfileUpdateRequest) -> User:
+    changes = payload.model_dump(exclude_unset=True)
+    if "full_name" in changes:
+        user.full_name = changes.pop("full_name").strip()
+    profile_changes = {key: value for key, value in changes.items() if value is not None}
+    if user.profile is None:
+        user.profile = AttendeeProfile()
+    for key, value in profile_changes.items():
+        setattr(user.profile, key, value)
     db.commit()
     db.refresh(user)
     return user
