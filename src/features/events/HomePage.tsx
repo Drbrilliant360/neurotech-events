@@ -55,7 +55,7 @@ export function HomePage() {
           </div>
 
           <div className="nt-feature-card" aria-label="Featured Neurotech event">
-            <img src={MEDIA.cover} alt="Neurotech Africa event audience" />
+            <img src={MEDIA.cover} alt="Keynote speaker on stage at a Neurotech Africa event" />
             <div className="nt-feature-card-content">
               {featured ? (
                 <>
