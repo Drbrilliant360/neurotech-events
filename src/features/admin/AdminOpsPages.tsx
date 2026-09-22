@@ -1,12 +1,18 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
-import { EmptyState, StatusPill } from "../../components/shared/Widgets";
+import { StatusPill } from "../../components/shared/Widgets";
 import { downloadTextFile, toCsv } from "../../lib/csv";
 import { formatDateTime, minutesBetween } from "../../lib/dates";
 import { formatMoney, paymentMethodLabel } from "../../lib/money";
 import type { CommunicationChannel, PaymentStatus, SponsorTier, TicketTier } from "../../domain/types";
 import { AdminEventFormPage } from "./AdminEventsPage";
+import { AdminEventPicker, ScopedAdminPage, type EditorProps } from "./AdminEventPicker";
+import { isApiEnabled, ApiError } from "../../services/api";
+import { getAuthToken } from "../../services/auth";
+import { buildCataloguePayload, readAdminCredential } from "../../services/catalogue";
+import { syncCatalogue } from "../../services/payments";
+import type { Event } from "../../domain/types";
 
 export function AdminEventEditPage() {
   const { eventId } = useParams();
@@ -17,9 +23,29 @@ export function AdminEventNewPage() {
   return <AdminEventFormPage mode="new" />;
 }
 
-export function AdminTicketsPage() {
+function AdminTicketsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveTicket, deleteTicket } = usePlatform();
-  const eventId = db.events.find((event) => event.featured)?.id ?? db.events[0].id;
+  const eventId = event.id;
+  const [publishState, setPublishState] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+
+  async function publishCatalogue() {
+    const credential = readAdminCredential(getAuthToken());
+    if (!credential) {
+      setPublishState("Sign in as a platform admin or open All transactions and enter the admin token first.");
+      return;
+    }
+    setPublishing(true);
+    setPublishState(null);
+    try {
+      const result = await syncCatalogue(credential, buildCataloguePayload(db));
+      setPublishState(`Published ${result.events_upserted} events and ${result.ticket_types_upserted} ticket types to the payments server (${result.ticket_types_deactivated} retired).`);
+    } catch (err) {
+      setPublishState(err instanceof ApiError ? err.message : "Publishing failed.");
+    } finally {
+      setPublishing(false);
+    }
+  }
   const [name, setName] = useState("Professional");
   const [price, setPrice] = useState("100000");
   const [capacity, setCapacity] = useState("100");
@@ -30,6 +56,17 @@ export function AdminTicketsPage() {
   return (
     <div style={{ maxWidth: 760 }}>
       <h1>Ticket types</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
+      {isApiEnabled() ? (
+        <div className="nt-card" style={{ marginBottom: 16 }}>
+          <h3>Live payments</h3>
+          <p className="nt-muted">Tickets can only be sold online once this catalogue has been published to the payments server, which prices every checkout itself.</p>
+          <div className="nt-actions" style={{ marginTop: 10, alignItems: "center" }}>
+            <button type="button" className="nt-btn" onClick={publishCatalogue} disabled={publishing}>{publishing ? "Publishing…" : "Publish catalogue to payments server"}</button>
+            {publishState ? <span className="nt-muted" role="status">{publishState}</span> : null}
+          </div>
+        </div>
+      ) : null}
       <div className="nt-card" style={{ marginBottom: 16 }}>
         <h3>Create ticket tier</h3>
         <div className="nt-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))" }}>
@@ -287,9 +324,8 @@ export function AdminCheckInPage() {
   );
 }
 
-export function AdminSchedulePage() {
+function AdminScheduleEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveSession, deleteSession } = usePlatform();
-  const event = db.events.find((item) => item.featured) ?? db.events[0];
   const sessions = db.sessions.filter((item) => item.eventId === event.id);
   const days = Array.from(new Set(sessions.map((item) => item.dayIndex))).sort();
   const [day, setDay] = useState(0);
@@ -303,6 +339,7 @@ export function AdminSchedulePage() {
   return (
     <div style={{ maxWidth: 880 }}>
       <h1>Schedule builder</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
       <div className="nt-card" style={{ marginBottom: 16 }}>
         <div className="nt-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))" }}>
           <label className="nt-field">
@@ -385,47 +422,67 @@ export function AdminSchedulePage() {
   );
 }
 
-export function AdminTimelinePage() {
-  const { db, saveMilestone } = usePlatform();
-  const event = db.events.find((item) => item.featured) ?? db.events[0];
+function AdminTimelineEditor({ events, event, setEventId }: EditorProps) {
+  const { db, saveMilestone, removeMilestone } = usePlatform();
   const [day, setDay] = useState<"all" | number>("all");
+  const [newTitle, setNewTitle] = useState("");
+  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
+  const dayOptions = Array.from({ length: eventDayCount(event) }, (_, index) => index);
   const items = db.milestones.filter((item) => item.eventId === event.id && (day === "all" || item.dayIndex === day));
   return (
     <div style={{ maxWidth: 660 }}>
       <h1>Event timeline</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
       <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
         <button type="button" className={`nt-chip ${day === "all" ? "is-on" : ""}`} onClick={() => setDay("all")}>
           All
         </button>
-        {[0, 1, 2].map((value) => (
+        {dayOptions.map((value) => (
           <button key={value} type="button" className={`nt-chip ${day === value ? "is-on" : ""}`} onClick={() => setDay(value)}>
             Day {value + 1}
           </button>
         ))}
-        <button
-          type="button"
-          className="nt-btn"
-          onClick={() => saveMilestone({ eventId: event.id, title: "New operational milestone", date: new Date().toISOString().slice(0, 10), status: "scheduled" })}
-        >
-          + Add milestone
-        </button>
       </div>
+      <div className="nt-card" style={{ marginBottom: 16 }}>
+        <h3>Add milestone</h3>
+        <div className="nt-grid" style={{ gridTemplateColumns: "2fr 1fr auto", alignItems: "end" }}>
+          <label className="nt-field"><span>Title</span><input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Speaker briefing" /></label>
+          <label className="nt-field"><span>Date</span><input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} /></label>
+          <button
+            type="button"
+            className="nt-btn"
+            disabled={!newTitle.trim() || !newDate}
+            onClick={() => {
+              saveMilestone({ eventId: event.id, title: newTitle.trim(), date: newDate, status: "scheduled", dayIndex: day === "all" ? undefined : day });
+              setNewTitle("");
+            }}
+          >
+            + Add milestone
+          </button>
+        </div>
+      </div>
+      {items.length === 0 ? <p className="nt-muted">No milestones for this view yet.</p> : null}
       {items.map((item) => (
-        <div key={item.id} className="nt-card" style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+        <div key={item.id} className="nt-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
           <div>
             <strong>{item.title}</strong>
-            <div className="nt-muted">{item.date}</div>
+            <div className="nt-muted">{item.date}{typeof item.dayIndex === "number" ? ` · Day ${item.dayIndex + 1}` : ""}</div>
           </div>
-          <StatusPill value={item.status} />
+          <div className="nt-actions" style={{ alignItems: "center" }}>
+            <StatusPill value={item.status} />
+            <button type="button" className="nt-chip" onClick={() => saveMilestone({ ...item, status: nextMilestoneStatus(item.status) })}>
+              Mark {nextMilestoneStatus(item.status)}
+            </button>
+            <button type="button" className="nt-chip" onClick={() => removeMilestone(item.id)}>Delete</button>
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-export function AdminPosterPage() {
+function AdminPosterEditor({ events, event, setEventId }: EditorProps) {
   const { db } = usePlatform();
-  const event = db.events.find((item) => item.featured) ?? db.events[0];
   const [title, setTitle] = useState(event.title);
   const [subtitle, setSubtitle] = useState(event.subtitle);
   const [layout, setLayout] = useState<"dark" | "light">("dark");
@@ -433,6 +490,7 @@ export function AdminPosterPage() {
   return (
     <div>
       <h1>Poster designer</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: 16 }}>
         <div className="nt-card">
           <label className="nt-field">
@@ -470,15 +528,15 @@ export function AdminPosterPage() {
   );
 }
 
-export function AdminCommsPage() {
+function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveComms } = usePlatform();
-  const event = db.events.find((item) => item.featured) ?? db.events[0];
   const [channel, setChannel] = useState<CommunicationChannel>("email");
   const [body, setBody] = useState("Thank you for joining NeuroTech Summit.");
   const [subject, setSubject] = useState("Event reminder");
   return (
     <div style={{ maxWidth: 720 }}>
       <h1>Communications</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
       <p className="nt-lede">Messages are simulated in local state. Nothing is sent.</p>
       <div className="nt-card">
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -513,13 +571,15 @@ export function AdminCommsPage() {
   );
 }
 
-export function AdminSponsorsPage() {
+function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveSponsor, deleteSponsor } = usePlatform();
   const [name, setName] = useState("");
   const [tier, setTier] = useState<SponsorTier>("gold");
+  const [pending, setPending] = useState<string | null>(null);
   return (
     <div>
       <h1>Sponsors</h1>
+      <AdminEventPicker events={events} event={event} onChange={setEventId} />
       <div className="nt-card" style={{ marginBottom: 16 }}>
         <label className="nt-field">
           <span>Name</span>
@@ -533,7 +593,7 @@ export function AdminSponsorsPage() {
             ))}
           </select>
         </label>
-        <button type="button" className="nt-btn" onClick={() => { if (!name.trim()) return; saveSponsor({ name, tier, eventIds: [db.events[0].id], website: "", contact: "" }); setName(""); }}>
+        <button type="button" className="nt-btn" onClick={() => { if (!name.trim()) return; saveSponsor({ name, tier, eventIds: [event.id], website: "", contact: "" }); setName(""); }}>
           Add sponsor
         </button>
       </div>
@@ -543,15 +603,17 @@ export function AdminSponsorsPage() {
             <h3>{sponsor.name}</h3>
             <div style={{ color: "#2f7d34" }}>{sponsor.tier}</div>
             <div className="nt-muted">{sponsor.website}</div>
+            <StatusPill value={sponsor.active ? "active" : "inactive"} />
             <button type="button" className="nt-chip" onClick={() => saveSponsor({ ...sponsor, active: !sponsor.active })}>
-              {sponsor.active ? "Active" : "Inactive"}
+              {sponsor.active ? "Deactivate" : "Activate"}
             </button>
-            <button type="button" className="nt-chip" onClick={() => deleteSponsor(sponsor.id)}>
+            <button type="button" className="nt-chip" onClick={() => setPending(sponsor.id)}>
               Delete
             </button>
           </article>
         ))}
       </div>
+      {pending ? <Confirm onCancel={() => setPending(null)} onOk={() => { deleteSponsor(pending); setPending(null); }} /> : null}
     </div>
   );
 }
@@ -697,7 +759,7 @@ export function AdminSettingsPage() {
   return (
     <div style={{ maxWidth: 640 }}>
       <h1>Settings</h1>
-      <p className="nt-lede">Frontend-only demo preferences. These do not enforce server security.</p>
+      <p className="nt-lede">Organisation defaults used across the site. VAT and currency feed the checkout quote; publish the catalogue after changing them so the payments server matches.</p>
       {(
         [
           ["organizationName", "Organization"],
@@ -705,6 +767,8 @@ export function AdminSettingsPage() {
           ["contactEmail", "Contact email"],
           ["contactPhone", "Contact phone"],
           ["defaultCity", "Default city"],
+          ["defaultCountry", "Default country"],
+          ["defaultCurrency", "Currency (ISO code)"],
         ] as const
       ).map(([key, label]) => (
         <label key={key} className="nt-field">
@@ -713,8 +777,22 @@ export function AdminSettingsPage() {
         </label>
       ))}
       <label className="nt-field">
+        <span>VAT percent applied at checkout</span>
+        <input type="number" min={0} max={100} step={0.5} value={settings.vatPercent} onChange={(e) => setSettings({ ...settings, vatPercent: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })} />
+      </label>
+      <label className="nt-field">
+        <span>
+          <input type="checkbox" checked={settings.registrationOpenByDefault} onChange={(e) => setSettings({ ...settings, registrationOpenByDefault: e.target.checked })} /> New events open for registration by default
+        </span>
+      </label>
+      <label className="nt-field">
         <span>
           <input type="checkbox" checked={settings.notifyOnRegistration} onChange={(e) => setSettings({ ...settings, notifyOnRegistration: e.target.checked })} /> Notify on registration
+        </span>
+      </label>
+      <label className="nt-field">
+        <span>
+          <input type="checkbox" checked={settings.notifyOnPayment} onChange={(e) => setSettings({ ...settings, notifyOnPayment: e.target.checked })} /> Notify on payment
         </span>
       </label>
       <button type="button" className="nt-btn" onClick={() => updateSettings(settings)}>
@@ -740,6 +818,35 @@ function Confirm({ onOk, onCancel }: { onOk: () => void; onCancel: () => void })
   );
 }
 
-export function AdminPlaceholder() {
-  return <EmptyState title="Missing screen" body="Use the admin navigation." />;
+export function AdminTicketsPage() {
+  return <ScopedAdminPage render={(scope) => <AdminTicketsEditor key={scope.event.id} {...scope} />} />;
+}
+
+export function AdminSchedulePage() {
+  return <ScopedAdminPage render={(scope) => <AdminScheduleEditor key={scope.event.id} {...scope} />} />;
+}
+
+export function AdminTimelinePage() {
+  return <ScopedAdminPage render={(scope) => <AdminTimelineEditor key={scope.event.id} {...scope} />} />;
+}
+
+export function AdminPosterPage() {
+  return <ScopedAdminPage render={(scope) => <AdminPosterEditor key={scope.event.id} {...scope} />} />;
+}
+
+export function AdminCommsPage() {
+  return <ScopedAdminPage render={(scope) => <AdminCommsEditor key={scope.event.id} {...scope} />} />;
+}
+
+export function AdminSponsorsPage() {
+  return <ScopedAdminPage render={(scope) => <AdminSponsorsEditor key={scope.event.id} {...scope} />} />;
+}
+
+function eventDayCount(event: Event): number {
+  const ms = new Date(event.endsAt).getTime() - new Date(event.startsAt).getTime();
+  return Math.max(1, Math.round(ms / 86400000) + 1);
+}
+
+function nextMilestoneStatus(status: "done" | "live" | "scheduled"): "done" | "live" | "scheduled" {
+  return status === "scheduled" ? "live" : status === "live" ? "done" : "scheduled";
 }
