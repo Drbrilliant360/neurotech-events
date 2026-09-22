@@ -5,14 +5,13 @@
  * prices, provider calls and confirmation; this module only relays requests and statuses.
  */
 import type { PaymentMethod, PaymentStatus } from "../domain/types";
+import { ApiError, apiRequest, isApiEnabled } from "./api";
 
-const rawBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
-export const API_BASE_URL = rawBase.replace(/\/+$/, "");
-const API_PREFIX = "/api/v1";
+export const isLivePaymentsEnabled = isApiEnabled;
+export const PaymentApiError = ApiError;
+export type PaymentApiError = ApiError;
 
-export function isLivePaymentsEnabled(): boolean {
-  return API_BASE_URL.length > 0;
-}
+const request = apiRequest;
 
 export type MobileMethod = Extract<PaymentMethod, "mpesa" | "airtel" | "mixx" | "halopesa">;
 
@@ -91,43 +90,6 @@ export interface ProviderBalance {
   currency: string;
 }
 
-export class PaymentApiError extends Error {
-  readonly code: string;
-  readonly status: number;
-
-  constructor(message: string, code: string, status: number) {
-    super(message);
-    this.name = "PaymentApiError";
-    this.code = code;
-    this.status = status;
-  }
-}
-
-async function request<T>(path: string, init: RequestInit = {}, token?: string): Promise<T> {
-  if (!isLivePaymentsEnabled()) throw new PaymentApiError("Live payments are not configured.", "not_configured", 0);
-  const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
-  if (init.body) headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, { ...init, headers });
-  } catch {
-    throw new PaymentApiError("Could not reach the payments server.", "network_error", 0);
-  }
-  const text = await response.text();
-  const data = text ? (JSON.parse(text) as unknown) : null;
-  if (!response.ok) {
-    const envelope = (data ?? {}) as { error?: { code?: string; message?: string } };
-    throw new PaymentApiError(
-      envelope.error?.message ?? `Request failed with status ${response.status}.`,
-      envelope.error?.code ?? "request_failed",
-      response.status,
-    );
-  }
-  return data as T;
-}
-
 export function startMobilePayment(input: StartMobilePaymentInput): Promise<RemotePayment> {
   return request<RemotePayment>("/payments/mobile", { method: "POST", body: JSON.stringify(input) });
 }
@@ -171,4 +133,36 @@ export function providerCustomer(item: ProviderTransaction): string {
   const c = item.customer;
   if (!c) return "—";
   return c.name ?? [c.first_name, c.last_name].filter(Boolean).join(" ") ?? c.email ?? c.phone ?? "—";
+}
+
+export interface TicketQuote {
+  event_slug: string;
+  code: string;
+  name: string;
+  tier: string;
+  currency: string;
+  price: number;
+  vat_percent: number | string;
+  vat: number;
+  total: number;
+  active: boolean;
+  capacity: number;
+  sold: number;
+  available: number;
+  payable_online: boolean;
+}
+
+/** The exact amount the server will charge for a ticket, VAT included. */
+export function fetchTicketQuote(eventSlug: string, ticketCode: string): Promise<TicketQuote> {
+  return request<TicketQuote>(`/events/${encodeURIComponent(eventSlug)}/tickets/${encodeURIComponent(ticketCode)}/quote`);
+}
+
+export interface CatalogueSyncResult {
+  events_upserted: number;
+  ticket_types_upserted: number;
+  ticket_types_deactivated: number;
+}
+
+export function syncCatalogue(token: string, payload: unknown): Promise<CatalogueSyncResult> {
+  return request<CatalogueSyncResult>("/admin/catalogue", { method: "PUT", body: JSON.stringify(payload) }, token);
 }

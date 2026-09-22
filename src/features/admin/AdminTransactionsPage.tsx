@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
+import { getAuthToken } from "../../services/auth";
 import { formatMoney, paymentMethodLabel } from "../../lib/money";
 import {
   fetchAdminPayments,
@@ -33,7 +34,7 @@ function when(value?: string | null): string {
 }
 
 export function AdminTransactionsPage() {
-  const [token, setToken] = useState(readToken);
+  const [token, setToken] = useState(() => readToken() || getAuthToken() || "");
   const [draft, setDraft] = useState("");
   const [balance, setBalance] = useState<ProviderBalance | null>(null);
   const [provider, setProvider] = useState<ProviderTransaction[]>([]);
@@ -62,7 +63,7 @@ export function AdminTransactionsPage() {
       setLoadedAt(new Date());
     } catch (err) {
       if (err instanceof PaymentApiError && (err.status === 401 || err.status === 403)) {
-        setError("The admin token was rejected by the server.");
+        setError("This account is not a platform admin. Enter the ADMIN_API_TOKEN or sign in as a platform admin.");
       } else {
         setError(err instanceof PaymentApiError ? err.message : "Could not load transactions.");
       }
@@ -157,7 +158,7 @@ export function AdminTransactionsPage() {
         <section className="nt-card nt-form-card" style={{ maxWidth: 560 }}>
           <p className="nt-kicker">Access</p>
           <h2>Enter the admin token</h2>
-          <p className="nt-muted">This token is set on the server as ADMIN_API_TOKEN and is checked on every request. It is kept in this browser session only.</p>
+          <p className="nt-muted">Sign in as a platform admin and this page opens automatically. Otherwise paste the server's ADMIN_API_TOKEN; it is kept in this browser session only.</p>
           <div className="nt-toolbar" style={{ marginTop: 16 }}>
             <input className="nt-search" type="password" autoComplete="off" value={draft} placeholder="Admin API token" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => e.key === "Enter" && connect()} aria-label="Admin API token" />
             <button type="button" className="nt-btn" onClick={connect} disabled={!draft.trim()}>Connect</button>

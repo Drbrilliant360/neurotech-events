@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
+import { isLivePaymentsEnabled } from "../../services/payments";
 
 const SECTIONS = [
   { title: "Overview", items: [["/admin", "Dashboard"]] },
@@ -37,7 +38,7 @@ const SECTIONS = [
     title: "Finance & data",
     items: [
       ["/admin/payments", "Payments"],
-      ["/admin/transactions", "All transactions"],
+      ...(isLivePaymentsEnabled() ? [["/admin/transactions", "All transactions"] as const] : []),
       ["/admin/reports", "Reports"],
       ["/admin/settings", "Settings"],
     ],
@@ -90,7 +91,7 @@ export function AdminLayout() {
           ))}
 
           <div className="nt-side-footer admin-footer">
-            <NavLink to="/" className="nt-side-explore">
+            <NavLink to="/events" className="nt-side-explore">
               View public site →
             </NavLink>
             <div className="nt-admin-status">

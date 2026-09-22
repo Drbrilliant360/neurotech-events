@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState } from "../../components/shared/Widgets";
 import { formatMoney, isMobileMoney, paymentMethodLabel } from "../../lib/money";
 import { registrationBundle } from "../../repositories/platform";
-import { isLivePaymentsEnabled, PaymentApiError, startMobilePayment, type MobileMethod } from "../../services/payments";
+import { fetchTicketQuote, isLivePaymentsEnabled, PaymentApiError, startMobilePayment, type MobileMethod, type TicketQuote } from "../../services/payments";
 import type { PaymentMethod } from "../../domain/types";
 
 const LIVE = isLivePaymentsEnabled();
@@ -29,6 +29,35 @@ export function CheckoutPage() {
   const [accepted, setAccepted] = useState(true);
   const [outcome, setOutcome] = useState<DemoOutcome>("paid");
   const [error, setError] = useState<string | null>(null);
+  const [quote, setQuote] = useState<TicketQuote | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
+  const quoteSlug = bundle?.event.slug;
+  const quoteCode = bundle?.ticket.id;
+  const quoteNeeded = LIVE && Boolean(bundle?.payment) && (bundle?.ticket.price ?? 0) > 0 && bundle?.payment?.status !== "paid";
+
+  useEffect(() => {
+    if (!quoteNeeded || !quoteSlug || !quoteCode) return;
+    let cancelled = false;
+    fetchTicketQuote(quoteSlug, quoteCode)
+      .then((result) => {
+        if (!cancelled) {
+          setQuote(result);
+          setQuoteError(null);
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setQuote(null);
+        setQuoteError(
+          err instanceof PaymentApiError && err.code === "not_found"
+            ? "This ticket has not been published to the payments server yet. Ask an administrator to publish the catalogue."
+            : err instanceof PaymentApiError ? err.message : "Could not verify the price with the payments server.",
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [quoteNeeded, quoteSlug, quoteCode]);
 
   if (!bundle?.payment) {
     return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Checkout not found" body="Start registration again from the event page." /></div>;
@@ -36,6 +65,8 @@ export function CheckoutPage() {
 
   const { registration, attendee, event, ticket, payment } = bundle;
   const isFree = ticket.price === 0;
+  const quoteBlocks = LIVE && !isFree && (quoteError !== null || (quote !== null && !quote.payable_online));
+  const chargeAmount = quote?.total ?? payment.amount;
 
   async function startPay() {
     if (!accepted || busy) return;
@@ -52,6 +83,10 @@ export function CheckoutPage() {
     }
     if (!isMobileMoney(method)) {
       setError("Only mobile money is available for live payments right now.");
+      return;
+    }
+    if (quoteBlocks) {
+      setError(quoteError ?? "This ticket cannot be paid online right now.");
       return;
     }
     setBusy(true);
@@ -88,7 +123,7 @@ export function CheckoutPage() {
   const payLabel = isFree
     ? "Confirm free registration"
     : LIVE
-      ? `Pay ${formatMoney(payment.amount)}`
+      ? `Pay ${formatMoney(chargeAmount)}`
       : outcome === "paid"
         ? `Pay ${formatMoney(payment.amount)}`
         : outcome === "failed"
@@ -190,12 +225,22 @@ export function CheckoutPage() {
             <div><dt>{ticket.name} pass × 1</dt><dd>{formatMoney(ticket.price)}</dd></div>
             <div><dt>VAT {db.settings.vatPercent}%</dt><dd>{formatMoney(payment.amount - ticket.price)}</dd></div>
             <div className="nt-summary-total"><dt>Total</dt><dd>{formatMoney(payment.amount)}</dd></div>
+            {LIVE && !isFree && quote ? (
+              <div><dt>Server-verified charge</dt><dd>{formatMoney(quote.total, quote.currency)}</dd></div>
+            ) : null}
           </dl>
+          {LIVE && !isFree && quote && quote.total !== payment.amount ? (
+            <p className="nt-muted" role="status">The payments server will charge {formatMoney(quote.total, quote.currency)}. Prices are set on the server and may differ from this browser's cached catalogue.</p>
+          ) : null}
+          {LIVE && !isFree && quote && !quote.payable_online ? (
+            <p className="nt-auth-error" role="alert">{quote.available === 0 ? "This ticket type is sold out." : !quote.active ? "This ticket type is not on sale." : "This ticket cannot be paid online."}</p>
+          ) : null}
+          {LIVE && !isFree && quoteError ? <p className="nt-auth-error" role="alert">{quoteError}</p> : null}
           {error ? <p className="nt-auth-error" role="alert">{error}</p> : null}
-          <button type="button" className="nt-btn" style={{ width: "100%", marginTop: 18 }} disabled={!accepted || busy} onClick={startPay}>
+          <button type="button" className="nt-btn" style={{ width: "100%", marginTop: 18 }} disabled={!accepted || busy || quoteBlocks} onClick={startPay}>
             {busy ? "Sending prompt…" : payLabel}
           </button>
-          <Link to={`/register/${event.id}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 9 }}>Back to registration</Link>
+          <Link to={`/events/${event.slug}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 9 }}>Back to event</Link>
           <p className="nt-payment-disclaimer">
             {LIVE ? "Payments are processed by Snippe and confirmed by our server before your ticket is issued." : "Frontend simulation only · no real payment is processed."}
           </p>

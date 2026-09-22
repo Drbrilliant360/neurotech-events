@@ -17,11 +17,14 @@ import type {
   TimelineMilestone,
 } from "../../domain/types";
 import { DEMO_ATTENDEE_KEY, DEMO_ROLE_KEY } from "../../lib/localStore";
+import { clearAuthToken } from "../../services/auth";
 import {
   checkInAttendee,
   connectProfiles,
   createRegistration,
+  deleteMilestone,
   detectSessionConflicts,
+  ensureAttendee,
   duplicateEvent,
   issueEligibleCertificates,
   linkRemotePayment,
@@ -33,12 +36,15 @@ import {
   simulatePayment,
   toggleSavedSession,
   undoCheckIn,
+  updateAttendee,
   upsertCommunication,
   upsertEvent,
   upsertMilestone,
   upsertSession,
   upsertSponsor,
   upsertTicket,
+  type AttendeeInput,
+  type AttendeePatch,
   type RemotePaymentLink,
 } from "../../repositories/platform";
 
@@ -49,7 +55,12 @@ interface PlatformContextValue {
   role: DemoRole;
   attendeeId: string;
   setRole: (role: DemoRole) => void;
+  /** Enter a workspace as a specific attendee (defaults to the demo attendee). */
+  signIn: (role: DemoRole, attendeeId?: string) => void;
   logout: () => void;
+  saveProfile: (patch: AttendeePatch) => void;
+  ensureLocalAttendee: (input: AttendeeInput) => string;
+  removeMilestone: (id: string) => void;
   resetDemo: () => void;
   refresh: () => void;
   saveEvent: (input: Partial<Event> & Pick<Event, "title">) => void;
@@ -92,21 +103,26 @@ function readRole(): DemoRole {
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<PlatformDatabase>(() => repo.get());
   const [role, setRoleState] = useState<DemoRole>(readRole);
-  const attendeeId = sessionStorage.getItem(DEMO_ATTENDEE_KEY) || DEMO_ATTENDEE_ID;
+  const [attendeeId, setAttendeeId] = useState<string>(() => sessionStorage.getItem(DEMO_ATTENDEE_KEY) || DEMO_ATTENDEE_ID);
 
   const apply = useCallback((next: PlatformDatabase) => {
     setDb(repo.commit(next));
   }, []);
 
-  const setRole = useCallback((next: DemoRole) => {
+  const signIn = useCallback((next: DemoRole, nextAttendeeId: string = DEMO_ATTENDEE_ID) => {
     sessionStorage.setItem(DEMO_ROLE_KEY, next);
-    sessionStorage.setItem(DEMO_ATTENDEE_KEY, DEMO_ATTENDEE_ID);
+    sessionStorage.setItem(DEMO_ATTENDEE_KEY, nextAttendeeId);
+    setAttendeeId(nextAttendeeId);
     setRoleState(next);
   }, []);
+
+  const setRole = useCallback((next: DemoRole) => signIn(next), [signIn]);
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(DEMO_ROLE_KEY);
     sessionStorage.removeItem(DEMO_ATTENDEE_KEY);
+    clearAuthToken();
+    setAttendeeId(DEMO_ATTENDEE_ID);
     setRoleState("visitor");
   }, []);
 
@@ -116,7 +132,15 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       role,
       attendeeId,
       setRole,
+      signIn,
       logout,
+      saveProfile: (patch) => apply(updateAttendee(repo.clone(), attendeeId, patch)),
+      ensureLocalAttendee: (input) => {
+        const result = ensureAttendee(repo.clone(), input);
+        apply(result.db);
+        return result.attendeeId;
+      },
+      removeMilestone: (id) => apply(deleteMilestone(repo.clone(), id)),
       resetDemo: () => setDb(repo.reset()),
       refresh: () => setDb(repo.get()),
       saveEvent: (input) => apply(upsertEvent(repo.clone(), input)),
@@ -174,7 +198,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       updateSettings: (settings) => apply(saveSettings(repo.clone(), settings)),
       issueCerts: () => apply(issueEligibleCertificates(repo.clone())),
     }),
-    [apply, attendeeId, db, logout, role, setRole],
+    [apply, attendeeId, db, logout, role, setRole, signIn],
   );
 
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;
