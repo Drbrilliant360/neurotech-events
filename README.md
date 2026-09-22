@@ -88,6 +88,7 @@ Each material change should:
 
 Read these before major implementation work:
 
+- [`backend/README.md`](./backend/README.md) — FastAPI backend architecture, phased delivery plan and monorepo conventions.
 - [`AGENTS.md`](./AGENTS.md) — rules for AI agents and contributors, including the required branch/commit/PR workflow.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution and implementation expectations.
 - [`docs/PRODUCT_REQUIREMENTS.md`](./docs/PRODUCT_REQUIREMENTS.md) — product vision, user roles, required flows and production rules.
@@ -112,9 +113,15 @@ src/
   styles/       Platform and Neurotech experience styles
   design/       Prototype/design source artifacts
   App.tsx       Application shell
+
+backend/
+  README.md     Backend architecture and phased implementation contract
+
+postman/
+  *.json        FastAPI contract-first collection and local environment
 ```
 
-As the application evolves, production work should move toward the explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating business logic in the current prototype model.
+The backend will be added under `backend/` as a separately deployable FastAPI application while remaining in this monorepo. Production work should move toward the explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating business logic in the current frontend prototype model.
 
 ## Pull requests
 
