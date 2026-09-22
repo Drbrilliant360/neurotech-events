@@ -96,6 +96,7 @@ Read these before major implementation work:
 - [`docs/GIT_WORKFLOW.md`](./docs/GIT_WORKFLOW.md) — branch, commit, validation and PR process.
 - [`docs/SYSTEM_ENGINEERING.md`](./docs/SYSTEM_ENGINEERING.md) — current system baseline, target boundaries, security, reliability, payments, check-in and observability.
 - [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) — phased roadmap from prototype to production.
+- [`docs/FEATURE_BENCHMARK.md`](./docs/FEATURE_BENCHMARK.md) — feature benchmark against pretix, Ti.to, Sessionize and Eventbrite, with a prioritised build order.
 - [`docs/adr/0000-template.md`](./docs/adr/0000-template.md) — architecture decision record template.
 - [`SECURITY.md`](./SECURITY.md) — project security policy and security-sensitive implementation guidance.
 
