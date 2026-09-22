@@ -95,6 +95,15 @@ interface PlatformContextValue {
 const PlatformContext = createContext<PlatformContextValue | null>(null);
 
 function readRole(): DemoRole {
+  if (import.meta.env.DEV) {
+    // Development helper: /?as=admin opens a workspace directly for local testing and screenshots.
+    const requested = new URLSearchParams(window.location.search).get("as");
+    if (requested === "attendee" || requested === "admin" || requested === "visitor") {
+      sessionStorage.setItem(DEMO_ROLE_KEY, requested);
+      sessionStorage.setItem(DEMO_ATTENDEE_KEY, DEMO_ATTENDEE_ID);
+      return requested;
+    }
+  }
   const value = sessionStorage.getItem(DEMO_ROLE_KEY);
   if (value === "attendee" || value === "admin" || value === "visitor") return value;
   return "visitor";

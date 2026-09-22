@@ -99,6 +99,13 @@ export function LoginPage() {
         <button type="submit" className="nt-btn accent" disabled={busy}>{busy ? "Signing in…" : "Sign in to my events"}</button>
       </form>
       <p className="nt-auth-switch">New to Neurotech Events? <Link to="/register">Create an account</Link></p>
+      {!LIVE ? (
+        <div className="nt-auth-demo-roles" aria-label="Demo workspaces">
+          <span className="nt-muted">Demo shortcuts</span>
+          <button type="button" className="nt-chip" onClick={() => { signIn("attendee"); navigate("/app"); }}>Open attendee workspace</button>
+          <button type="button" className="nt-chip" onClick={() => { signIn("admin"); navigate("/admin"); }}>Open admin console</button>
+        </div>
+      ) : null}
     </AuthShell>
   );
 }
