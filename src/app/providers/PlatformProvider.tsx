@@ -47,6 +47,7 @@ interface PlatformContextValue {
   role: DemoRole;
   attendeeId: string;
   setRole: (role: DemoRole) => void;
+  logout: () => void;
   resetDemo: () => void;
   refresh: () => void;
   saveEvent: (input: Partial<Event> & Pick<Event, "title">) => void;
@@ -100,12 +101,19 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     setRoleState(next);
   }, []);
 
+  const logout = useCallback(() => {
+    sessionStorage.removeItem(DEMO_ROLE_KEY);
+    sessionStorage.removeItem(DEMO_ATTENDEE_KEY);
+    setRoleState("visitor");
+  }, []);
+
   const value = useMemo<PlatformContextValue>(
     () => ({
       db,
       role,
       attendeeId,
       setRole,
+      logout,
       resetDemo: () => setDb(repo.reset()),
       refresh: () => setDb(repo.get()),
       saveEvent: (input) => apply(upsertEvent(repo.clone(), input)),
@@ -162,7 +170,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       updateSettings: (settings) => apply(saveSettings(repo.clone(), settings)),
       issueCerts: () => apply(issueEligibleCertificates(repo.clone())),
     }),
-    [apply, attendeeId, db, role, setRole],
+    [apply, attendeeId, db, logout, role, setRole],
   );
 
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;

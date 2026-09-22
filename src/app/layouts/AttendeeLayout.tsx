@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
-import { DemoSwitcher } from "./DemoSwitcher";
 
 const NAV = [
   ["/app", "Dashboard"],
@@ -29,7 +28,6 @@ export function AttendeeLayout() {
 
   return (
     <div className="nt-shell nt-surface-attendee">
-      <DemoSwitcher />
       <nav className="mobile-nav" aria-label="Attendee">
         {NAV.map(([to, label]) => (
           <NavLink key={to} to={to} end={to === "/app"} className="nt-chip">
