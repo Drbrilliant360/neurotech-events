@@ -218,6 +218,8 @@ Exit criteria:
 
 ### Phase 1 — Identity and authorization
 
+Progress: identity foundation implemented on `feat/backend`.
+
 Deliver:
 
 - user/account model;
@@ -228,6 +230,18 @@ Deliver:
 - protected route dependencies;
 - event-level authorization policy;
 - tests for ownership and forbidden access.
+
+Current implementation includes:
+
+- persisted `users` table and Alembic migration;
+- attendee default role;
+- Argon2 password hashing;
+- JWT access-token issuance;
+- registration and login endpoints;
+- authenticated `GET /api/v1/auth/me`;
+- duplicate-email and invalid-credential tests.
+
+Organization membership, refresh-token/session revocation, profile data, admin roles and event-scoped authorization remain follow-up work in this phase.
 
 Recommended initial roles:
 

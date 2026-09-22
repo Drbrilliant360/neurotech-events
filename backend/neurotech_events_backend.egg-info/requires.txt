@@ -1,0 +1,14 @@
+alembic<2,>=1.15
+fastapi<1,>=0.115
+email-validator<3,>=2.2
+PyJWT<3,>=2.10
+pwdlib[argon2]<1,>=0.2
+pydantic-settings<3,>=2.7
+sqlalchemy<3,>=2.0
+uvicorn[standard]<1,>=0.34
+
+[dev]
+httpx<1,>=0.28
+pytest<9,>=8.3
+pytest-cov<7,>=6
+ruff<1,>=0.9
