@@ -4,9 +4,12 @@ import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState } from "../../components/shared/Widgets";
 import { formatMoney, isMobileMoney, paymentMethodLabel } from "../../lib/money";
 import { registrationBundle } from "../../repositories/platform";
+import { isLivePaymentsEnabled, PaymentApiError, startMobilePayment, type MobileMethod } from "../../services/payments";
 import type { PaymentMethod } from "../../domain/types";
 
-const METHODS: PaymentMethod[] = ["mpesa", "airtel", "mixx", "halopesa", "card", "bank"];
+const LIVE = isLivePaymentsEnabled();
+// Snippe collects mobile money only; card and bank stay available in the local demo.
+const METHODS: PaymentMethod[] = LIVE ? ["mpesa", "airtel", "mixx", "halopesa"] : ["mpesa", "airtel", "mixx", "halopesa", "card", "bank"];
 type DemoOutcome = "paid" | "failed" | "cancelled";
 
 const OUTCOMES: Array<{ value: DemoOutcome; title: string; body: string }> = [
@@ -17,32 +20,86 @@ const OUTCOMES: Array<{ value: DemoOutcome; title: string; body: string }> = [
 
 export function CheckoutPage() {
   const { registrationId = "" } = useParams();
-  const { db, pay } = usePlatform();
+  const { db, pay, linkRemote } = usePlatform();
   const navigate = useNavigate();
   const bundle = registrationBundle(db, registrationId);
   const [method, setMethod] = useState<PaymentMethod>(bundle?.payment?.method ?? "mpesa");
+  const [phone, setPhone] = useState(bundle?.attendee.phone ?? "");
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(true);
   const [outcome, setOutcome] = useState<DemoOutcome>("paid");
+  const [error, setError] = useState<string | null>(null);
 
   if (!bundle?.payment) {
     return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Checkout not found" body="Start registration again from the event page." /></div>;
   }
 
   const { registration, attendee, event, ticket, payment } = bundle;
+  const isFree = ticket.price === 0;
 
-  function startPay() {
+  async function startPay() {
     if (!accepted || busy) return;
+    setError(null);
+    if (payment.status === "paid" || isFree) {
+      navigate(`/payment/${payment.id}`);
+      return;
+    }
+    if (!LIVE) {
+      setBusy(true);
+      pay(payment.id, method, outcome);
+      navigate(`/payment/${payment.id}`);
+      return;
+    }
+    if (!isMobileMoney(method)) {
+      setError("Only mobile money is available for live payments right now.");
+      return;
+    }
     setBusy(true);
-    if (payment.status !== "paid" && ticket.price > 0) pay(payment.id, method, outcome);
-    navigate(`/payment/${payment.id}`);
+    try {
+      const remote = await startMobilePayment({
+        event_slug: event.slug,
+        ticket_code: ticket.id,
+        phone_number: phone,
+        method: method as MobileMethod,
+        attendee: {
+          full_name: attendee.fullName,
+          email: attendee.email,
+          organization: attendee.organization || undefined,
+          job_title: attendee.jobTitle || undefined,
+          country: attendee.country || undefined,
+        },
+        client_reference: registration.id,
+      });
+      linkRemote(payment.id, {
+        providerPaymentId: remote.id,
+        reference: remote.reference,
+        providerReference: remote.provider_reference ?? undefined,
+        method: remote.method,
+        status: remote.status,
+        amount: remote.amount,
+      });
+      navigate(`/payment/${payment.id}`);
+    } catch (err) {
+      setError(err instanceof PaymentApiError ? err.message : "Could not start the payment. Please try again.");
+      setBusy(false);
+    }
   }
+
+  const payLabel = isFree
+    ? "Confirm free registration"
+    : LIVE
+      ? `Pay ${formatMoney(payment.amount)}`
+      : outcome === "paid"
+        ? `Pay ${formatMoney(payment.amount)}`
+        : outcome === "failed"
+          ? "Simulate payment failure"
+          : "Cancel payment";
 
   return (
     <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 1080 }}>
       <div className="nt-page-intro">
         <div>
-          <p className="nt-kicker">Secure checkout · Demo environment</p>
+          <p className="nt-kicker">{LIVE ? "Secure checkout · Mobile money via Snippe" : "Secure checkout · Demo environment"}</p>
           <h1>Complete your registration.</h1>
           <p className="nt-lede">{registration.ticketNumber} · {event.title}</p>
         </div>
@@ -66,7 +123,11 @@ export function CheckoutPage() {
           <section className="nt-card nt-form-card">
             <p className="nt-kicker">Payment method</p>
             <h2>How would you like to pay?</h2>
-            <p className="nt-muted">This frontend simulates the payment experience. Do not enter real payment credentials.</p>
+            <p className="nt-muted">
+              {LIVE
+                ? "You will receive a prompt on your phone to approve the payment with your mobile money PIN. We never see your PIN."
+                : "This frontend simulates the payment experience. Do not enter real payment credentials."}
+            </p>
             <div className="nt-grid cards" style={{ marginTop: 20 }}>
               {METHODS.map((item) => (
                 <button key={item} type="button" className={`nt-choice ${method === item ? "is-on" : ""}`} onClick={() => setMethod(item)}>
@@ -75,10 +136,26 @@ export function CheckoutPage() {
                 </button>
               ))}
             </div>
-            {isMobileMoney(method) ? <div className="nt-checkout-note">A {paymentMethodLabel(method)} prompt will be simulated for {attendee.phone}. No PIN is collected in this demo.</div> : null}
+            {LIVE && !isFree ? (
+              <label className="nt-field" style={{ marginTop: 20, display: "block" }}>
+                <span>Mobile money number</span>
+                <input
+                  className="nt-input"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  placeholder="0712 345 678 or 255712345678"
+                  onChange={(e) => setPhone(e.target.value)}
+                  aria-describedby="checkout-phone-help"
+                />
+                <small id="checkout-phone-help" className="nt-muted">The {paymentMethodLabel(method)} prompt will be sent to this Tanzanian number.</small>
+              </label>
+            ) : null}
+            {!LIVE && isMobileMoney(method) ? <div className="nt-checkout-note">A {paymentMethodLabel(method)} prompt will be simulated for {attendee.phone}. No PIN is collected in this demo.</div> : null}
           </section>
 
-          {ticket.price > 0 ? (
+          {!LIVE && !isFree ? (
             <section className="nt-card nt-form-card nt-demo-payment-scenario">
               <div>
                 <p className="nt-kicker">Demo payment result</p>
@@ -98,7 +175,11 @@ export function CheckoutPage() {
 
           <label className="nt-consent-row">
             <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-            <span>I accept the event terms and understand that this local demo does not charge a real wallet, card or bank account.</span>
+            <span>
+              {LIVE
+                ? "I accept the event terms and authorise a mobile money charge for the total shown."
+                : "I accept the event terms and understand that this local demo does not charge a real wallet, card or bank account."}
+            </span>
           </label>
         </div>
 
@@ -110,11 +191,14 @@ export function CheckoutPage() {
             <div><dt>VAT {db.settings.vatPercent}%</dt><dd>{formatMoney(payment.amount - ticket.price)}</dd></div>
             <div className="nt-summary-total"><dt>Total</dt><dd>{formatMoney(payment.amount)}</dd></div>
           </dl>
+          {error ? <p className="nt-auth-error" role="alert">{error}</p> : null}
           <button type="button" className="nt-btn" style={{ width: "100%", marginTop: 18 }} disabled={!accepted || busy} onClick={startPay}>
-            {busy ? "Starting…" : ticket.price === 0 ? "Confirm free registration" : outcome === "paid" ? `Pay ${formatMoney(payment.amount)}` : outcome === "failed" ? "Simulate payment failure" : "Cancel payment"}
+            {busy ? "Sending prompt…" : payLabel}
           </button>
           <Link to={`/register/${event.id}`} className="nt-btn ghost" style={{ width: "100%", marginTop: 9 }}>Back to registration</Link>
-          <p className="nt-payment-disclaimer">Frontend simulation only · no real payment is processed.</p>
+          <p className="nt-payment-disclaimer">
+            {LIVE ? "Payments are processed by Snippe and confirmed by our server before your ticket is issued." : "Frontend simulation only · no real payment is processed."}
+          </p>
         </aside>
       </div>
     </div>

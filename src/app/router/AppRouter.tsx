@@ -24,6 +24,7 @@ import { CertificatesPage } from "../../features/certificates/CertificatesPage";
 import { ProfilePage } from "../../features/attendees/ProfilePage";
 import { AdminDashboardPage } from "../../features/admin/AdminDashboardPage";
 import { AdminEventsPage } from "../../features/admin/AdminEventsPage";
+import { AdminTransactionsPage } from "../../features/admin/AdminTransactionsPage";
 import {
   AdminAttendeesPage,
   AdminCheckInPage,
@@ -97,6 +98,7 @@ export function AppRouter() {
             <Route path="communications" element={<AdminCommsPage />} />
             <Route path="sponsors" element={<AdminSponsorsPage />} />
             <Route path="payments" element={<AdminPaymentsPage />} />
+            <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>

@@ -24,6 +24,7 @@ import {
   detectSessionConflicts,
   duplicateEvent,
   issueEligibleCertificates,
+  linkRemotePayment,
   LocalPlatformRepository,
   markAllNotifications,
   markNotification,
@@ -38,6 +39,7 @@ import {
   upsertSession,
   upsertSponsor,
   upsertTicket,
+  type RemotePaymentLink,
 } from "../../repositories/platform";
 
 const repo = new LocalPlatformRepository();
@@ -64,6 +66,7 @@ interface PlatformContextValue {
   }) => { registration: Registration; payment: Payment };
   pay: (paymentId: string, method: PaymentMethod, outcome: Extract<PaymentStatus, "paid" | "failed" | "cancelled">) => void;
   refund: (paymentId: string) => void;
+  linkRemote: (paymentId: string, remote: RemotePaymentLink) => void;
   toggleAgenda: (sessionId: string) => void;
   toggleConnect: (toAttendeeId: string) => void;
   readOne: (id: string) => void;
@@ -149,6 +152,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       },
       pay: (paymentId, method, outcome) => apply(simulatePayment(repo.clone(), paymentId, method, outcome)),
       refund: (paymentId) => apply(refundPayment(repo.clone(), paymentId)),
+      linkRemote: (paymentId, remote) => apply(linkRemotePayment(repo.clone(), paymentId, remote)),
       toggleAgenda: (sessionId) => apply(toggleSavedSession(repo.clone(), attendeeId, sessionId)),
       toggleConnect: (toAttendeeId) => apply(connectProfiles(repo.clone(), attendeeId, toAttendeeId)),
       readOne: (id) => apply(markNotification(repo.clone(), id, true)),

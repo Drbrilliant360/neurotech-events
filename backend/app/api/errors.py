@@ -1,6 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+from app.services.payments import PaymentError
 
 
 def register_error_handlers(app: FastAPI) -> None:
@@ -16,3 +18,14 @@ def register_error_handlers(app: FastAPI) -> None:
                 }
             },
         )
+
+    @app.exception_handler(PaymentError)
+    async def payment_error_handler(request: Request, exc: PaymentError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content={"error": {"code": exc.code, "message": str(exc)}})
+
+    @app.exception_handler(HTTPException)
+    async def http_error_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        code = {401: "unauthorized", 403: "forbidden", 404: "not_found", 503: "unavailable"}.get(
+            exc.status_code, "error"
+        )
+        return JSONResponse(status_code=exc.status_code, content={"error": {"code": code, "message": str(exc.detail)}})

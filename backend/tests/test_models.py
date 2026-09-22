@@ -16,6 +16,7 @@ EXPECTED_TABLES = {
     "registrations",
     "payments",
     "payment_events",
+    "provider_webhook_events",
     "check_ins",
     "certificates",
     "notifications",

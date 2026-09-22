@@ -38,9 +38,13 @@ class TicketType(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("price >= 0", name="price_non_negative"),
         CheckConstraint("capacity >= 0", name="capacity_non_negative"),
+        UniqueConstraint("event_id", "code", name="uq_ticket_types_event_code"),
     )
 
     event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Stable, human-readable product code (e.g. "tt_summit_std"). Lets clients reference a
+    # ticket without knowing its UUID while the server still owns the price.
+    code: Mapped[str | None] = mapped_column(String(60))
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     tier: Mapped[str] = mapped_column(String(40), nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=Decimal("0"))

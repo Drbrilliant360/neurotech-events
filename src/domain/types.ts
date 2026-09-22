@@ -175,6 +175,10 @@ export interface Payment {
   status: PaymentStatus;
   createdAt: string;
   updatedAt: string;
+  /** Set when a real provider (Snippe) is processing this payment. */
+  provider?: "snippe";
+  providerPaymentId?: string;
+  providerReference?: string;
 }
 
 export interface Sponsor {

@@ -237,6 +237,49 @@ Review every generated migration before applying it: Alembic does not add the
 `from sqlalchemy.dialects import postgresql` import that JSONB variants need, and it does not
 detect later changes to CHECK constraints.
 
+## Payments (Snippe)
+
+Mobile-money collections run through [Snippe](https://snippe.sh) (API `2026-01-25`, TZS only).
+The server is the only authority on price, provider calls and confirmation:
+
+```text
+POST /api/v1/payments/mobile          price ticket from DB, reserve registration, push USSD prompt
+GET  /api/v1/payments/{id}            current state; open payments are re-verified with Snippe
+POST /api/v1/webhooks/snippe          signed provider events (HMAC-SHA256, 5-minute replay window, de-duplicated)
+GET  /api/v1/admin/payments           every payment this platform created, with its audit trail
+GET  /api/v1/admin/payments/provider  every transaction on the Snippe account, including other apps
+GET  /api/v1/admin/payments/balance   live provider balance
+POST /api/v1/admin/payments/{id}/verify  force a provider status check
+```
+
+Layout: `app/integrations/payments/snippe.py` (gateway adapter + `PaymentGateway` protocol),
+`app/services/payments.py` (pricing, state machine, webhook handling), `app/schemas/payments.py`,
+`app/api/v1/{payments,webhooks,admin_payments}.py`.
+
+Rules enforced:
+
+- the client sends an event slug and a ticket `code`; the amount is `price + VAT` from the database;
+- payments below Snippe's 500 TZS minimum are refused (free tickets never touch the provider);
+- our payment reference doubles as the Snippe `Idempotency-Key` (max 30 characters);
+- every status change is appended to `payment_events`; terminal states never regress;
+- `paid` confirms the registration, `cancelled`/`expired` releases the seat, `failed` leaves it pending for retry;
+- webhooks are rejected unless `SNIPPE_WEBHOOK_SECRET` is set and the signature and timestamp verify;
+  each event `id` is stored in `provider_webhook_events`, so redeliveries are no-ops;
+- `/admin/*` requires `Authorization: Bearer $ADMIN_API_TOKEN` (interim gate until Phase 1 identity).
+
+Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
+build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.
+
+Seed the demo catalogue the API prices against (idempotent):
+
+```bash
+python -m app.db.seed
+```
+
+Testing: `tests/conftest.py` provides a `FakeGateway`; no test calls Snippe. To exercise a real
+payment, run the frontend with `VITE_API_BASE_URL` set, register for a paid ticket and approve the
+prompt on your own phone (minimum 500 TZS). Never commit `.env`.
+
 ## Phased delivery plan
 
 ### Phase 0 — Contract and scaffolding

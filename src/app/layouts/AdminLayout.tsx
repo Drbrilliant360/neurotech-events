@@ -37,6 +37,7 @@ const SECTIONS = [
     title: "Finance & data",
     items: [
       ["/admin/payments", "Payments"],
+      ["/admin/transactions", "All transactions"],
       ["/admin/reports", "Reports"],
       ["/admin/settings", "Settings"],
     ],

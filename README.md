@@ -122,6 +122,8 @@ postman/
   *.json        FastAPI contract-first collection and local environment
 ```
 
+Live payments: copy `.env.example` to `.env` and set `VITE_API_BASE_URL` to the running backend (default `http://localhost:8000`). Checkout then offers mobile money only and the payment page polls the server, which verifies each payment with Snippe before a ticket is issued. Leave the variable unset to keep the local demo checkout. The admin **All transactions** page needs the backend's `ADMIN_API_TOKEN`.
+
 The backend will be added under `backend/` as a separately deployable FastAPI application while remaining in this monorepo. Production work should move toward the explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating business logic in the current frontend prototype model.
 
 ## Pull requests

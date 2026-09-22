@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.errors import register_error_handlers
 from app.api.v1.router import router as api_v1_router
@@ -13,6 +14,12 @@ app = FastAPI(
     debug=settings.debug,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
+)
 register_error_handlers(app)
 app.include_router(api_v1_router, prefix=settings.api_prefix)
 

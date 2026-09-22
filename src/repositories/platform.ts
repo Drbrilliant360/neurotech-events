@@ -325,6 +325,30 @@ export function simulatePayment(
   return db;
 }
 
+export interface RemotePaymentLink {
+  providerPaymentId: string;
+  reference: string;
+  providerReference?: string;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  amount?: number;
+}
+
+/** Attach the server-side payment created by the API to the local checkout record. */
+export function linkRemotePayment(db: PlatformDatabase, paymentId: string, remote: RemotePaymentLink): PlatformDatabase {
+  const payment = db.payments.find((item) => item.id === paymentId);
+  if (!payment) return db;
+  payment.provider = "snippe";
+  payment.providerPaymentId = remote.providerPaymentId;
+  payment.providerReference = remote.providerReference;
+  payment.reference = remote.reference;
+  payment.method = remote.method;
+  if (typeof remote.amount === "number") payment.amount = remote.amount;
+  payment.status = remote.status === "paid" ? "processing" : remote.status;
+  payment.updatedAt = new Date().toISOString();
+  return db;
+}
+
 export function refundPayment(db: PlatformDatabase, paymentId: string): PlatformDatabase {
   const payment = db.payments.find((item) => item.id === paymentId);
   if (!payment || payment.status !== "paid") return db;
