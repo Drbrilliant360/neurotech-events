@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.deps import DbSession
-from app.api.v1 import admin_payments, auth, payments, webhooks
+from app.api.v1 import admin_catalogue, admin_payments, auth, payments, public_events, webhooks
 from app.api.v1.auth import CurrentUser
 from app.schemas.auth import ProfileUpdateRequest, UserResponse
 from app.services.auth import update_profile, user_response
@@ -11,6 +11,8 @@ router.include_router(auth.router)
 router.include_router(payments.router)
 router.include_router(webhooks.router)
 router.include_router(admin_payments.router)
+router.include_router(admin_catalogue.router)
+router.include_router(public_events.router)
 
 
 @router.get("/meta", tags=["system"])
