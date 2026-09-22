@@ -25,7 +25,14 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(HTTPException)
     async def http_error_handler(request: Request, exc: HTTPException) -> JSONResponse:
-        code = {401: "unauthorized", 403: "forbidden", 404: "not_found", 503: "unavailable"}.get(
-            exc.status_code, "error"
+        default_code = {401: "unauthorized", 403: "forbidden", 404: "not_found", 409: "conflict", 503: "unavailable"}
+        detail = exc.detail
+        if isinstance(detail, dict):
+            code = str(detail.get("code") or default_code.get(exc.status_code, "error"))
+            message = str(detail.get("message") or detail)
+        else:
+            code = default_code.get(exc.status_code, "error")
+            message = str(detail)
+        return JSONResponse(
+            status_code=exc.status_code, content={"error": {"code": code, "message": message}}, headers=exc.headers
         )
-        return JSONResponse(status_code=exc.status_code, content={"error": {"code": code, "message": str(exc.detail)}})

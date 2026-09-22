@@ -1,0 +1,49 @@
+import uuid
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+
+class ProfileFields(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    phone: str | None = Field(default=None, max_length=40)
+    organization: str | None = Field(default=None, max_length=200)
+    job_title: str | None = Field(default=None, max_length=200)
+    country: str | None = Field(default=None, max_length=120)
+    interests: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("interests")
+    @classmethod
+    def normalize_interests(cls, interests: list[str]) -> list[str]:
+        return [interest.strip() for interest in interests if interest.strip()]
+
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str = Field(min_length=2, max_length=200)
+    profile: ProfileFields = Field(default_factory=ProfileFields)
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+    full_name: str
+    role: str
+    is_active: bool
+    profile: ProfileFields | None = None
+
+
+class ProfileUpdateRequest(ProfileFields):
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse

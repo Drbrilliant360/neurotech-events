@@ -40,17 +40,26 @@ Gateway = Annotated[PaymentGateway | None, Depends(payment_gateway)]
 
 def require_super_admin(
     settings: AppSettings,
+    db: DbSession,
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
-    """Interim platform-admin gate: a static bearer token from the environment.
+    """Platform-admin gate for money and cross-tenant data.
 
-    Replaced by role-based authorization in Phase 1 identity. Kept server-side so the browser
-    never decides who may see money.
+    Accepts either the static `ADMIN_API_TOKEN` (operational break-glass) or a JWT belonging to
+    an active user with the `platform_admin` role. Enforced server-side; the browser never
+    decides who may see transactions.
     """
-    if not settings.admin_api_token:
-        raise HTTPException(status_code=503, detail="Admin access is not configured on this server.")
+    from app.db.models.enums import UserRole
+    from app.services.auth import AuthenticationError, get_user_from_token
+
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Admin bearer token required.")
     presented = authorization.split(" ", 1)[1].strip()
-    if not secrets.compare_digest(presented, settings.admin_api_token):
-        raise HTTPException(status_code=403, detail="Invalid admin token.")
+    if settings.admin_api_token and secrets.compare_digest(presented, settings.admin_api_token):
+        return
+    try:
+        user = get_user_from_token(db, presented, settings)
+    except AuthenticationError as exc:
+        raise HTTPException(status_code=403, detail="Invalid admin token.") from exc
+    if user.role != UserRole.PLATFORM_ADMIN:
+        raise HTTPException(status_code=403, detail="Platform admin role required.")

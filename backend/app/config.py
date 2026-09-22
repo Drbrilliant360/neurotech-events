@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     database_url: str = "sqlite:///./neurotech-events.db"
     debug: bool = False
+    jwt_secret_key: str = "unsafe-development-secret-change-me-32"
+    access_token_expire_minutes: int = 30
 
     # Comma-separated browser origins allowed to call this API.
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"

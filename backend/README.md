@@ -9,7 +9,26 @@ The repository is intentionally being evolved as a monorepo:
 - both applications share product documentation and are validated through GitHub Actions;
 - deployment can scale each application independently without splitting the repository prematurely.
 
-Phase 0 now contains only service scaffolding: configuration, health/versioned routing, database infrastructure, migration configuration, smoke tests and CI validation. Business domains are intentionally deferred to later phases. This document is the implementation contract for the agents and contributors who will build them incrementally.
+Phase 0 scaffolding, the identity foundation, the full persistence schema and live mobile-money payments are implemented. Remaining business domains are delivered incrementally. This document is both the implementation contract and the current handoff ledger for agents and contributors who continue the backend.
+
+## Current implementation status
+
+Integration branch: `masterchanges`, merged into `main` through pull requests (see `AGENTS.md` and `docs/GIT_WORKFLOW.md`). The earlier `feat/backend` branch has been merged and retired.
+
+Phase status:
+
+| Phase | Status | Notes |
+| --- | --- | --- |
+| Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
+| Phase 1 — Identity and authorization | In progress | `users` (UUID, role enum) linked to `attendees`, Argon2 hashing, JWT login, current-user/profile routes, `platform_admin` gate on admin routes, `python -m app.db.create_admin` |
+| Phase 2 — Public events and program | Schema ready | Tables and demo seed exist (`python -m app.db.seed`); public read endpoints pending |
+| Phase 3 — Ticketing and registration | Partial | Registrations are created server-side by the payment flow with capacity checks; no stored `sold` counter |
+| Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, polling verification, `payment_events` audit trail, super-admin transaction views |
+| Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
+| Phase 6 — Operations and check-in | Not started | Scoped check-in, audit history and exports |
+| Phase 7 — Communications, media and scale | Not started | Workers, providers, storage, observability and retention |
+
+History lives in `git log main`; the identity work from `feat/backend` and the schema/payments work from `masterchanges` were unified in one merge so Alembic keeps a single revision chain.
 
 ## Backend objectives
 
@@ -284,6 +303,8 @@ prompt on your own phone (minimum 500 TZS). Never commit `.env`.
 
 ### Phase 0 — Contract and scaffolding
 
+Status: **complete**.
+
 Deliver:
 
 - backend architecture ADR;
@@ -296,6 +317,24 @@ Deliver:
 - CI job that installs and validates the backend;
 - initial OpenAPI metadata.
 
+Implemented endpoints:
+
+```text
+GET /health
+GET /api/v1/meta
+GET /docs
+GET /openapi.json
+```
+
+Validation completed:
+
+```text
+ruff check backend
+pytest backend/tests
+alembic current
+alembic upgrade head
+```
+
 Exit criteria:
 
 - the backend starts locally;
@@ -304,6 +343,8 @@ Exit criteria:
 - frontend CI remains green.
 
 ### Phase 1 — Identity and authorization
+
+Status: **in progress**.
 
 Deliver:
 
@@ -316,6 +357,37 @@ Deliver:
 - event-level authorization policy;
 - tests for ownership and forbidden access.
 
+Current implementation includes:
+
+- persisted `users` table (UUID ids, `role` enum) in the baseline migration;
+- attendee records in `attendees`, linked by `attendees.user_id`; guest registrations made before sign-up attach to the account by email;
+- attendee default role;
+- Argon2 password hashing;
+- JWT access-token issuance;
+- registration and login endpoints;
+- authenticated `GET /api/v1/auth/me`;
+- authenticated `PATCH /api/v1/auth/me`;
+- frontend-compatible `GET /api/v1/me`;
+- frontend-compatible `PATCH /api/v1/me`;
+- normalized email addresses and duplicate-email protection;
+- profile fields for phone, organization, job title, country and interests;
+- `platform_admin` role accepted by the admin payment routes (alongside the static `ADMIN_API_TOKEN`);
+- duplicate-email and invalid-credential tests.
+
+Validation currently covers registration, login, invalid credentials, duplicate email, protected current-user access and profile updates.
+
+Still required before Phase 1 is complete:
+
+- organization membership model (the `organizations` table exists);
+- permission model beyond the role enum;
+- `event_staff`, `event_admin` and `platform_admin` authorization;
+- event-scoped access checks;
+- refresh-token/session revocation strategy;
+- password reset;
+- email verification;
+- explicit `401`, `403` and resource-ownership tests;
+- authentication/authorization ADR.
+
 Recommended initial roles:
 
 ```text
@@ -326,6 +398,8 @@ platform_admin
 ```
 
 ### Phase 2 — Public events and program
+
+Status: **not started**. Do not implement event administration or protected event resources until the Phase 1 authorization boundary is defined.
 
 Deliver:
 
@@ -342,6 +416,8 @@ Connect the frontend public routes only after response schemas are stable.
 
 ### Phase 3 — Ticketing and registration
 
+Status: **not started**.
+
 Deliver:
 
 - ticket types;
@@ -356,6 +432,8 @@ Deliver:
 Inventory must be updated transactionally. Do not recreate the frontend `sold` counter as the only source of truth.
 
 ### Phase 4 — Payments
+
+Status: **not started**.
 
 Deliver:
 
@@ -372,6 +450,8 @@ Begin with a deterministic fake provider for development and tests. Add a real p
 
 ### Phase 5 — Attendee experience
 
+Status: **not started**.
+
 Deliver:
 
 - dashboard read model;
@@ -384,6 +464,8 @@ Deliver:
 
 ### Phase 6 — Operations and check-in
 
+Status: **not started**.
+
 Deliver:
 
 - scoped attendee search;
@@ -394,6 +476,8 @@ Deliver:
 - operational reports.
 
 ### Phase 7 — Communications, media and scale
+
+Status: **not started**.
 
 Deliver:
 
@@ -471,6 +555,43 @@ npm run dev
 ```
 
 The frontend API base URL should be configured through a browser-safe Vite variable once API integration starts.
+
+## Resume checklist for the next agent
+
+Before changing code:
+
+```bash
+git switch masterchanges
+git pull --ff-only origin masterchanges
+git status
+```
+
+Read this file and then inspect:
+
+- `backend/app/db/models/`
+- `backend/app/schemas/auth.py`
+- `backend/app/services/auth.py`
+- `backend/app/api/v1/auth.py`
+- `backend/app/services/payments.py`
+- `backend/tests/test_auth.py`
+- `backend/tests/test_payments_api.py`
+- `docs/SYSTEM_ENGINEERING.md`
+- `postman/neurotech-events.postman_collection.json`
+
+The next recommended implementation slice is **organization membership and authorization**: define the permission matrix, add membership migrations and schemas, protect the remaining admin routes with server-side dependencies, and add forbidden-access tests. Public event read endpoints are the slice after that.
+
+After each coherent slice:
+
+```bash
+backend/.venv/bin/ruff check backend
+backend/.venv/bin/pytest backend/tests
+git diff --check
+git add backend
+git commit -m "<imperative scoped message>"
+git push origin masterchanges
+```
+
+Do not commit `.env`, `.venv`, SQLite databases, `__pycache__`, `.pytest_cache`, `.ruff_cache` or `*.egg-info`.
 
 ## Definition of done for backend phases
 
