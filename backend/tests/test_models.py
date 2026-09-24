@@ -5,10 +5,12 @@ from app.db.base import Base
 
 EXPECTED_TABLES = {
     "organizations",
+    "organization_memberships",
     "users",
     "attendees",
     "venues",
     "events",
+    "event_staff_assignments",
     "speakers",
     "sessions",
     "timeline_milestones",

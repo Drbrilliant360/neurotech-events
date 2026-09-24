@@ -9,7 +9,7 @@ from app.db.base import Base, JSONList, TimestampMixin, UUIDPrimaryKeyMixin
 from app.db.models.enums import EventFormat, EventStatus, MilestoneStatus, SessionType, string_enum
 
 if TYPE_CHECKING:
-    from app.db.models.identity import Organization
+    from app.db.models.identity import EventStaffAssignment, Organization
     from app.db.models.sponsors import SponsorEvent
     from app.db.models.ticketing import Registration, TicketType
 
@@ -66,6 +66,9 @@ class Event(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     ticket_types: Mapped[list["TicketType"]] = relationship(back_populates="event", cascade="all, delete-orphan")
     registrations: Mapped[list["Registration"]] = relationship(back_populates="event")
     sponsor_links: Mapped[list["SponsorEvent"]] = relationship(back_populates="event", cascade="all, delete-orphan")
+    staff_assignments: Mapped[list["EventStaffAssignment"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
 
 
 class Speaker(UUIDPrimaryKeyMixin, TimestampMixin, Base):

@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@neon/config": "^1.7.3",
+    "@neon/env": "^1.4.4",
     "animejs": "^4.5.0",
     "framer-motion": "^13.3.0",
     "qrcode": "^1.5.4",

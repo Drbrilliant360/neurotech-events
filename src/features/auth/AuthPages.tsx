@@ -4,6 +4,7 @@ import { usePlatform } from "../../app/providers/PlatformProvider";
 import { accountPathFor } from "../../lib/routes";
 import { ApiError, isApiEnabled } from "../../services/api";
 import { login as apiLogin, register as apiRegister, roleToDemoRole, setAuthToken, type AuthUser } from "../../services/auth";
+import { BrandLogo } from "../../components/shared/BrandLogo";
 
 const LIVE = isApiEnabled();
 
@@ -18,7 +19,7 @@ function AuthShell({ eyebrow, title, copy, children }: { eyebrow: string; title:
       <div className="nt-auth-orbit nt-auth-orbit-two" aria-hidden="true" />
       <section className="nt-auth-card">
         <Link to="/" className="nt-auth-brand" aria-label="Neurotech Events home">
-          <span className="nt-mark" />
+          <BrandLogo />
           <span><strong>Neurotech Events</strong><small>by Neurotech Africa</small></span>
         </Link>
         <div className="nt-auth-heading">

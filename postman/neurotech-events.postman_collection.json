@@ -1636,6 +1636,103 @@
           }
         }
       ]
+    },
+    {
+      "name": "Authorization",
+      "description": "Implemented scoped authorization. Use the access token from authentication and UUIDs from the seeded catalogue/users.",
+      "item": [
+        {
+          "name": "Get event access",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/events/{{event_id}}"
+          }
+        },
+        {
+          "name": "Assign organization membership",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/organizations/{{organization_id}}/memberships/{{user_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Assign event role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/events/{{event_id}}/assignments/{{user_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"role\": \"staff\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Deactivate organization membership",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/organizations/{{organization_id}}/memberships/{{user_id}}"
+          }
+        },
+        {
+          "name": "Deactivate event role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/events/{{event_id}}/assignments/{{user_id}}"
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
 import { Icon } from "../../components/shared/Icon";
+import { BrandLogo } from "../../components/shared/BrandLogo";
 import { BottomNav, MobileDrawer, MobileTopBar, useDrawer, type NavItem } from "../../components/shared/MobileNav";
 
 const NAV: NavItem[] = [
@@ -56,7 +57,7 @@ export function AttendeeLayout() {
       <div className="nt-app">
         <aside className="nt-side">
           <NavLink to="/" className="nt-brand nt-side-brand" aria-label="Back to Neurotech Events">
-            <span className="nt-mark sm" />
+            <BrandLogo compact />
             <span>
               <strong>Neurotech Events</strong>
               <small>Attendee workspace</small>
