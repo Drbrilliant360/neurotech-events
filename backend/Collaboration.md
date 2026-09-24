@@ -61,13 +61,13 @@ From the repository root:
 ```bash
 backend/.venv/bin/ruff check backend
 backend/.venv/bin/pytest backend/tests
-backend/.venv/bin/alembic -c backend/alembic.ini check
+(cd backend && .venv/bin/alembic -c alembic.ini check)
 ```
 
 For a local API smoke test:
 
 ```bash
-backend/.venv/bin/uvicorn app.main:app --app-dir backend --reload
+(cd backend && .venv/bin/uvicorn app.main:app --reload)
 ```
 
 The minimum expected API checks are:

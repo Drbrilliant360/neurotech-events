@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
 import { Icon } from "../../components/shared/Icon";
+import { BrandLogo } from "../../components/shared/BrandLogo";
 import { BottomNav, MobileDrawer, MobileTopBar, useDrawer, type NavItem, type NavSection } from "../../components/shared/MobileNav";
 import { isLivePaymentsEnabled } from "../../services/payments";
 
@@ -84,7 +85,7 @@ export function AdminLayout() {
       <div className="nt-app">
         <aside className="nt-side admin">
           <NavLink to="/admin" className="nt-brand nt-side-brand" aria-label="Neurotech Events admin dashboard">
-            <span className="nt-mark sm" />
+            <BrandLogo compact />
             <span>
               <strong>Neurotech Events</strong>
               <small>Operations console</small>

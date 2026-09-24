@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
 import { Icon } from "../../components/shared/Icon";
+import { BrandLogo } from "../../components/shared/BrandLogo";
 import { MobileDrawer, useDrawer } from "../../components/shared/MobileNav";
 import { accountPathFor } from "../../lib/routes";
 
@@ -24,7 +25,7 @@ export function PublicLayout() {
         <div className="nt-container nt-header-row">
           <div className="nt-public-nav-cluster">
             <NavLink to="/" className="nt-brand" aria-label="Neurotech Events home">
-              <span className="nt-mark" />
+              <BrandLogo />
               <span className="nt-brand-copy">
                 <span className="nt-brand-name">Neurotech Events</span>
                 <span className="nt-brand-subtitle">by Neurotech Africa</span>
@@ -112,7 +113,7 @@ export function PublicLayout() {
           <div className="nt-footer-grid">
             <div className="nt-footer-intro">
               <div className="nt-footer-brand">
-                <span className="nt-mark sm" />
+                <BrandLogo compact />
                 <div>
                   <strong>Neurotech Events</strong>
                   <span>by Neurotech Africa</span>

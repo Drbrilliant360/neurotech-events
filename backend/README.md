@@ -18,15 +18,15 @@ Phase 0 scaffolding, the identity foundation, the full persistence schema and li
 
 ## Current implementation status
 
-Integration branch: `masterchanges`, merged into `main` through pull requests (see `AGENTS.md` and `docs/GIT_WORKFLOW.md`). The earlier `feat/backend` branch has been merged and retired.
+Backend work currently continues on the long-lived `feat/backend` branch. Keep it synchronized with `main` before starting a new slice and submit backend changes through a pull request.
 
 Phase status:
 
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
-| Phase 1 — Identity and authorization | In progress | `users` (UUID, role enum) linked to `attendees`, Argon2 hashing, JWT login, current-user/profile routes, `platform_admin` gate on admin routes, `python -m app.db.create_admin` |
-| Phase 2 — Public events and program | Schema ready | Tables and demo seed exist (`python -m app.db.seed`); public read endpoints pending |
+| Phase 1 — Identity and authorization | In progress | Users, JWT/current-user flows, organization memberships, event assignments, scoped access endpoint and protected membership/assignment mutations exist; refresh/revocation and broader admin-route conversion remain |
+| Phase 2 — Public events and program | Partial | Event, venue and ticket tables, demo seed, public event listing/detail and ticket quote endpoints exist |
 | Phase 3 — Ticketing and registration | Partial | Registrations are created server-side by the payment flow with capacity checks; no stored `sold` counter |
 | Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, polling verification, `payment_events` audit trail, super-admin transaction views |
 | Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
@@ -165,6 +165,18 @@ The initial API should expose:
 - admin event, program, ticket, attendee, check-in and reporting operations;
 - provider webhooks.
 
+Implemented authorization routes:
+
+```text
+GET    /api/v1/authorization/events/{event_id}
+PUT    /api/v1/authorization/organizations/{organization_id}/memberships/{user_id}
+DELETE /api/v1/authorization/organizations/{organization_id}/memberships/{user_id}
+PUT    /api/v1/authorization/events/{event_id}/assignments/{user_id}
+DELETE /api/v1/authorization/events/{event_id}/assignments/{user_id}
+```
+
+Membership mutations require a platform administrator or organization owner/admin. Event assignment mutations require a platform administrator, organization owner/admin, or event manager. The assignment and membership payloads use the role values defined in `app.db.models.enums`.
+
 Use:
 
 - JSON request and response bodies;
@@ -250,10 +262,13 @@ Deliberate departures from the frontend model:
 
 Migration workflow:
 
+Run migration commands from `backend/`, because `alembic.ini` uses a relative `script_location`:
+
 ```bash
-alembic upgrade head                                   # apply pending migrations
-alembic revision --autogenerate -m "describe change"   # after editing models
-alembic downgrade -1                                   # roll back one revision
+cd backend
+.venv/bin/alembic upgrade head                                   # apply pending migrations
+.venv/bin/alembic revision --autogenerate -m "describe change"   # after editing models
+.venv/bin/alembic downgrade -1                                  # roll back one revision
 ```
 
 New model modules must be imported in `app/db/models/__init__.py` or autogenerate will not see them.
@@ -307,8 +322,21 @@ does not know or cannot sell.
 Seed the demo catalogue the API prices against (idempotent):
 
 ```bash
-python -m app.db.seed
+cd backend
+.venv/bin/python -m app.db.seed
 ```
+
+If a development SQLite file was created by an older migration history and Alembic reports
+`Can't locate revision identified by ...`, it is safe to recreate that generated local file:
+
+```bash
+rm backend/neurotech-events.db
+cd backend
+.venv/bin/alembic upgrade head
+.venv/bin/python -m app.db.seed
+```
+
+Do not use this reset procedure against PostgreSQL or any shared environment.
 
 Testing: `tests/conftest.py` provides a `FakeGateway`; no test calls Snippe. To exercise a real
 payment, run the frontend with `VITE_API_BASE_URL` set, register for a paid ticket and approve the
@@ -548,8 +576,9 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 cp .env.example .env
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+.venv/bin/alembic upgrade head
+.venv/bin/python -m app.db.seed
+.venv/bin/uvicorn app.main:app --reload --port 8000
 ```
 
 ### Connecting to PostgreSQL (Neon)
@@ -562,9 +591,11 @@ DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DBNAME?sslmode=require&chan
 
 The `psycopg` (v3) driver is installed with the project dependencies. `.env` is gitignored; never commit a real connection string. Neon's pooled endpoint (the `-pooler` host) is suitable for the running API. Neon recommends the direct endpoint for migration tooling if the pooler causes session-level issues.
 
-The frontend should continue to run separately:
+The frontend should continue to run separately from the repository root:
 
 ```bash
+cd ..
+cp .env.example .env
 npm ci
 npm run dev
 ```

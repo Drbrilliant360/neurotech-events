@@ -26,6 +26,20 @@ class UserRole(StrEnum):
     PLATFORM_ADMIN = "platform_admin"
 
 
+class OrganizationRole(StrEnum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    FINANCE = "finance"
+    MEMBER = "member"
+
+
+class EventAssignmentRole(StrEnum):
+    MANAGER = "manager"
+    STAFF = "staff"
+    CHECK_IN = "check_in"
+    SPEAKER = "speaker"
+
+
 class EventStatus(StrEnum):
     DRAFT = "draft"
     PUBLISHED = "published"

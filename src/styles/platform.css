@@ -96,6 +96,20 @@
   border-radius: 9px;
 }
 
+.nt-logo-image {
+  width: 154px;
+  height: 36px;
+  object-fit: contain;
+  object-position: left center;
+  border-radius: 6px;
+  flex: none;
+}
+
+.nt-logo-image.compact {
+  width: 112px;
+  height: 30px;
+}
+
 .nt-brand-name {
   font: 800 21px "Manrope", sans-serif;
   letter-spacing: -0.025em;

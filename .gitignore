@@ -30,3 +30,4 @@ neurotech-events.pub
 *.njsproj
 *.sln
 *.sw?
+.neon

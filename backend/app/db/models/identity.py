@@ -3,11 +3,11 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONList, TimestampMixin, UUIDPrimaryKeyMixin
-from app.db.models.enums import UserRole, string_enum
+from app.db.models.enums import OrganizationRole, UserRole, string_enum
 
 if TYPE_CHECKING:
     from app.db.models.engagement import NetworkingProfile
@@ -33,6 +33,26 @@ class Organization(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     notify_on_payment: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     events: Mapped[list["Event"]] = relationship(back_populates="organization")
+    memberships: Mapped[list["OrganizationMembership"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan"
+    )
+
+
+class OrganizationMembership(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "organization_memberships"
+    __table_args__ = (UniqueConstraint("organization_id", "user_id", name="uq_org_membership_user"),)
+
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role: Mapped[OrganizationRole] = mapped_column(
+        string_enum(OrganizationRole, "organization_role"), nullable=False, default=OrganizationRole.MEMBER
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    organization: Mapped["Organization"] = relationship(back_populates="memberships")
+    user: Mapped["User"] = relationship(back_populates="organization_memberships")
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -50,6 +70,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     attendee: Mapped["Attendee | None"] = relationship(back_populates="user", uselist=False)
+    organization_memberships: Mapped[list[OrganizationMembership]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    event_assignments: Mapped[list["EventStaffAssignment"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Attendee(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -73,3 +99,16 @@ class Attendee(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user: Mapped["User | None"] = relationship(back_populates="attendee")
     registrations: Mapped[list["Registration"]] = relationship(back_populates="attendee")
     networking_profile: Mapped["NetworkingProfile | None"] = relationship(back_populates="attendee", uselist=False)
+
+
+class EventStaffAssignment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "event_staff_assignments"
+    __table_args__ = (UniqueConstraint("event_id", "user_id", name="uq_event_assignment_user"),)
+
+    event_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(String(30), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    event: Mapped["Event"] = relationship(back_populates="staff_assignments")
+    user: Mapped["User"] = relationship(back_populates="event_assignments")

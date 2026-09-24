@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Icon, type IconName } from "./Icon";
+import { BrandLogo } from "./BrandLogo";
 
 export interface NavItem {
   to: string;
@@ -52,7 +53,7 @@ export function MobileTopBar({
   return (
     <div className="nt-mobile-bar">
       <Link to={homeTo} className="nt-mobile-brand" aria-label={`${title} home`}>
-        <span className="nt-mark sm" />
+        <BrandLogo compact />
         <span>
           <strong>{title}</strong>
           {subtitle ? <small>{subtitle}</small> : null}
