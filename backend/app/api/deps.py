@@ -55,7 +55,11 @@ def require_super_admin(
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Admin bearer token required.")
     presented = authorization.split(" ", 1)[1].strip()
-    if settings.admin_api_token and secrets.compare_digest(presented, settings.admin_api_token):
+    if (
+        settings.environment.lower() in {"development", "test"}
+        and settings.admin_api_token
+        and secrets.compare_digest(presented, settings.admin_api_token)
+    ):
         return
     try:
         user = get_user_from_token(db, presented, settings)

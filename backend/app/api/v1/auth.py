@@ -43,6 +43,25 @@ def current_user(
 CurrentUser = Annotated[User, Depends(current_user)]
 
 
+def optional_current_user(
+    db: DbSession,
+    settings: AppSettings,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)] = None,
+) -> User | None:
+    if credentials is None:
+        return None
+    try:
+        return get_user_from_token(db, credentials.credentials, settings)
+    except AuthenticationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={"code": "invalid_token", "message": str(exc)},
+        ) from exc
+
+
+OptionalCurrentUser = Annotated[User | None, Depends(optional_current_user)]
+
+
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest, db: DbSession, settings: AppSettings) -> TokenResponse:
     try:

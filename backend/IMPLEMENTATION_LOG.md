@@ -10,7 +10,7 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - Database foundation: SQLAlchemy with Alembic migrations
 - Current completed phase: Phase 0
 - Current active phases: Phase 1 — identity and authorization; Phase 2 — public catalogue; Phase 4 — payments
-- Next priority: convert existing admin routes to scoped authorization, then expand attendee registration and operations
+- Next priority: convert existing admin routes to scoped authorization, then expand attendee ticket and operations workflows
 
 ## Phase status
 
@@ -89,6 +89,23 @@ Refer to Git history for the exact commit associated with each earlier slice.
 - Added Postman requests for the authorization contract.
 - Validation: Ruff, 32 backend tests, and frontend checks all pass.
 - Follow-up: add dedicated mutation endpoint tests, authorization ADR, and migrate existing catalogue/payment admin routes to scoped checks.
+
+### 2026-09-24 — Attendee registration ownership
+
+- Added authenticated payment ownership: mobile payments associate the attendee record with the authenticated user when a bearer token is supplied.
+- Added attendee registration list, detail and cancellation routes.
+- Enforced ownership checks so one attendee cannot access another attendee's registration.
+- Pending registrations can be cancelled and release open payment intents; confirmed registrations remain protected for a future refund workflow.
+- Added Postman requests and API tests for registration ownership and cancellation.
+- Validation: Ruff, 37 backend tests, frontend checks and Alembic consistency check all pass.
+
+### 2026-09-24 — OWASP and DevSecOps baseline
+
+- Rejected the development JWT secret and wildcard CORS in production/staging settings.
+- Restricted the compatibility static admin token to development/test environments.
+- Added browser security headers, including HSTS in production/staging.
+- Added configuration security tests and documented the OWASP/API Security and DevSecOps baseline in [`SECURITY.md`](./SECURITY.md).
+- Follow-up: add token rotation/revocation, rate limiting, security audit events and CI SAST/DAST/dependency checks.
 
 ## Next implementation slices
 
