@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,6 +35,15 @@ class Settings(BaseSettings):
         if value.startswith("postgresql://"):
             return value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        if self.environment.lower() in {"production", "staging"}:
+            if self.jwt_secret_key == "unsafe-development-secret-change-me-32" or len(self.jwt_secret_key) < 32:
+                raise ValueError("JWT_SECRET_KEY must be a unique secret with at least 32 characters.")
+            if "*" in self.cors_origin_list:
+                raise ValueError("CORS_ORIGINS must explicitly list trusted origins.")
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:

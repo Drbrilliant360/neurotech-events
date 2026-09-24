@@ -1638,6 +1638,51 @@
       ]
     },
     {
+      "name": "Attendee registrations",
+      "description": "Authenticated attendee registration ownership and cancellation.",
+      "item": [
+        {
+          "name": "List my registrations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/attendee/registrations"
+          }
+        },
+        {
+          "name": "Get my registration",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/attendee/registrations/{{registration_id}}"
+          }
+        },
+        {
+          "name": "Cancel my registration",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/attendee/registrations/{{registration_id}}"
+          }
+        }
+      ]
+    },
+    {
       "name": "Authorization",
       "description": "Implemented scoped authorization. Use the access token from authentication and UUIDs from the seeded catalogue/users.",
       "item": [

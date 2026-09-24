@@ -15,6 +15,7 @@ Phase 0 scaffolding, the identity foundation, the full persistence schema and li
 
 - [`Collaboration.md`](./Collaboration.md) — shared workflow and implementation rules for contributors and coding agents.
 - [`IMPLEMENTATION_LOG.md`](./IMPLEMENTATION_LOG.md) — append-only record of backend changes, phase status, validation and follow-up work.
+- [`SECURITY.md`](./SECURITY.md) — OWASP-aligned security baseline and DevSecOps requirements.
 
 ## Current implementation status
 
@@ -27,7 +28,7 @@ Phase status:
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
 | Phase 1 — Identity and authorization | In progress | Users, JWT/current-user flows, organization memberships, event assignments, scoped access endpoint and protected membership/assignment mutations exist; refresh/revocation and broader admin-route conversion remain |
 | Phase 2 — Public events and program | Partial | Event, venue and ticket tables, demo seed, public event listing/detail and ticket quote endpoints exist |
-| Phase 3 — Ticketing and registration | Partial | Registrations are created server-side by the payment flow with capacity checks; no stored `sold` counter |
+| Phase 3 — Ticketing and registration | Partial | Authenticated payments attach registrations to attendee accounts; attendee list/detail/cancellation routes now exist; standalone checkout and refund workflows remain |
 | Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, polling verification, `payment_events` audit trail, super-admin transaction views |
 | Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
 | Phase 6 — Operations and check-in | Not started | Scoped check-in, audit history and exports |
@@ -176,6 +177,18 @@ DELETE /api/v1/authorization/events/{event_id}/assignments/{user_id}
 ```
 
 Membership mutations require a platform administrator or organization owner/admin. Event assignment mutations require a platform administrator, organization owner/admin, or event manager. The assignment and membership payloads use the role values defined in `app.db.models.enums`.
+
+Implemented attendee registration routes:
+
+```text
+GET    /api/v1/attendee/registrations
+GET    /api/v1/attendee/registrations/{registration_id}
+DELETE /api/v1/attendee/registrations/{registration_id}
+```
+
+Authenticated mobile payments now link the resulting attendee record to the account.
+Attendees can only read or cancel their own pending registrations. Confirmed
+registrations require a future refund workflow instead of direct cancellation.
 
 Use:
 

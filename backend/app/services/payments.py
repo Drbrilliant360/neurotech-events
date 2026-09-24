@@ -23,6 +23,7 @@ from app.db.models import (
     ProviderWebhookEvent,
     Registration,
     TicketType,
+    User,
 )
 from app.db.models.enums import EventStatus, PaymentMethod, PaymentStatus, RegistrationStatus
 from app.integrations.payments.snippe import (
@@ -125,7 +126,7 @@ class PaymentService:
 
     # ----------------------------------------------------------------- commands
 
-    def start_mobile_payment(self, request: MobilePaymentRequest) -> Payment:
+    def start_mobile_payment(self, request: MobilePaymentRequest, *, user: User | None = None) -> Payment:
         if self.gateway is None:
             raise GatewayUnavailable("Payments are not configured on this server.")
 
@@ -155,7 +156,7 @@ class PaymentService:
         if total < MIN_AMOUNT_TZS:
             raise ValidationError(f"Mobile money payments must be at least {MIN_AMOUNT_TZS} TZS.")
 
-        attendee = self._upsert_attendee(request)
+        attendee = self._upsert_attendee(request, user=user)
         registration = Registration(
             event_id=event.id,
             attendee_id=attendee.id,
@@ -331,12 +332,16 @@ class PaymentService:
             selectinload(Payment.registration).selectinload(Registration.ticket_type),
         )
 
-    def _upsert_attendee(self, request: MobilePaymentRequest) -> Attendee:
+    def _upsert_attendee(self, request: MobilePaymentRequest, *, user: User | None = None) -> Attendee:
         details = request.attendee
         attendee = self.db.scalar(select(Attendee).where(func.lower(Attendee.email) == details.email))
         if attendee is None:
             attendee = Attendee(email=details.email, full_name=details.full_name, interests=[])
             self.db.add(attendee)
+        elif user is not None and attendee.user_id not in (None, user.id):
+            raise ConflictError("This attendee email belongs to another account.")
+        if user is not None and attendee.user_id is None:
+            attendee.user_id = user.id
         attendee.full_name = details.full_name
         attendee.phone = request.phone_number
         if details.organization:
