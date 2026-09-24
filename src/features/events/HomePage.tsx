@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
+import { accountPathFor } from "../../lib/routes";
 import { formatRange } from "../../lib/dates";
 import { MEDIA, eventImage, sceneImage } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
 
 export function HomePage() {
-  const { db } = usePlatform();
+  const { db, role } = usePlatform();
+  const accountPath = accountPathFor(role);
   const visibleEvents = publicEvents(db);
   const upcomingEvents = visibleEvents.filter((event) => event.status !== "completed");
   const pastEvents = visibleEvents.filter((event) => event.status === "completed");
@@ -38,7 +40,7 @@ export function HomePage() {
               <Link to="/events" className="nt-btn ghost">
                 Explore all events
               </Link>
-              <Link to="/app" className="nt-arrow-link">
+              <Link to={accountPath} className="nt-arrow-link">
                 View my events →
               </Link>
             </div>
@@ -55,7 +57,7 @@ export function HomePage() {
           </div>
 
           <div className="nt-feature-card" aria-label="Featured Neurotech event">
-            <img src={MEDIA.cover} alt="Neurotech Africa event audience" />
+            <img src={MEDIA.cover} alt="Keynote speaker on stage at a Neurotech Africa event" />
             <div className="nt-feature-card-content">
               {featured ? (
                 <>
@@ -153,7 +155,7 @@ export function HomePage() {
               <h2>Registration should not disappear after the event ends.</h2>
               <p>Your attendee account is designed to retain tickets, notices, schedules, past attendance and certificates across Neurotech events.</p>
             </div>
-            <Link to="/app" className="nt-btn">Open attendee dashboard</Link>
+            <Link to={accountPath} className="nt-btn">Open attendee dashboard</Link>
           </div>
 
           <div className="nt-history-strip">
@@ -179,7 +181,7 @@ export function HomePage() {
           </div>
           <div className="nt-cta-actions">
             <Link to="/events" className="nt-btn accent">Explore events</Link>
-            <Link to="/app" className="nt-btn ghost" style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.22)" }}>
+            <Link to={accountPath} className="nt-btn ghost" style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.22)" }}>
               My events
             </Link>
           </div>

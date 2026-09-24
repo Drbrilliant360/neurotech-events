@@ -9,18 +9,19 @@ description = "FastAPI backend for Neurotech Events"
 requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.15,<2",
-  "fastapi>=0.115,<1",
   "email-validator>=2.2,<3",
-  "PyJWT>=2.10,<3",
+  "fastapi>=0.115,<1",
+  "httpx>=0.28,<1",
+  "psycopg[binary]>=3.2,<4",
   "pwdlib[argon2]>=0.2,<1",
   "pydantic-settings>=2.7,<3",
+  "PyJWT>=2.10,<3",
   "sqlalchemy>=2.0,<3",
   "uvicorn[standard]>=0.34,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "httpx>=0.28,<1",
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",
   "ruff>=0.9,<1",

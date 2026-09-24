@@ -9,7 +9,7 @@ The repository is intentionally being evolved as a monorepo:
 - both applications share product documentation and are validated through GitHub Actions;
 - deployment can scale each application independently without splitting the repository prematurely.
 
-Phase 0 scaffolding and the first identity slices are implemented. Business domains are intentionally deferred to later phases. This document is both the implementation contract and the current handoff ledger for agents and contributors who continue the backend.
+Phase 0 scaffolding, the identity foundation, the full persistence schema and live mobile-money payments are implemented. Remaining business domains are delivered incrementally. This document is both the implementation contract and the current handoff ledger for agents and contributors who continue the backend.
 
 ## Collaboration and progress records
 
@@ -18,36 +18,22 @@ Phase 0 scaffolding and the first identity slices are implemented. Business doma
 
 ## Current implementation status
 
-Current development branch:
-
-```text
-feat/backend
-```
+Integration branch: `masterchanges`, merged into `main` through pull requests (see `AGENTS.md` and `docs/GIT_WORKFLOW.md`). The earlier `feat/backend` branch has been merged and retired.
 
 Phase status:
 
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
-| Phase 1 — Identity and authorization | In progress | Accounts, attendee profiles, password hashing, JWT login and current-user/profile routes are implemented |
-| Phase 2 — Public events and program | Not started | Next major domain after identity authorization boundaries are complete |
-| Phase 3 — Ticketing and registration | Not started | Must use transactional inventory, not the frontend `sold` counter |
-| Phase 4 — Payments | Not started | Provider/webhook/reconciliation design required before live integration |
+| Phase 1 — Identity and authorization | In progress | `users` (UUID, role enum) linked to `attendees`, Argon2 hashing, JWT login, current-user/profile routes, `platform_admin` gate on admin routes, `python -m app.db.create_admin` |
+| Phase 2 — Public events and program | Schema ready | Tables and demo seed exist (`python -m app.db.seed`); public read endpoints pending |
+| Phase 3 — Ticketing and registration | Partial | Registrations are created server-side by the payment flow with capacity checks; no stored `sold` counter |
+| Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, polling verification, `payment_events` audit trail, super-admin transaction views |
 | Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
 | Phase 6 — Operations and check-in | Not started | Scoped check-in, audit history and exports |
 | Phase 7 — Communications, media and scale | Not started | Workers, providers, storage, observability and retention |
 
-Completed backend commits on `feat/backend` include:
-
-```text
-bd2e6cf  build: scaffold FastAPI backend phase 0
-e8057ff  feat: add backend identity foundation
-df7123f  chore: ignore generated backend metadata
-60a0f49  fix: align current user endpoint contract
-63449e1  feat: add attendee profile foundation
-```
-
-The branch is intentionally long-lived. Continue implementation on `feat/backend`; do not create a new phase branch unless the maintainer changes this workflow.
+History lives in `git log main`; the identity work from `feat/backend` and the schema/payments work from `masterchanges` were unified in one merge so Alembic keeps a single revision chain.
 
 ## Backend objectives
 
@@ -231,6 +217,103 @@ Production requirements:
 
 Payment integrations must use provider verification and signed webhooks. The frontend must never determine whether a payment succeeded.
 
+## Database schema
+
+The persistence layer lives in `app/db/models/` and is applied through Alembic. The baseline
+migration `0e5f3e6a33fc_create_core_platform_tables` creates 21 tables that mirror the frontend
+domain in `src/domain/types.ts` plus the Phase 1 identity models.
+
+| Domain | Tables |
+| --- | --- |
+| Identity | `organizations`, `users`, `attendees` |
+| Events and programme | `venues`, `events`, `speakers`, `sessions`, `timeline_milestones` |
+| Ticketing and money | `ticket_types`, `registrations`, `payments`, `payment_events`, `check_ins`, `certificates` |
+| Attendee engagement | `notifications`, `communications`, `networking_profiles`, `connections`, `saved_sessions` |
+| Sponsors | `sponsors`, `sponsor_events` |
+
+Conventions:
+
+- UUID primary keys, timezone-aware timestamps, `Numeric(12, 2)` for money, ISO currency codes;
+- enumerations are stored as strings with CHECK constraints (no native PostgreSQL enums), so
+  adding a value is a plain migration;
+- list fields (`highlights`, `faqs`, `interests`) are JSONB on PostgreSQL and JSON on SQLite;
+- constraint and index names follow the naming convention in `app/db/base.py`, so Alembic diffs stay stable;
+- every foreign key declares an explicit `ondelete` rule.
+
+Deliberate departures from the frontend model:
+
+- `ticket_types.tier` is an open string, not a closed enum, so organisers can add products without a deploy;
+- there is no stored `sold` counter. Quantity sold is derived from `registrations` inside a transaction;
+- `organizations` absorbs the frontend `OrganizationSettings` (VAT, currency, defaults, notification flags);
+- `sponsor_events` replaces the `eventIds` array on sponsors;
+- `payment_events` is an append-only audit trail of payment status transitions.
+
+Migration workflow:
+
+```bash
+alembic upgrade head                                   # apply pending migrations
+alembic revision --autogenerate -m "describe change"   # after editing models
+alembic downgrade -1                                   # roll back one revision
+```
+
+New model modules must be imported in `app/db/models/__init__.py` or autogenerate will not see them.
+Review every generated migration before applying it: Alembic does not add the
+`from sqlalchemy.dialects import postgresql` import that JSONB variants need, and it does not
+detect later changes to CHECK constraints.
+
+## Payments (Snippe)
+
+Mobile-money collections run through [Snippe](https://snippe.sh) (API `2026-01-25`, TZS only).
+The server is the only authority on price, provider calls and confirmation:
+
+```text
+POST /api/v1/payments/mobile          price ticket from DB, reserve registration, push USSD prompt
+GET  /api/v1/payments/{id}            current state; open payments are re-verified with Snippe
+POST /api/v1/webhooks/snippe          signed provider events (HMAC-SHA256, 5-minute replay window, de-duplicated)
+GET  /api/v1/admin/payments           every payment this platform created, with its audit trail
+GET  /api/v1/admin/payments/provider  every transaction on the Snippe account, including other apps
+GET  /api/v1/admin/payments/balance   live provider balance
+POST /api/v1/admin/payments/{id}/verify  force a provider status check
+GET  /api/v1/events                   published, ongoing and completed events (public)
+GET  /api/v1/events/{slug}            event detail with ticket types and sold counts (public)
+GET  /api/v1/events/{slug}/tickets/{code}/quote  exact server price for a ticket (public)
+PUT  /api/v1/admin/catalogue          upsert the admin console's events and ticket types
+```
+
+Layout: `app/integrations/payments/snippe.py` (gateway adapter + `PaymentGateway` protocol),
+`app/services/payments.py` (pricing, state machine, webhook handling), `app/schemas/payments.py`,
+`app/api/v1/{payments,webhooks,admin_payments}.py`.
+
+Rules enforced:
+
+- the client sends an event slug and a ticket `code`; the amount is `price + VAT` from the database;
+- payments below Snippe's 500 TZS minimum are refused (free tickets never touch the provider);
+- our payment reference doubles as the Snippe `Idempotency-Key` (max 30 characters);
+- every status change is appended to `payment_events`; terminal states never regress;
+- `paid` confirms the registration, `cancelled`/`expired` releases the seat, `failed` leaves it pending for retry;
+- webhooks are rejected unless `SNIPPE_WEBHOOK_SECRET` is set and the signature and timestamp verify;
+  each event `id` is stored in `provider_webhook_events`, so redeliveries are no-ops;
+- `/admin/*` requires `Authorization: Bearer $ADMIN_API_TOKEN` (interim gate until Phase 1 identity).
+
+Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
+build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.
+
+The admin console publishes its catalogue with `PUT /api/v1/admin/catalogue` (button on the
+Tickets page when `VITE_API_BASE_URL` is set). Events are matched by slug and tickets by code, so
+repeated publishes update in place; tickets no longer listed are deactivated, never deleted.
+Checkout fetches the ticket quote first and refuses to start a payment for a ticket the server
+does not know or cannot sell.
+
+Seed the demo catalogue the API prices against (idempotent):
+
+```bash
+python -m app.db.seed
+```
+
+Testing: `tests/conftest.py` provides a `FakeGateway`; no test calls Snippe. To exercise a real
+payment, run the frontend with `VITE_API_BASE_URL` set, register for a paid ticket and approve the
+prompt on your own phone (minimum 500 TZS). Never commit `.env`.
+
 ## Phased delivery plan
 
 ### Phase 0 — Contract and scaffolding
@@ -291,8 +374,8 @@ Deliver:
 
 Current implementation includes:
 
-- persisted `users` table and Alembic migration;
-- persisted `attendee_profiles` table and Alembic migration;
+- persisted `users` table (UUID ids, `role` enum) in the baseline migration;
+- attendee records in `attendees`, linked by `attendees.user_id`; guest registrations made before sign-up attach to the account by email;
 - attendee default role;
 - Argon2 password hashing;
 - JWT access-token issuance;
@@ -303,15 +386,15 @@ Current implementation includes:
 - frontend-compatible `PATCH /api/v1/me`;
 - normalized email addresses and duplicate-email protection;
 - profile fields for phone, organization, job title, country and interests;
+- `platform_admin` role accepted by the admin payment routes (alongside the static `ADMIN_API_TOKEN`);
 - duplicate-email and invalid-credential tests.
 
 Validation currently covers registration, login, invalid credentials, duplicate email, protected current-user access and profile updates.
 
 Still required before Phase 1 is complete:
 
-- organization model;
-- organization membership model;
-- role and permission model beyond the attendee default;
+- organization membership model (the `organizations` table exists);
+- permission model beyond the role enum;
 - `event_staff`, `event_admin` and `platform_admin` authorization;
 - event-scoped access checks;
 - refresh-token/session revocation strategy;
@@ -469,6 +552,16 @@ alembic upgrade head
 uvicorn app.main:app --reload --port 8000
 ```
 
+### Connecting to PostgreSQL (Neon)
+
+The default `.env` points at a local SQLite file. To use a managed PostgreSQL database such as Neon, set `DATABASE_URL` in `.env` to the connection string using the `postgresql+psycopg://` scheme with TLS required:
+
+```bash
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST/DBNAME?sslmode=require&channel_binding=require
+```
+
+The `psycopg` (v3) driver is installed with the project dependencies. `.env` is gitignored; never commit a real connection string. Neon's pooled endpoint (the `-pooler` host) is suitable for the running API. Neon recommends the direct endpoint for migration tooling if the pooler causes session-level issues.
+
 The frontend should continue to run separately:
 
 ```bash
@@ -483,9 +576,8 @@ The frontend API base URL should be configured through a browser-safe Vite varia
 Before changing code:
 
 ```bash
-cd "/Users/remnant01/Documents/Neurotech Summit/neurotech-events"
-git switch feat/backend
-git pull --ff-only origin feat/backend
+git switch masterchanges
+git pull --ff-only origin masterchanges
 git status
 ```
 
@@ -495,11 +587,13 @@ Read this file and then inspect:
 - `backend/app/schemas/auth.py`
 - `backend/app/services/auth.py`
 - `backend/app/api/v1/auth.py`
+- `backend/app/services/payments.py`
 - `backend/tests/test_auth.py`
+- `backend/tests/test_payments_api.py`
 - `docs/SYSTEM_ENGINEERING.md`
 - `postman/neurotech-events.postman_collection.json`
 
-The next recommended implementation slice is **organization membership and authorization**, not events or payments. It should define the permission matrix, add organization/membership migrations and schemas, protect admin routes with server-side dependencies, and add forbidden-access tests.
+The next recommended implementation slice is **organization membership and authorization**: define the permission matrix, add membership migrations and schemas, protect the remaining admin routes with server-side dependencies, and add forbidden-access tests. Public event read endpoints are the slice after that.
 
 After each coherent slice:
 
@@ -509,7 +603,7 @@ backend/.venv/bin/pytest backend/tests
 git diff --check
 git add backend
 git commit -m "<imperative scoped message>"
-git push origin feat/backend
+git push origin masterchanges
 ```
 
 Do not commit `.env`, `.venv`, SQLite databases, `__pycache__`, `.pytest_cache`, `.ruff_cache` or `*.egg-info`.

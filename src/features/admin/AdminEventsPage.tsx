@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { StatusPill } from "../../components/shared/Widgets";
 import { formatRange } from "../../lib/dates";
-import type { EventStatus } from "../../domain/types";
+import type { EventFormat, EventStatus } from "../../domain/types";
 
 export function AdminEventsPage() {
   const { db, copyEvent, deleteEvent, saveEvent } = usePlatform();
@@ -108,6 +108,15 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
   const [capacity, setCapacity] = useState(String(event?.capacity ?? 200));
   const [startsAt, setStartsAt] = useState(event?.startsAt?.slice(0, 16) ?? "2027-04-01T09:00");
   const [endsAt, setEndsAt] = useState(event?.endsAt?.slice(0, 16) ?? "2027-04-01T17:00");
+  const [subtitle, setSubtitle] = useState(event?.subtitle ?? "");
+  const [category, setCategory] = useState(event?.category ?? "Summit");
+  const [format, setFormat] = useState<EventFormat>(event?.format ?? "physical");
+  const [featured, setFeatured] = useState(event?.featured ?? false);
+  const [bannerLabel, setBannerLabel] = useState(event?.bannerLabel ?? "");
+  const [registrationOpensAt, setRegistrationOpensAt] = useState(event?.registrationOpensAt?.slice(0, 16) ?? new Date().toISOString().slice(0, 16));
+  const [registrationClosesAt, setRegistrationClosesAt] = useState(event?.registrationClosesAt?.slice(0, 16) ?? "");
+  const [highlights, setHighlights] = useState((event?.highlights ?? []).join(", "));
+  const [faqs, setFaqs] = useState((event?.faqs ?? []).join("\n"));
   const [error, setError] = useState("");
 
   function submit() {
@@ -126,15 +135,15 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
       startsAt: new Date(startsAt).toISOString(),
       endsAt: new Date(endsAt).toISOString(),
       status: event?.status ?? "draft",
-      subtitle: event?.subtitle ?? "",
-      category: event?.category ?? "Summit",
-      format: event?.format ?? "physical",
-      registrationOpensAt: event?.registrationOpensAt ?? new Date().toISOString(),
-      registrationClosesAt: event?.registrationClosesAt ?? new Date(endsAt).toISOString(),
-      featured: event?.featured ?? false,
-      bannerLabel: event?.bannerLabel ?? "Event",
-      highlights: event?.highlights ?? [],
-      faqs: event?.faqs ?? [],
+      subtitle: subtitle.trim(),
+      category: category.trim() || "Event",
+      format,
+      registrationOpensAt: new Date(registrationOpensAt || startsAt).toISOString(),
+      registrationClosesAt: new Date(registrationClosesAt || endsAt).toISOString(),
+      featured,
+      bannerLabel: bannerLabel.trim() || category.trim() || "Event",
+      highlights: highlights.split(",").map((item) => item.trim()).filter(Boolean),
+      faqs: faqs.split("\n").map((item) => item.trim()).filter(Boolean),
     });
     navigate("/admin/events");
   }
@@ -161,6 +170,17 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
           <label className="nt-field"><span>Capacity</span><input value={capacity} onChange={(e) => setCapacity(e.target.value)} /></label>
           <label className="nt-field"><span>Starts</span><input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} /></label>
           <label className="nt-field"><span>Ends</span><input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} /></label>
+          <label className="nt-field"><span>Subtitle</span><input value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="One line that appears under the title" /></label>
+          <label className="nt-field"><span>Category</span><input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Summit, Workshop, Conference…" /></label>
+          <label className="nt-field"><span>Format</span><select value={format} onChange={(e) => setFormat(e.target.value as EventFormat)}>{(["physical", "online", "hybrid"] as const).map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+          <label className="nt-field"><span>Banner label</span><input value={bannerLabel} onChange={(e) => setBannerLabel(e.target.value)} placeholder="Defaults to the category" /></label>
+          <label className="nt-field"><span>Registration opens</span><input type="datetime-local" value={registrationOpensAt} onChange={(e) => setRegistrationOpensAt(e.target.value)} /></label>
+          <label className="nt-field"><span>Registration closes</span><input type="datetime-local" value={registrationClosesAt} onChange={(e) => setRegistrationClosesAt(e.target.value)} /></label>
+          <label className="nt-field" style={{ gridColumn: "1 / -1" }}><span>Highlights (comma-separated)</span><input value={highlights} onChange={(e) => setHighlights(e.target.value)} placeholder="Neuroscience, BCI, Healthcare" /></label>
+          <label className="nt-field" style={{ gridColumn: "1 / -1" }}><span>FAQ questions (one per line)</span><textarea rows={3} value={faqs} onChange={(e) => setFaqs(e.target.value)} /></label>
+          <label className="nt-field" style={{ gridColumn: "1 / -1" }}>
+            <span><input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} /> Feature this event on the home page</span>
+          </label>
         </div>
         {error ? <p className="error">{error}</p> : null}
         <div className="nt-actions" style={{ marginTop: 20 }}>

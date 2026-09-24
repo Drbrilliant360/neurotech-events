@@ -62,7 +62,7 @@ export function SpeakersPage() {
             <p className="nt-speaker-role">{selected.role}</p>
             <p className="nt-muted">{selected.organization}</p>
             <p>{selected.bio}</p>
-            {selected.socialUrl ? <p><a href={selected.socialUrl} rel="noreferrer">Professional profile →</a></p> : null}
+            {selected.socialUrl ? <p><a href={selected.socialUrl} target="_blank" rel="noreferrer">Professional profile →</a></p> : null}
             <p className="nt-kicker" style={{ marginTop: 28 }}>Related sessions</p>
             {related.length === 0 ? <p className="nt-muted">No sessions assigned yet.</p> : related.map((session) => (
               <div key={session.id} className="nt-card" style={{ marginBottom: 8 }}>

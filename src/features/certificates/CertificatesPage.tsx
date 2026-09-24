@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState } from "../../components/shared/Widgets";
 import { formatDate } from "../../lib/dates";
@@ -55,8 +56,11 @@ export function CertificatesPage() {
               <p>participated in {db.events.find((item) => item.id === open.eventId)?.title}</p>
               <p>{formatDate(open.issuedAt)} · {open.certificateId}</p>
             </div>
+            <p className="no-print nt-muted" style={{ marginTop: 12 }}>
+              Anyone can verify this certificate at <Link to={`/verify/${open.certificateId}`}>/verify/{open.certificateId}</Link>.
+            </p>
             <div className="no-print nt-actions" style={{ marginTop: 16 }}>
-              <button type="button" className="nt-btn" onClick={() => window.print()}>Print / download</button>
+              <button type="button" className="nt-btn" onClick={() => window.print()}>Print / save as PDF</button>
               <button type="button" className="nt-btn ghost" onClick={() => setOpenId(null)}>Close</button>
             </div>
           </div>

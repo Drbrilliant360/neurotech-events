@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
+import { Link, useSearchParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatRange } from "../../lib/dates";
@@ -5,7 +8,29 @@ import { venueOf } from "../../repositories/platform";
 
 export function TicketPage() {
   const { db, attendeeId } = usePlatform();
-  const registration = db.registrations.find((item) => item.attendeeId === attendeeId && item.status !== "cancelled");
+  const [params, setParams] = useSearchParams();
+  const registrations = db.registrations.filter((item) => item.attendeeId === attendeeId && item.status !== "cancelled");
+  const requested = params.get("registration");
+  const registration = registrations.find((item) => item.id === requested) ?? registrations[0];
+  const ticketNumber = registration?.ticketNumber;
+  const [qr, setQr] = useState("");
+
+  useEffect(() => {
+    if (!ticketNumber) return;
+    let cancelled = false;
+    // The QR carries the ticket number the check-in desk searches for.
+    QRCode.toDataURL(ticketNumber, { width: 240, margin: 1, color: { dark: "#12150c", light: "#ffffff" } })
+      .then((url) => {
+        if (!cancelled) setQr(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQr("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ticketNumber]);
+
   if (!registration) return <EmptyState title="No ticket yet" body="Register for an event to receive a ticket." />;
 
   const event = db.events.find((item) => item.id === registration.eventId);
@@ -22,6 +47,22 @@ export function TicketPage() {
           <p className="nt-kicker">Entry pass</p>
           <h1>My ticket</h1>
           <p className="nt-lede">Keep this pass ready for event-day check-in. Your current registration and payment state are shown below.</p>
+          {registrations.length > 1 ? (
+            <label className="nt-field no-print" style={{ maxWidth: 420 }}>
+              <span>Registration</span>
+              <select
+                className="nt-chip"
+                value={registration.id}
+                onChange={(e) => setParams({ registration: e.target.value }, { replace: true })}
+                aria-label="Choose which ticket to show"
+              >
+                {registrations.map((item) => {
+                  const itemEvent = db.events.find((entry) => entry.id === item.eventId);
+                  return <option key={item.id} value={item.id}>{itemEvent?.title ?? "Event"} · {item.ticketNumber}</option>;
+                })}
+              </select>
+            </label>
+          ) : null}
         </div>
         <StatusPill value={registration.status} />
       </div>
@@ -34,18 +75,23 @@ export function TicketPage() {
             <div style={{ color: "#8bd05d", marginTop: 4 }}>{ticket?.name} pass</div>
           </div>
           <div style={{ padding: 30, textAlign: "center" }}>
-            <div className="nt-qr" role="img" aria-label={`Ticket pattern for ${registration.ticketNumber}`} />
-            <div className="nt-muted" style={{ marginTop: 16 }}>Present this pass at the registration desk.</div>
+            {qr ? (
+              <img src={qr} width={240} height={240} alt={`QR code for ticket ${registration.ticketNumber}`} style={{ display: "block", margin: "0 auto", borderRadius: 12 }} />
+            ) : (
+              <div className="nt-qr" role="img" aria-label={`Ticket ${registration.ticketNumber}`} />
+            )}
+            <div className="nt-muted" style={{ marginTop: 16 }}>Present this code at the registration desk.</div>
           </div>
           <div style={{ borderTop: "1px dashed rgba(18,21,12,.16)", padding: "20px 28px" }}>
             <Row label="Ticket number" value={registration.ticketNumber} />
             <Row label="Date" value={event ? formatRange(event.startsAt, event.endsAt) : "—"} />
             <Row label="Venue" value={venue ? `${venue.name}, ${venue.city}` : "—"} />
           </div>
-          <div style={{ padding: "0 28px 28px" }}>
-            <button type="button" className="nt-btn" style={{ width: "100%" }} onClick={() => window.print()}>
+          <div className="no-print nt-actions" style={{ padding: "0 28px 28px" }}>
+            <button type="button" className="nt-btn" onClick={() => window.print()}>
               Print ticket
             </button>
+            <Link to={`/receipt/${registration.id}`} className="nt-btn ghost">View receipt</Link>
           </div>
         </article>
 

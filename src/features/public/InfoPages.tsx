@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
+import { accountPathFor } from "../../lib/routes";
 import { publicEvents } from "../../repositories/platform";
 
 export function AboutPage() {
-  const { db } = usePlatform();
+  const { db, role } = usePlatform();
+  const accountPath = accountPathFor(role);
   const events = publicEvents(db);
 
   return (
@@ -14,7 +16,7 @@ export function AboutPage() {
         <p className="nt-lede">Neurotech Events is the shared home for Neurotech Africa experiences: the place to discover a programme, register, stay informed and return to the moments that moved your work forward.</p>
         <div className="nt-info-actions">
           <Link to="/events" className="nt-btn accent">Explore events</Link>
-          <Link to="/app" className="nt-btn ghost">Open my events</Link>
+          <Link to={accountPath} className="nt-btn ghost">Open my events</Link>
         </div>
       </section>
 
@@ -105,6 +107,7 @@ export function PartnersPage() {
 }
 
 export function HelpPage() {
+  const { db } = usePlatform();
   return (
     <div className="nt-container nt-page nt-info-page nt-help-page">
       <section className="nt-info-hero">
@@ -117,7 +120,7 @@ export function HelpPage() {
         {[
           ["Registration and tickets", "Register from an event page, then find your ticket anytime in My events. Each registration is kept with the attendee account used for the demo."],
           ["Schedules and updates", "Use the schedule to explore sessions before the event. Attendees can save sessions to their own agenda and receive notices in the attendee area."],
-          ["Payments in this demo", "This prototype does not take real wallet, card or bank payments. Payment screens demonstrate the expected status flow only."],
+          ["Payments", "Paid tickets are settled by mobile money (M-Pesa, Airtel Money, Mixx by Yas, HaloPesa). You approve the prompt on your phone and your ticket is issued once the payment is confirmed."],
           ["On the day", "Bring your ticket details and follow the event-specific guidance on your event page. Venue, session and check-in information can vary by event."],
         ].map(([title, body]) => (
           <article key={title} className="nt-card nt-help-card">
@@ -131,9 +134,12 @@ export function HelpPage() {
         <div>
           <p className="nt-kicker">Still need a hand?</p>
           <h2>Reach the events team.</h2>
-          <p>For event-specific questions, use the contact path on the event page so the team has the right context.</p>
+          <p>Email the events team and mention the event name so they have the right context.</p>
         </div>
-        <Link to="/events" className="nt-btn accent">Find an event</Link>
+        <div className="nt-actions">
+          <a href={`mailto:${db.settings.contactEmail}`} className="nt-btn accent">Email {db.settings.contactEmail}</a>
+          <Link to="/events" className="nt-btn ghost">Find an event</Link>
+        </div>
       </section>
     </div>
   );

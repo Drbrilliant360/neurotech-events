@@ -96,6 +96,7 @@ Read these before major implementation work:
 - [`docs/GIT_WORKFLOW.md`](./docs/GIT_WORKFLOW.md) — branch, commit, validation and PR process.
 - [`docs/SYSTEM_ENGINEERING.md`](./docs/SYSTEM_ENGINEERING.md) — current system baseline, target boundaries, security, reliability, payments, check-in and observability.
 - [`docs/IMPLEMENTATION_PLAN.md`](./docs/IMPLEMENTATION_PLAN.md) — phased roadmap from prototype to production.
+- [`docs/FEATURE_BENCHMARK.md`](./docs/FEATURE_BENCHMARK.md) — feature benchmark against pretix, Ti.to, Sessionize and Eventbrite, with a prioritised build order.
 - [`docs/adr/0000-template.md`](./docs/adr/0000-template.md) — architecture decision record template.
 - [`SECURITY.md`](./SECURITY.md) — project security policy and security-sensitive implementation guidance.
 
@@ -120,6 +121,12 @@ backend/
 postman/
   *.json        FastAPI contract-first collection and local environment
 ```
+
+Frontend and backend connect through `src/services/` (a shared API client plus auth, payments and catalogue modules). With the API configured, sign-in and account creation use the backend, the profile page saves to the account, checkout shows the server-verified price and starts a real mobile-money payment, the payment page polls the server until Snippe confirms, admins publish the event and ticket catalogue to the payments server from the Tickets page, and platform admins see every transaction under Finance. Without it the site runs as a local demo.
+
+Navigation: on phones and tablets the public site uses a menu drawer, the attendee and admin workspaces use a bottom navigation bar with a "More" drawer, deep pages carry breadcrumbs that collapse to a back control, and event pages pin a Register bar to the bottom of the screen. `src/styles/mobile.css` is loaded last and owns the small-screen rules. During development, `/?as=admin` or `/?as=attendee` opens a workspace directly (ignored in production builds), and in demo mode the sign-in page offers shortcuts into both workspaces.
+
+Live payments: copy `.env.example` to `.env` and set `VITE_API_BASE_URL` to the running backend (default `http://localhost:8000`). Checkout then offers mobile money only and the payment page polls the server, which verifies each payment with Snippe before a ticket is issued. Leave the variable unset to keep the local demo checkout. The admin **All transactions** page needs the backend's `ADMIN_API_TOKEN`.
 
 The backend will be added under `backend/` as a separately deployable FastAPI application while remaining in this monorepo. Production work should move toward the explicit domain/feature/service boundaries described in `docs/SYSTEM_ENGINEERING.md` rather than concentrating business logic in the current frontend prototype model.
 

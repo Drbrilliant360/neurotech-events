@@ -325,6 +325,30 @@ export function simulatePayment(
   return db;
 }
 
+export interface RemotePaymentLink {
+  providerPaymentId: string;
+  reference: string;
+  providerReference?: string;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  amount?: number;
+}
+
+/** Attach the server-side payment created by the API to the local checkout record. */
+export function linkRemotePayment(db: PlatformDatabase, paymentId: string, remote: RemotePaymentLink): PlatformDatabase {
+  const payment = db.payments.find((item) => item.id === paymentId);
+  if (!payment) return db;
+  payment.provider = "snippe";
+  payment.providerPaymentId = remote.providerPaymentId;
+  payment.providerReference = remote.providerReference;
+  payment.reference = remote.reference;
+  payment.method = remote.method;
+  if (typeof remote.amount === "number") payment.amount = remote.amount;
+  payment.status = remote.status === "paid" ? "processing" : remote.status;
+  payment.updatedAt = new Date().toISOString();
+  return db;
+}
+
 export function refundPayment(db: PlatformDatabase, paymentId: string): PlatformDatabase {
   const payment = db.payments.find((item) => item.id === paymentId);
   if (!payment || payment.status !== "paid") return db;
@@ -332,6 +356,81 @@ export function refundPayment(db: PlatformDatabase, paymentId: string): Platform
   payment.updatedAt = new Date().toISOString();
   const registration = db.registrations.find((item) => item.id === payment.registrationId);
   if (registration) registration.status = "cancelled";
+  return db;
+}
+
+function initialsOf(name: string): string {
+  return name.split(" ").filter(Boolean).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+}
+
+export type AttendeePatch = Partial<Pick<Attendee, "fullName" | "phone" | "organization" | "jobTitle" | "country" | "roleTitle" | "interests">>;
+
+/** Update an attendee and keep their networking card in step. */
+export function updateAttendee(db: PlatformDatabase, attendeeId: string, patch: AttendeePatch): PlatformDatabase {
+  const attendee = db.attendees.find((item) => item.id === attendeeId);
+  if (!attendee) return db;
+  Object.assign(attendee, patch);
+  const profile = db.networkingProfiles.find((item) => item.attendeeId === attendeeId);
+  if (profile) {
+    profile.publicName = attendee.fullName;
+    profile.initials = initialsOf(attendee.fullName);
+    profile.jobTitle = attendee.jobTitle;
+    profile.organization = attendee.organization;
+    profile.interests = attendee.interests;
+  }
+  return db;
+}
+
+export interface AttendeeInput {
+  email: string;
+  fullName: string;
+  phone?: string;
+  organization?: string;
+  jobTitle?: string;
+  country?: string;
+  interests?: string[];
+}
+
+/** Find the attendee with this email or create one (used when someone signs in or creates an account). */
+export function ensureAttendee(db: PlatformDatabase, input: AttendeeInput): { db: PlatformDatabase; attendeeId: string } {
+  const existing = db.attendees.find((item) => item.email.toLowerCase() === input.email.trim().toLowerCase());
+  if (existing) {
+    if (input.fullName) existing.fullName = input.fullName;
+    if (input.phone) existing.phone = input.phone;
+    if (input.organization) existing.organization = input.organization;
+    if (input.jobTitle) existing.jobTitle = input.jobTitle;
+    if (input.country) existing.country = input.country;
+    if (input.interests?.length) existing.interests = input.interests;
+    return { db, attendeeId: existing.id };
+  }
+  const attendee: Attendee = {
+    id: createId("att"),
+    fullName: input.fullName,
+    email: input.email.trim().toLowerCase(),
+    phone: input.phone ?? "",
+    organization: input.organization ?? "",
+    jobTitle: input.jobTitle ?? "",
+    country: input.country ?? "Tanzania",
+    roleTitle: input.jobTitle ?? "Attendee",
+    interests: input.interests ?? [],
+    isDemoUser: false,
+  };
+  db.attendees.push(attendee);
+  db.networkingProfiles.push({
+    id: createId("net"),
+    attendeeId: attendee.id,
+    publicName: attendee.fullName,
+    initials: initialsOf(attendee.fullName),
+    jobTitle: attendee.jobTitle,
+    organization: attendee.organization,
+    interests: attendee.interests,
+    bio: attendee.jobTitle && attendee.organization ? `${attendee.jobTitle} at ${attendee.organization}` : "",
+  });
+  return { db, attendeeId: attendee.id };
+}
+
+export function deleteMilestone(db: PlatformDatabase, id: string): PlatformDatabase {
+  db.milestones = db.milestones.filter((item) => item.id !== id);
   return db;
 }
 

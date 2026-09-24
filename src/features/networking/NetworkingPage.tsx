@@ -56,7 +56,7 @@ export function NetworkingPage() {
               {profile.interests.map((item) => <span key={item} className="nt-badge neutral">{item}</span>)}
             </div>
             <button type="button" className={`nt-btn ${connected.has(profile.attendeeId) ? "ghost" : ""}`} style={{ width: "100%" }} onClick={() => toggleConnect(profile.attendeeId)}>
-              {connected.has(profile.attendeeId) ? "Connected" : "Connect"}
+              {connected.has(profile.attendeeId) ? "Disconnect" : "Connect"}
             </button>
           </article>
         ))}

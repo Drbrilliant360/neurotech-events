@@ -1,13 +1,15 @@
+import uuid
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class ProfileFields(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    phone: str | None = Field(default=None, max_length=32)
-    organization: str | None = Field(default=None, max_length=160)
-    job_title: str | None = Field(default=None, max_length=160)
-    country: str | None = Field(default=None, max_length=80)
+    phone: str | None = Field(default=None, max_length=40)
+    organization: str | None = Field(default=None, max_length=200)
+    job_title: str | None = Field(default=None, max_length=200)
+    country: str | None = Field(default=None, max_length=120)
     interests: list[str] = Field(default_factory=list, max_length=20)
 
     @field_validator("interests")
@@ -19,7 +21,7 @@ class ProfileFields(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    full_name: str = Field(min_length=2, max_length=160)
+    full_name: str = Field(min_length=2, max_length=200)
     profile: ProfileFields = Field(default_factory=ProfileFields)
 
 
@@ -29,9 +31,7 @@ class LoginRequest(BaseModel):
 
 
 class UserResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
+    id: uuid.UUID
     email: EmailStr
     full_name: str
     role: str
@@ -40,7 +40,7 @@ class UserResponse(BaseModel):
 
 
 class ProfileUpdateRequest(ProfileFields):
-    full_name: str | None = Field(default=None, min_length=2, max_length=160)
+    full_name: str | None = Field(default=None, min_length=2, max_length=200)
 
 
 class TokenResponse(BaseModel):

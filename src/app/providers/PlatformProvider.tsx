@@ -17,13 +17,17 @@ import type {
   TimelineMilestone,
 } from "../../domain/types";
 import { DEMO_ATTENDEE_KEY, DEMO_ROLE_KEY } from "../../lib/localStore";
+import { clearAuthToken } from "../../services/auth";
 import {
   checkInAttendee,
   connectProfiles,
   createRegistration,
+  deleteMilestone,
   detectSessionConflicts,
+  ensureAttendee,
   duplicateEvent,
   issueEligibleCertificates,
+  linkRemotePayment,
   LocalPlatformRepository,
   markAllNotifications,
   markNotification,
@@ -32,12 +36,16 @@ import {
   simulatePayment,
   toggleSavedSession,
   undoCheckIn,
+  updateAttendee,
   upsertCommunication,
   upsertEvent,
   upsertMilestone,
   upsertSession,
   upsertSponsor,
   upsertTicket,
+  type AttendeeInput,
+  type AttendeePatch,
+  type RemotePaymentLink,
 } from "../../repositories/platform";
 
 const repo = new LocalPlatformRepository();
@@ -47,7 +55,12 @@ interface PlatformContextValue {
   role: DemoRole;
   attendeeId: string;
   setRole: (role: DemoRole) => void;
+  /** Enter a workspace as a specific attendee (defaults to the demo attendee). */
+  signIn: (role: DemoRole, attendeeId?: string) => void;
   logout: () => void;
+  saveProfile: (patch: AttendeePatch) => void;
+  ensureLocalAttendee: (input: AttendeeInput) => string;
+  removeMilestone: (id: string) => void;
   resetDemo: () => void;
   refresh: () => void;
   saveEvent: (input: Partial<Event> & Pick<Event, "title">) => void;
@@ -64,6 +77,7 @@ interface PlatformContextValue {
   }) => { registration: Registration; payment: Payment };
   pay: (paymentId: string, method: PaymentMethod, outcome: Extract<PaymentStatus, "paid" | "failed" | "cancelled">) => void;
   refund: (paymentId: string) => void;
+  linkRemote: (paymentId: string, remote: RemotePaymentLink) => void;
   toggleAgenda: (sessionId: string) => void;
   toggleConnect: (toAttendeeId: string) => void;
   readOne: (id: string) => void;
@@ -81,6 +95,15 @@ interface PlatformContextValue {
 const PlatformContext = createContext<PlatformContextValue | null>(null);
 
 function readRole(): DemoRole {
+  if (import.meta.env.DEV) {
+    // Development helper: /?as=admin opens a workspace directly for local testing and screenshots.
+    const requested = new URLSearchParams(window.location.search).get("as");
+    if (requested === "attendee" || requested === "admin" || requested === "visitor") {
+      sessionStorage.setItem(DEMO_ROLE_KEY, requested);
+      sessionStorage.setItem(DEMO_ATTENDEE_KEY, DEMO_ATTENDEE_ID);
+      return requested;
+    }
+  }
   const value = sessionStorage.getItem(DEMO_ROLE_KEY);
   if (value === "attendee" || value === "admin" || value === "visitor") return value;
   return "visitor";
@@ -89,21 +112,26 @@ function readRole(): DemoRole {
 export function PlatformProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<PlatformDatabase>(() => repo.get());
   const [role, setRoleState] = useState<DemoRole>(readRole);
-  const attendeeId = sessionStorage.getItem(DEMO_ATTENDEE_KEY) || DEMO_ATTENDEE_ID;
+  const [attendeeId, setAttendeeId] = useState<string>(() => sessionStorage.getItem(DEMO_ATTENDEE_KEY) || DEMO_ATTENDEE_ID);
 
   const apply = useCallback((next: PlatformDatabase) => {
     setDb(repo.commit(next));
   }, []);
 
-  const setRole = useCallback((next: DemoRole) => {
+  const signIn = useCallback((next: DemoRole, nextAttendeeId: string = DEMO_ATTENDEE_ID) => {
     sessionStorage.setItem(DEMO_ROLE_KEY, next);
-    sessionStorage.setItem(DEMO_ATTENDEE_KEY, DEMO_ATTENDEE_ID);
+    sessionStorage.setItem(DEMO_ATTENDEE_KEY, nextAttendeeId);
+    setAttendeeId(nextAttendeeId);
     setRoleState(next);
   }, []);
+
+  const setRole = useCallback((next: DemoRole) => signIn(next), [signIn]);
 
   const logout = useCallback(() => {
     sessionStorage.removeItem(DEMO_ROLE_KEY);
     sessionStorage.removeItem(DEMO_ATTENDEE_KEY);
+    clearAuthToken();
+    setAttendeeId(DEMO_ATTENDEE_ID);
     setRoleState("visitor");
   }, []);
 
@@ -113,7 +141,15 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       role,
       attendeeId,
       setRole,
+      signIn,
       logout,
+      saveProfile: (patch) => apply(updateAttendee(repo.clone(), attendeeId, patch)),
+      ensureLocalAttendee: (input) => {
+        const result = ensureAttendee(repo.clone(), input);
+        apply(result.db);
+        return result.attendeeId;
+      },
+      removeMilestone: (id) => apply(deleteMilestone(repo.clone(), id)),
       resetDemo: () => setDb(repo.reset()),
       refresh: () => setDb(repo.get()),
       saveEvent: (input) => apply(upsertEvent(repo.clone(), input)),
@@ -149,6 +185,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       },
       pay: (paymentId, method, outcome) => apply(simulatePayment(repo.clone(), paymentId, method, outcome)),
       refund: (paymentId) => apply(refundPayment(repo.clone(), paymentId)),
+      linkRemote: (paymentId, remote) => apply(linkRemotePayment(repo.clone(), paymentId, remote)),
       toggleAgenda: (sessionId) => apply(toggleSavedSession(repo.clone(), attendeeId, sessionId)),
       toggleConnect: (toAttendeeId) => apply(connectProfiles(repo.clone(), attendeeId, toAttendeeId)),
       readOne: (id) => apply(markNotification(repo.clone(), id, true)),
@@ -170,7 +207,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       updateSettings: (settings) => apply(saveSettings(repo.clone(), settings)),
       issueCerts: () => apply(issueEligibleCertificates(repo.clone())),
     }),
-    [apply, attendeeId, db, logout, role, setRole],
+    [apply, attendeeId, db, logout, role, setRole, signIn],
   );
 
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;

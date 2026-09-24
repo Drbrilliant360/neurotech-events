@@ -1,15 +1,17 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { usePlatform } from "../providers/PlatformProvider";
+import { Icon } from "../../components/shared/Icon";
+import { BottomNav, MobileDrawer, MobileTopBar, useDrawer, type NavItem } from "../../components/shared/MobileNav";
 
-const NAV = [
-  ["/app", "Dashboard"],
-  ["/app/ticket", "My ticket"],
-  ["/app/schedule", "My schedule"],
-  ["/app/networking", "Networking"],
-  ["/app/notifications", "Notifications"],
-  ["/app/certificates", "Certificates"],
-  ["/app/profile", "Profile"],
-] as const;
+const NAV: NavItem[] = [
+  { to: "/app", label: "Dashboard", icon: "home", end: true },
+  { to: "/app/ticket", label: "My ticket", icon: "ticket" },
+  { to: "/app/schedule", label: "My schedule", icon: "calendar" },
+  { to: "/app/networking", label: "Networking", icon: "people" },
+  { to: "/app/notifications", label: "Notifications", icon: "bell" },
+  { to: "/app/certificates", label: "Certificates", icon: "award" },
+  { to: "/app/profile", label: "Profile", icon: "user" },
+];
 
 function initials(name?: string) {
   if (!name) return "NE";
@@ -22,20 +24,34 @@ function initials(name?: string) {
 }
 
 export function AttendeeLayout() {
-  const { db, attendeeId } = usePlatform();
+  const { db, attendeeId, logout } = usePlatform();
+  const navigate = useNavigate();
+  const drawer = useDrawer();
   const me = db.attendees.find((item) => item.id === attendeeId);
   const unread = db.notifications.filter((item) => item.attendeeId === attendeeId && !item.read).length;
+  const withBadges = NAV.map((item) => (item.to === "/app/notifications" ? { ...item, badge: unread } : item));
+  const primary = withBadges.filter((item) => ["/app", "/app/ticket", "/app/schedule", "/app/notifications"].includes(item.to));
+
+  function handleLogout() {
+    drawer.close();
+    logout();
+    navigate("/", { replace: true });
+  }
 
   return (
     <div className="nt-shell nt-surface-attendee">
-      <nav className="mobile-nav" aria-label="Attendee">
-        {NAV.map(([to, label]) => (
-          <NavLink key={to} to={to} end={to === "/app"} className="nt-chip">
-            {label}
-            {to === "/app/notifications" && unread ? ` · ${unread}` : ""}
+      <MobileTopBar
+        title="Neurotech Events"
+        subtitle="Attendee workspace"
+        homeTo="/app"
+        menuOpen={drawer.open}
+        onMenu={drawer.toggle}
+        right={
+          <NavLink to="/app/profile" className="nt-icon-btn" aria-label="Open profile">
+            <Icon name="user" />
           </NavLink>
-        ))}
-      </nav>
+        }
+      />
 
       <div className="nt-app">
         <aside className="nt-side">
@@ -49,10 +65,10 @@ export function AttendeeLayout() {
 
           <div className="sec">Your event space</div>
           <nav aria-label="Attendee navigation">
-            {NAV.map(([to, label]) => (
-              <NavLink key={to} to={to} end={to === "/app"}>
-                <span>{label}</span>
-                {to === "/app/notifications" && unread ? <span className="nt-nav-count">{unread}</span> : null}
+            {withBadges.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end}>
+                <span>{item.label}</span>
+                {item.badge ? <span className="nt-nav-count">{item.badge}</span> : null}
               </NavLink>
             ))}
           </nav>
@@ -88,6 +104,9 @@ export function AttendeeLayout() {
                   <span>{me?.organization ?? "Neurotech Events"}</span>
                 </span>
               </NavLink>
+              <button type="button" className="nt-chip" onClick={handleLogout}>
+                Log out
+              </button>
             </div>
           </div>
           <div className="nt-workspace-content">
@@ -95,6 +114,22 @@ export function AttendeeLayout() {
           </div>
         </main>
       </div>
+
+      <BottomNav items={primary} moreOpen={drawer.open} onMore={drawer.toggle} />
+      <MobileDrawer
+        open={drawer.open}
+        onClose={drawer.close}
+        heading={me?.fullName ?? "Attendee"}
+        sections={[
+          { title: "Your event space", items: withBadges },
+          { title: "Explore", items: [{ to: "/events", label: "Browse events", icon: "calendar" }, { to: "/schedule", label: "Public programme", icon: "grid" }, { to: "/help", label: "Help centre", icon: "info" }] },
+        ]}
+        footer={
+          <button type="button" className="nt-chip" onClick={handleLogout}>
+            <Icon name="logout" size={16} /> Log out
+          </button>
+        }
+      />
     </div>
   );
 }

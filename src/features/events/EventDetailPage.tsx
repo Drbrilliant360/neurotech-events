@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, MediaTile } from "../../components/shared/Widgets";
 import { formatRange, minutesBetween } from "../../lib/dates";
+import { Breadcrumbs } from "../../components/shared/Breadcrumbs";
+import { downloadIcs } from "../../lib/calendar";
 import { MEDIA, eventImage, speakerImageById } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { eventBySlug, sessionsFor, speakersForEvent, sponsorsForEvent, ticketsFor, venueOf } from "../../repositories/platform";
@@ -26,6 +28,7 @@ export function EventDetailPage() {
 
   return (
     <div className="nt-container nt-page nt-detail-page">
+      <Breadcrumbs items={[{ label: "Events", to: "/events" }, { label: event.title }]} />
       <div className="nt-detail-hero">
         <MediaTile
           label={`${event.title} cover`}
@@ -141,7 +144,7 @@ export function EventDetailPage() {
                   aria-expanded={openFaq === index}
                 >
                   <strong>{faq} {openFaq === index ? "–" : "+"}</strong>
-                  {openFaq === index ? <div className="nt-muted" style={{ marginTop: 8 }}>Details will be confirmed closer to the event. Contact hello@neurotech.co.tz for specifics.</div> : null}
+                  {openFaq === index ? <div className="nt-muted" style={{ marginTop: 8 }}>Details will be confirmed closer to the event. Contact {db.settings.contactEmail} for specifics.</div> : null}
                 </button>
               ))}
             </div>
@@ -163,8 +166,37 @@ export function EventDetailPage() {
           ) : (
             <p className="nt-muted">Registration is not open for this event.</p>
           )}
-          <a className="nt-btn ghost" style={{ width: "100%" }} href={`/events/${event.slug}`}>Add to calendar</a>
+          <button
+            type="button"
+            className="nt-btn ghost"
+            style={{ width: "100%" }}
+            onClick={() =>
+              downloadIcs(event.slug, {
+                uid: `${event.slug}@neurotech-events`,
+                title: event.title,
+                description: event.subtitle,
+                location: venue ? [venue.name, venue.city, venue.country].filter(Boolean).join(", ") : undefined,
+                url: window.location.href,
+                startsAt: event.startsAt,
+                endsAt: event.endsAt,
+              })
+            }
+          >
+            Add to calendar (.ics)
+          </button>
         </aside>
+      </div>
+
+      <div className="nt-mobile-cta" aria-label="Registration">
+        <div>
+          <span className="nt-muted">{fromLowestPrice(tickets.map((ticket) => ticket.price))}</span>
+          <strong>{event.title}</strong>
+        </div>
+        {canRegister ? (
+          <Link to={`/register/${event.id}`} className="nt-btn">Register</Link>
+        ) : (
+          <span className="nt-badge neutral">Registration closed</span>
+        )}
       </div>
     </div>
   );
