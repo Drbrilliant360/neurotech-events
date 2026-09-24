@@ -11,6 +11,11 @@ The repository is intentionally being evolved as a monorepo:
 
 Phase 0 scaffolding and the first identity slices are implemented. Business domains are intentionally deferred to later phases. This document is both the implementation contract and the current handoff ledger for agents and contributors who continue the backend.
 
+## Collaboration and progress records
+
+- [`Collaboration.md`](./Collaboration.md) — shared workflow and implementation rules for contributors and coding agents.
+- [`IMPLEMENTATION_LOG.md`](./IMPLEMENTATION_LOG.md) — append-only record of backend changes, phase status, validation and follow-up work.
+
 ## Current implementation status
 
 Current development branch:
