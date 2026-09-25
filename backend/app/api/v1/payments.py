@@ -35,3 +35,13 @@ def get_payment(payment_id: uuid.UUID, service: Service) -> PaymentOut:
     """Current payment state. Open payments are re-verified with the provider on every read."""
     payment = service.get_payment(payment_id)
     return service.to_out(service.sync_with_gateway(payment))
+
+
+@router.post(
+    "/{payment_id}/push",
+    response_model=PaymentOut,
+    dependencies=[Depends(rate_limit("payments", "payment_rate_limit_per_minute"))],
+)
+def resend_prompt(payment_id: uuid.UUID, service: Service) -> PaymentOut:
+    """Re-send the mobile money prompt to the payer's phone (for example if they missed it)."""
+    return service.to_out(service.resend_prompt(service.get_payment(payment_id)))

@@ -5,6 +5,7 @@ ticket by code; the price comes from the database, the provider decides whether 
 paid, and this service records every transition in `payment_events`.
 """
 
+import logging
 import secrets
 import threading
 import time
@@ -34,11 +35,14 @@ from app.integrations.payments.snippe import (
     GatewayPayment,
     PaymentGateway,
     SnippeError,
+    customer_message,
     parse_gateway_payment,
 )
 from app.schemas.payments import MobilePaymentRequest, PaymentEventOut, PaymentOut
 from app.services import inventory
 from app.services.errors import ConflictError, DomainError, NotFoundError, ValidationError
+
+logger = logging.getLogger("neurotech.payments")
 
 # Re-exported so existing imports of these names from this module keep working.
 PaymentError = DomainError
@@ -230,11 +234,12 @@ class PaymentService:
                 webhook_url=self.settings.snippe_webhook_url,
             )
         except SnippeError as exc:
+            logger.warning("snippe create failed status=%s code=%s: %s", exc.status_code, exc.error_code, exc)
             self._transition(payment, PaymentStatus.FAILED, note=f"Provider rejected the payment intent: {exc}")
             registration.status = RegistrationStatus.CANCELLED
             registration.cancelled_at = _now()
             self.db.commit()
-            raise GatewayError(str(exc)) from exc
+            raise GatewayError(customer_message(exc)) from exc
 
         self._lock(payment)
         payment.provider_reference = provider_payment.reference
@@ -256,9 +261,24 @@ class PaymentService:
         try:
             provider_payment = self.gateway.get_payment(payment.provider_reference)
         except SnippeError as exc:
-            raise GatewayError(str(exc)) from exc
+            raise GatewayError(customer_message(exc)) from exc
         self._lock(payment)
         self._apply_gateway_payment(payment, provider_payment, note="Status verified with provider")
+        self.db.commit()
+        return self.get_payment(payment.id)
+
+    def resend_prompt(self, payment: Payment) -> Payment:
+        """Ask the provider to push the USSD prompt again for an open payment."""
+        if self.gateway is None:
+            raise GatewayUnavailable("Payments are not configured on this server.")
+        if payment.status not in {PaymentStatus.PENDING, PaymentStatus.PROCESSING} or not payment.provider_reference:
+            raise ConflictError("Only an open mobile payment can resend its prompt.")
+        try:
+            self.gateway.resend_push(payment.provider_reference)
+        except SnippeError as exc:
+            logger.warning("snippe push failed status=%s code=%s: %s", exc.status_code, exc.error_code, exc)
+            raise GatewayError(customer_message(exc)) from exc
+        payment.events.append(PaymentEvent(from_status=payment.status, to_status=payment.status, note="Prompt resent"))
         self.db.commit()
         return self.get_payment(payment.id)
 

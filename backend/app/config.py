@@ -92,9 +92,11 @@ class Settings(BaseSettings):
 
     @property
     def snippe_webhook_url(self) -> str | None:
-        if not self.public_base_url:
+        # Snippe only accepts HTTPS webhook URLs up to 500 characters; otherwise rely on polling.
+        if not self.public_base_url or not self.public_base_url.startswith("https://"):
             return None
-        return f"{self.public_base_url.rstrip('/')}{self.api_prefix}/webhooks/snippe"
+        url = f"{self.public_base_url.rstrip('/')}{self.api_prefix}/webhooks/snippe"
+        return url if len(url) <= 500 else None
 
 
 @lru_cache

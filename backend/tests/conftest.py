@@ -31,6 +31,7 @@ class FakeGateway:
         self.providers: dict[str, str] = {}
         self.fail_create: Exception | None = None
         self.counter = 0
+        self.pushed: list[str] = []
         self.balance = {"available": {"currency": "TZS", "value": 350}, "balance": {"currency": "TZS", "value": 350}}
         self.listed = {
             "items": [
@@ -68,6 +69,9 @@ class FakeGateway:
 
     def get_balance(self) -> dict:
         return self.balance
+
+    def resend_push(self, reference: str) -> None:
+        self.pushed.append(reference)
 
 
 @pytest.fixture
