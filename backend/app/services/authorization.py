@@ -169,3 +169,17 @@ def visible_events_filter(db: Session, user: User) -> ColumnElement[bool]:
         EventStaffAssignment.user_id == user.id, EventStaffAssignment.is_active.is_(True)
     )
     return or_(Event.organization_id.in_(organization_ids), Event.id.in_(event_ids))
+
+
+def require_directory_editor(db: Session, user: User, used_by_organizations: set[uuid.UUID]) -> None:
+    """Who may edit or delete a shared speaker or venue.
+
+    Speakers and venues are shared across organizations, so only a platform admin, or an owner/
+    admin of *every* organization whose events use the record, may change it. A record no event
+    uses yet can be changed by any organization owner/admin.
+    """
+    if user.role == UserRole.PLATFORM_ADMIN:
+        return
+    managed = set(managed_organization_ids(db, user))
+    if not managed or not used_by_organizations <= managed:
+        raise ForbiddenError("This record is used by events you do not manage.")

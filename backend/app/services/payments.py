@@ -156,6 +156,9 @@ class PaymentService:
         if event.registration_closes_at and now > _aware(event.registration_closes_at):
             raise ConflictError("Registration for this event has closed.")
 
+        if event.capacity:
+            # Event-wide capacity spans ticket types, so serialise on the event row first.
+            self.db.refresh(event, with_for_update=True)
         # Lock the ticket row so concurrent checkouts for the same ticket cannot both take the
         # last seat (row lock on PostgreSQL; SQLite serialises writers anyway).
         ticket = self.db.scalar(
@@ -233,6 +236,7 @@ class PaymentService:
             self.db.commit()
             raise GatewayError(str(exc)) from exc
 
+        self._lock(payment)
         payment.provider_reference = provider_payment.reference
         self._apply_gateway_payment(payment, provider_payment, note="Provider accepted the payment intent")
         self.db.commit()
@@ -241,7 +245,11 @@ class PaymentService:
     def sync_with_gateway(self, payment: Payment, *, force: bool = False) -> Payment:
         """Ask the provider for the current status. This is the real verification path when webhooks
         cannot reach us (for example in local development)."""
-        if payment.status in TERMINAL_STATUSES or not payment.provider_reference or self.gateway is None:
+        if not payment.provider_reference or self.gateway is None:
+            return payment
+        # Cancelled/failed payments are still checked: the payer may approve the prompt after a
+        # local cancellation, and without a webhook this is the only way to see the money.
+        if payment.status in TERMINAL_STATUSES and payment.status not in LATE_PAYABLE_STATUSES:
             return payment
         if not force and not _sync_due(payment.id, self.settings.payment_sync_interval_seconds):
             return payment
@@ -249,6 +257,7 @@ class PaymentService:
             provider_payment = self.gateway.get_payment(payment.provider_reference)
         except SnippeError as exc:
             raise GatewayError(str(exc)) from exc
+        self._lock(payment)
         self._apply_gateway_payment(payment, provider_payment, note="Status verified with provider")
         self.db.commit()
         return self.get_payment(payment.id)
@@ -274,6 +283,7 @@ class PaymentService:
             record.note = "No matching payment for this event."
         else:
             record.payment_id = payment.id
+            self._lock(payment)
             self._apply_gateway_payment(payment, parse_gateway_payment(data), note=f"Webhook {event_type}")
             record.processed_at = _now()
         self.db.add(record)
@@ -442,6 +452,15 @@ class PaymentService:
         elif target in {PaymentStatus.CANCELLED, PaymentStatus.FAILED}:
             registration.status = RegistrationStatus.CANCELLED
             registration.cancelled_at = _now()
+
+    def _lock(self, payment: Payment) -> None:
+        """Re-read the payment under a row lock before applying a provider status.
+
+        A webhook, a client poll and checkout can race on one payment; applying a provider status
+        to a stale copy could otherwise overwrite PAID with PROCESSING. Call before any change.
+        """
+        self.db.refresh(payment, with_for_update=True)
+        self.db.refresh(payment.registration)
 
     def _transition(self, payment: Payment, to_status: PaymentStatus, *, note: str) -> None:
         payment.events.append(PaymentEvent(from_status=payment.status, to_status=to_status, note=note))

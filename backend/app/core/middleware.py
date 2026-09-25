@@ -97,31 +97,37 @@ class BodySizeLimitMiddleware:
 
         received = 0
         response_started = False
+        rejected = False
 
         async def limited_receive() -> Message:
-            nonlocal received
+            nonlocal received, rejected
+            if rejected:
+                return {"type": "http.disconnect"}
             message = await receive()
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
                 if received > self.max_bytes:
-                    raise _BodyTooLarge
+                    # Answer 413 ourselves and tell the app the client went away. Raising here would
+                    # be swallowed by the framework's body parser and turned into a generic 400.
+                    rejected = True
+                    if not response_started:
+                        await _too_large(send)
+                    return {"type": "http.disconnect"}
             return message
 
         async def tracking_send(message: Message) -> None:
             nonlocal response_started
+            if rejected:
+                return  # the 413 has already been sent
             if message["type"] == "http.response.start":
                 response_started = True
             await send(message)
 
         try:
             await self.app(scope, limited_receive, tracking_send)
-        except _BodyTooLarge:
-            if not response_started:
-                await _too_large(send)
-
-
-class _BodyTooLarge(Exception):
-    pass
+        except Exception:
+            if not rejected:
+                raise
 
 
 async def _too_large(send: Send) -> None:

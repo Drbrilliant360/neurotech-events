@@ -206,6 +206,8 @@ def create_complimentary_registration(
 ) -> Registration:
     if event.status in {EventStatus.COMPLETED, EventStatus.CANCELLED}:
         raise ConflictError(f"Cannot add registrations to a {event.status.value} event.")
+    if event.capacity:
+        db.refresh(event, with_for_update=True)  # same lock order as checkout: event, then ticket
     ticket = db.scalar(
         select(TicketType)
         .where(TicketType.id == payload.ticket_type_id, TicketType.event_id == event.id)

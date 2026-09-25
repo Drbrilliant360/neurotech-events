@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     # edge limiter (load balancer / CDN) in front for multi-instance deployments.
     rate_limit_enabled: bool = True
     auth_rate_limit_per_minute: int = 10
+    # Failed logins per account: per client IP, and a looser ceiling across all IPs (x4).
+    login_failures_per_account_per_minute: int = 5
     payment_rate_limit_per_minute: int = 10
     check_in_rate_limit_per_minute: int = 120
     # Requests with larger bodies are rejected before they reach a route.

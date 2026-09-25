@@ -3,7 +3,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.api.deps import AppSettings, DbSession, client_ip, enforce_rate_limit, rate_limit
+from app.api.deps import (
+    AppSettings,
+    DbSession,
+    check_login_lockout,
+    client_ip,
+    rate_limit,
+    record_login_failure,
+)
 from app.db.models import User
 from app.schemas.auth import (
     LoginRequest,
@@ -108,12 +115,12 @@ def register(payload: RegisterRequest, request: Request, db: DbSession, settings
 @router.post("/login", response_model=TokenResponse, dependencies=[auth_rate_limit])
 def login(payload: LoginRequest, request: Request, db: DbSession, settings: AppSettings) -> TokenResponse:
     email = normalize_email(str(payload.email))
-    # A per-account budget stops password spraying from many IPs against one account.
-    enforce_rate_limit(settings, f"login-account:{email}", settings.auth_rate_limit_per_minute)
     ip = client_ip(request)
+    check_login_lockout(settings, email, ip)
     try:
         user = authenticate_user(db, payload)
     except AuthenticationError as exc:
+        record_login_failure(settings, email, ip)
         audit.record(db, "auth.login_failed", ip_address=ip, details={"email": email})
         db.commit()
         raise _unauthorized("invalid_credentials", str(exc)) from exc

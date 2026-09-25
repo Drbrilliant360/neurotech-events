@@ -191,3 +191,34 @@ def test_public_event_list_filters(client) -> None:
     assert [item["slug"] for item in featured] == ["neurotech-summit-2026"]
     assert client.get("/api/v1/events", params={"q": "bci"}).json()[0]["slug"] == "bci-hands-on-workshop"
     assert len(client.get("/api/v1/events", params={"limit": 1}).json()) == 1
+
+
+def test_shared_directory_records_are_protected_across_organizations(client, db) -> None:
+    import uuid
+
+    from app.db.models import EventSession, Organization, Speaker
+    from app.db.seed import seed_id
+
+    owner = org_member(client, db, "owner@example.org")
+    speaker = client.post("/api/v1/admin/speakers", json={"name": "Shared Speaker"}, headers=owner).json()
+    client.post(
+        f"/api/v1/admin/events/{SUMMIT_ID}/sessions",
+        json={"title": "Talk", "session_date": "2026-11-20", "start_time": "09:00", "end_time": "10:00",
+              "speaker_id": speaker["id"]},
+        headers=owner,
+    )
+    # A manager of one event, and an admin of a different organization, cannot touch it.
+    manager = event_staff(client, db, "manager@example.org", "manager", seed_id("evt_bci_workshop"))
+    assert client.delete(f"/api/v1/admin/speakers/{speaker['id']}", headers=manager).status_code == 403
+    other_org = Organization(id=uuid.uuid4(), name="Other", brand_name="Other", contact_email="o@example.org")
+    db.add(other_org)
+    db.commit()
+    headers, user_id = signup(client, "other-owner@example.org")
+    from app.db.models import OrganizationMembership
+
+    db.add(OrganizationMembership(organization_id=other_org.id, user_id=user_id, role=OrganizationRole.OWNER))
+    db.commit()
+    url = f"/api/v1/admin/speakers/{speaker['id']}"
+    assert client.patch(url, json={"bio": "x"}, headers=headers).status_code == 403
+    assert client.patch(url, json={"bio": "ok"}, headers=owner).status_code == 200
+    assert db.get(Speaker, uuid.UUID(speaker["id"])) is not None and db.query(EventSession).count() == 1

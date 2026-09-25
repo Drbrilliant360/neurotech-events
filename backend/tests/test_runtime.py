@@ -47,6 +47,16 @@ def test_oversized_body_is_rejected_before_routing() -> None:
     assert response.json()["error"]["code"] == "payload_too_large"
 
 
+def test_oversized_chunked_body_is_rejected_with_413(client) -> None:
+    def chunks():
+        for _ in range(40):
+            yield b"x" * 65_536  # ~2.6 MB, no Content-Length header
+
+    response = client.post("/api/v1/auth/login", content=chunks(), headers={"content-type": "application/json"})
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "payload_too_large"
+
+
 def test_unhandled_errors_return_generic_envelope_without_internals() -> None:
     app = FastAPI()
     app.add_middleware(RequestContextMiddleware, hsts=False)
@@ -62,6 +72,7 @@ def test_unhandled_errors_return_generic_envelope_without_internals() -> None:
     assert body["code"] == "internal_error"
     assert "secret" not in response.text
     assert body["request_id"]
+    assert response.headers["x-request-id"] == body["request_id"]
 
 
 def test_validation_errors_do_not_echo_submitted_secrets(client) -> None:

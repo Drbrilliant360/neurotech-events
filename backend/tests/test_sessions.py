@@ -109,10 +109,11 @@ def test_login_failures_are_audited_without_passwords(client, db) -> None:
     assert "not-the-password" not in str(entries[0].details)
 
 
-def test_login_is_rate_limited_per_account(client, test_settings) -> None:
+def test_failed_logins_lock_the_account_for_that_client(client, test_settings) -> None:
     signup(client)
     test_settings.rate_limit_enabled = True
-    test_settings.auth_rate_limit_per_minute = 3
+    test_settings.auth_rate_limit_per_minute = 100
+    test_settings.login_failures_per_account_per_minute = 3
     statuses = [
         client.post("/api/v1/auth/login", json={"email": "session@example.com", "password": "bad-password"}).status_code
         for _ in range(4)
@@ -121,6 +122,26 @@ def test_login_is_rate_limited_per_account(client, test_settings) -> None:
     blocked = client.post("/api/v1/auth/login", json={"email": "session@example.com", "password": PASSWORD})
     assert blocked.status_code == 429
     assert int(blocked.headers["retry-after"]) >= 1
+
+
+def test_successful_logins_never_lock_an_account(client, test_settings) -> None:
+    signup(client)
+    test_settings.rate_limit_enabled = True
+    test_settings.auth_rate_limit_per_minute = 100
+    test_settings.login_failures_per_account_per_minute = 2
+    for _ in range(6):
+        response = client.post("/api/v1/auth/login", json={"email": "session@example.com", "password": PASSWORD})
+        assert response.status_code == 200
+
+
+def test_auth_routes_are_rate_limited_per_ip(client, test_settings) -> None:
+    test_settings.rate_limit_enabled = True
+    test_settings.auth_rate_limit_per_minute = 2
+    statuses = [
+        client.post("/api/v1/auth/login", json={"email": f"u{i}@example.com", "password": "whatever1"}).status_code
+        for i in range(3)
+    ]
+    assert statuses == [401, 401, 429]
 
 
 def test_sliding_window_limiter_frees_slots() -> None:

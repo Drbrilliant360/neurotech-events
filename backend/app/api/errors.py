@@ -20,7 +20,10 @@ def _envelope(status_code: int, code: str, message: str, request: Request, **ext
     request_id = _request_id(request)
     if request_id:
         body["error"]["request_id"] = request_id
-    return JSONResponse(status_code=status_code, content=jsonable_encoder(body))
+    # Unhandled errors are answered by Starlette's outermost middleware, outside the request
+    # context middleware, so set the correlation header here as well.
+    headers = {"X-Request-ID": request_id} if request_id else None
+    return JSONResponse(status_code=status_code, content=jsonable_encoder(body), headers=headers)
 
 
 def register_error_handlers(app: FastAPI) -> None:

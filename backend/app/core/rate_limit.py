@@ -32,6 +32,19 @@ class SlidingWindowLimiter:
             hits.append(now)
             return None
 
+    def retry_after(self, key: str, limit: int, window_seconds: float = 60.0) -> int | None:
+        """Like `hit` but records nothing: seconds until allowed, or None when under the limit."""
+        now = time.monotonic()
+        with self._lock:
+            hits = self._hits.get(key)
+            if not hits:
+                return None
+            while hits and now - hits[0] >= window_seconds:
+                hits.popleft()
+            if len(hits) >= limit:
+                return max(1, math.ceil(window_seconds - (now - hits[0])))
+            return None
+
     def reset(self) -> None:
         with self._lock:
             self._hits.clear()

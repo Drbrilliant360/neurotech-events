@@ -92,3 +92,25 @@ def enforce_rate_limit(settings: Settings, key: str, per_minute: int) -> None:
     retry_after = limiter.hit(key, per_minute)
     if retry_after is not None:
         raise RateLimitedError("Too many requests. Please wait and try again.", retry_after=retry_after)
+
+
+def login_failure_keys(settings: Settings, email: str, ip: str) -> list[tuple[str, int]]:
+    per_account = settings.login_failures_per_account_per_minute
+    return [(f"login-fail:{email}:{ip}", per_account), (f"login-fail:{email}", per_account * 4)]
+
+
+def check_login_lockout(settings: Settings, email: str, ip: str) -> None:
+    """Only failures count, so a victim's own successful logins never lock them out, and an
+    attacker must fail from many IPs to hit the account-wide ceiling."""
+    if not settings.rate_limit_enabled:
+        return
+    waits = [limiter.retry_after(key, limit) for key, limit in login_failure_keys(settings, email, ip)]
+    waits = [wait for wait in waits if wait is not None]
+    if waits:
+        raise RateLimitedError("Too many failed sign-in attempts. Please wait and try again.", retry_after=max(waits))
+
+
+def record_login_failure(settings: Settings, email: str, ip: str) -> None:
+    if settings.rate_limit_enabled:
+        for key, limit in login_failure_keys(settings, email, ip):
+            limiter.hit(key, limit)

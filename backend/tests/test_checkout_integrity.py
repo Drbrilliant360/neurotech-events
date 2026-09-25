@@ -102,3 +102,45 @@ def test_client_polling_is_throttled_before_reaching_the_provider(client, gatewa
 def test_ticket_numbers_have_forty_bits_of_entropy(client) -> None:
     ticket_number = client.post("/api/v1/payments/mobile", json=CHECKOUT).json()["ticket_number"]
     assert ticket_number.startswith("NTS-") and len(ticket_number) == 14
+
+
+def test_webhook_during_checkout_is_not_overwritten(client, gateway, db_factory, monkeypatch) -> None:
+    """The payer approves before the provider's create call returns and the webhook lands first."""
+    import uuid
+
+    from app.db.models import Payment
+    from app.db.models.enums import PaymentStatus, RegistrationStatus
+
+    original = gateway.create_mobile_payment
+
+    def create_then_webhook(**kwargs):
+        result = original(**kwargs)
+        with db_factory() as other:
+            payment = other.get(Payment, uuid.UUID(kwargs["metadata"]["payment_id"]))
+            payment.status = PaymentStatus.PAID
+            payment.registration.status = RegistrationStatus.CONFIRMED
+            other.commit()
+        return result
+
+    monkeypatch.setattr(gateway, "create_mobile_payment", create_then_webhook)
+    body = client.post("/api/v1/payments/mobile", json=CHECKOUT).json()
+    assert body["status"] == "paid"
+    assert body["registration_status"] == "confirmed"
+
+
+def test_admin_verify_recovers_late_payment_without_webhook(client, gateway) -> None:
+    from tests.conftest import ADMIN_TOKEN
+
+    account = client.post(
+        "/api/v1/auth/register",
+        json={"email": CHECKOUT["attendee"]["email"], "password": "password123", "full_name": "Asha Mwinyi"},
+    ).json()
+    headers = {"Authorization": f"Bearer {account['access_token']}"}
+    payment = client.post("/api/v1/payments/mobile", json=CHECKOUT, headers=headers).json()
+    client.delete(f"/api/v1/attendee/registrations/{payment['registration_id']}", headers=headers)
+    gateway.statuses[payment["provider_reference"]] = "completed"
+
+    verified = client.post(
+        f"/api/v1/admin/payments/{payment['id']}/verify", headers={"Authorization": f"Bearer {ADMIN_TOKEN}"}
+    ).json()
+    assert verified["status"] == "paid" and verified["registration_status"] == "confirmed"

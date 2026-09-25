@@ -50,7 +50,12 @@ from app.schemas.admin_events import (
     validate_event_times,
 )
 from app.services import audit, inventory
-from app.services.authorization import managed_organization_ids, require_organization_manager, visible_events_filter
+from app.services.authorization import (
+    managed_organization_ids,
+    require_directory_editor,
+    require_organization_manager,
+    visible_events_filter,
+)
 from app.services.errors import ConflictError, NotFoundError, ValidationError
 
 STATUS_TRANSITIONS: dict[EventStatus, set[EventStatus]] = {
@@ -534,6 +539,19 @@ def _speaker(db: Session, speaker_id: uuid.UUID) -> Speaker:
     return speaker
 
 
+def _speaker_organizations(db: Session, speaker_id: uuid.UUID) -> set[uuid.UUID]:
+    return set(
+        db.scalars(
+            select(Event.organization_id).join(EventSession, EventSession.event_id == Event.id)
+            .where(EventSession.speaker_id == speaker_id).distinct()
+        )
+    )
+
+
+def _venue_organizations(db: Session, venue_id: uuid.UUID) -> set[uuid.UUID]:
+    return set(db.scalars(select(Event.organization_id).where(Event.venue_id == venue_id).distinct()))
+
+
 def create_speaker(db: Session, user: User, payload: SpeakerFields) -> Speaker:
     speaker = Speaker(**payload.model_dump())
     speaker.initials = speaker.initials or _initials(speaker.name)
@@ -546,6 +564,7 @@ def create_speaker(db: Session, user: User, payload: SpeakerFields) -> Speaker:
 
 def update_speaker(db: Session, user: User, speaker_id: uuid.UUID, payload: SpeakerUpdate) -> Speaker:
     speaker = _speaker(db, speaker_id)
+    require_directory_editor(db, user, _speaker_organizations(db, speaker.id))
     _apply(speaker, payload.model_dump(exclude_unset=True), {"name"})
     audit.record(db, "speaker.updated", actor=user, target_type="speaker", target_id=speaker.id)
     db.commit()
@@ -554,6 +573,7 @@ def update_speaker(db: Session, user: User, speaker_id: uuid.UUID, payload: Spea
 
 def delete_speaker(db: Session, user: User, speaker_id: uuid.UUID) -> None:
     speaker = _speaker(db, speaker_id)
+    require_directory_editor(db, user, _speaker_organizations(db, speaker.id))
     audit.record(db, "speaker.deleted", actor=user, target_type="speaker", target_id=speaker.id)
     db.delete(speaker)
     db.commit()
@@ -579,6 +599,7 @@ def update_venue(db: Session, user: User, venue_id: uuid.UUID, payload: VenueUpd
     venue = db.get(Venue, venue_id)
     if venue is None:
         raise NotFoundError("Venue not found.")
+    require_directory_editor(db, user, _venue_organizations(db, venue.id))
     _apply(venue, payload.model_dump(exclude_unset=True), {"name"})
     audit.record(db, "venue.updated", actor=user, target_type="venue", target_id=venue.id)
     db.commit()
