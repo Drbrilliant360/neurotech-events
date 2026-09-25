@@ -62,7 +62,11 @@ class TicketType(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 class Registration(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "registrations"
-    __table_args__ = (Index("ix_registrations_event_attendee", "event_id", "attendee_id"),)
+    __table_args__ = (
+        Index("ix_registrations_event_attendee", "event_id", "attendee_id"),
+        # Serves the seat-count query used on every checkout and availability read.
+        Index("ix_registrations_ticket_status_created", "ticket_type_id", "status", "created_at"),
+    )
 
     event_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("events.id", ondelete="RESTRICT"), nullable=False, index=True
@@ -112,7 +116,7 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         string_enum(PaymentStatus, "payment_status"), nullable=False, default=PaymentStatus.PENDING, index=True
     )
     provider: Mapped[str | None] = mapped_column(String(60))
-    provider_reference: Mapped[str | None] = mapped_column(String(120))
+    provider_reference: Mapped[str | None] = mapped_column(String(120), index=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     refunded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -144,6 +148,7 @@ class CheckIn(UUIDPrimaryKeyMixin, Base):
     """Door check-in record. Undo is recorded, never deleted."""
 
     __tablename__ = "check_ins"
+    __table_args__ = (Index("ix_check_ins_event_undone", "event_id", "undone"),)
 
     registration_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("registrations.id", ondelete="CASCADE"), nullable=False, index=True

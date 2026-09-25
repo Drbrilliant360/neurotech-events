@@ -12,8 +12,8 @@ from decimal import Decimal
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import Event, Organization, Registration, TicketType, Venue
-from app.db.models.enums import EventFormat, EventStatus, RegistrationStatus
+from app.db.models import Event, Organization, TicketType, Venue
+from app.db.models.enums import EventFormat, EventStatus
 from app.db.seed import ORGANIZATION, seed_id
 from app.schemas.events import (
     CatalogueSyncIn,
@@ -24,20 +24,26 @@ from app.schemas.events import (
     TicketTypeOut,
     VenueOut,
 )
+from app.services import inventory
 from app.services.payments import MIN_AMOUNT_TZS, NotFoundError, ValidationError, compute_total
 
 PUBLIC_STATUSES = (EventStatus.PUBLISHED, EventStatus.ONGOING, EventStatus.COMPLETED)
 
 
 def _sold_counts(db: Session, ticket_type_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
-    if not ticket_type_ids:
-        return {}
-    rows = db.execute(
-        select(Registration.ticket_type_id, func.count())
-        .where(Registration.ticket_type_id.in_(ticket_type_ids), Registration.status != RegistrationStatus.CANCELLED)
-        .group_by(Registration.ticket_type_id)
-    ).all()
-    return {ticket_type_id: count for ticket_type_id, count in rows}
+    return inventory.taken_by_ticket_type(db, ticket_type_ids)
+
+
+def _aware(value: datetime | None) -> datetime | None:
+    return value.replace(tzinfo=UTC) if value is not None and value.tzinfo is None else value
+
+
+def _on_sale(event: Event, ticket: TicketType, now: datetime) -> bool:
+    windows = [
+        (_aware(event.registration_opens_at), _aware(event.registration_closes_at)),
+        (_aware(ticket.sales_start_at), _aware(ticket.sales_end_at)),
+    ]
+    return all((opens is None or now >= opens) and (closes is None or now <= closes) for opens, closes in windows)
 
 
 def _venue_out(venue: Venue | None) -> VenueOut | None:
@@ -132,7 +138,9 @@ def quote_ticket(db: Session, slug: str, code: str) -> TicketQuoteOut:
         available=max(ticket.capacity - sold, 0),
         payable_online=ticket.active
         and total >= MIN_AMOUNT_TZS
-        and event.status in (EventStatus.PUBLISHED, EventStatus.ONGOING),
+        and sold < ticket.capacity
+        and event.status in (EventStatus.PUBLISHED, EventStatus.ONGOING)
+        and _on_sale(event, ticket, datetime.now(UTC)),
     )
 
 

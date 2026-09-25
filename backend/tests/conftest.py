@@ -2,7 +2,7 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -11,6 +11,7 @@ from app.api.deps import database_session, payment_gateway, settings_dependency
 from app.config import Settings
 from app.core.rate_limit import limiter
 from app.db.base import Base
+from app.db.models import Event
 from app.db.seed import seed
 from app.integrations.payments.snippe import GatewayPayment
 from app.main import app
@@ -88,6 +89,12 @@ def db_factory(engine):
 def db(db_factory) -> Iterator[Session]:
     with db_factory() as session:
         seed(session)
+        # The seed carries real calendar dates; clear registration windows so tests do not start
+        # failing as those dates pass. Window rules have dedicated tests that set them explicitly.
+        for event in session.scalars(select(Event)):
+            event.registration_opens_at = None
+            event.registration_closes_at = None
+        session.commit()
         yield session
 
 

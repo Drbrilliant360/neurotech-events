@@ -58,4 +58,4 @@ def provider_balance(service: Service) -> BalanceOut:
 @router.post("/{payment_id}/verify", response_model=PaymentOut)
 def verify_payment(payment_id: uuid.UUID, service: Service) -> PaymentOut:
     """Force a status check against the provider for one payment."""
-    return service.to_out(service.sync_with_gateway(service.get_payment(payment_id)))
+    return service.to_out(service.sync_with_gateway(service.get_payment(payment_id), force=True))
