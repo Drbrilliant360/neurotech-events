@@ -9,12 +9,13 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.db.models import Event, Organization, Registration, TicketType, Venue
-from app.db.models.enums import EventFormat, EventStatus, RegistrationStatus
+from app.db.models import Event, Organization, TicketType, Venue
+from app.db.models.enums import EventFormat, EventStatus
 from app.db.seed import ORGANIZATION, seed_id
+from app.schemas.admin_events import ProgramOut
 from app.schemas.events import (
     CatalogueSyncIn,
     CatalogueSyncOut,
@@ -24,20 +25,26 @@ from app.schemas.events import (
     TicketTypeOut,
     VenueOut,
 )
+from app.services import event_admin, inventory
 from app.services.payments import MIN_AMOUNT_TZS, NotFoundError, ValidationError, compute_total
 
 PUBLIC_STATUSES = (EventStatus.PUBLISHED, EventStatus.ONGOING, EventStatus.COMPLETED)
 
 
 def _sold_counts(db: Session, ticket_type_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
-    if not ticket_type_ids:
-        return {}
-    rows = db.execute(
-        select(Registration.ticket_type_id, func.count())
-        .where(Registration.ticket_type_id.in_(ticket_type_ids), Registration.status != RegistrationStatus.CANCELLED)
-        .group_by(Registration.ticket_type_id)
-    ).all()
-    return {ticket_type_id: count for ticket_type_id, count in rows}
+    return inventory.taken_by_ticket_type(db, ticket_type_ids)
+
+
+def _aware(value: datetime | None) -> datetime | None:
+    return value.replace(tzinfo=UTC) if value is not None and value.tzinfo is None else value
+
+
+def _on_sale(event: Event, ticket: TicketType, now: datetime) -> bool:
+    windows = [
+        (_aware(event.registration_opens_at), _aware(event.registration_closes_at)),
+        (_aware(ticket.sales_start_at), _aware(ticket.sales_end_at)),
+    ]
+    return all((opens is None or now >= opens) and (closes is None or now <= closes) for opens, closes in windows)
 
 
 def _venue_out(venue: Venue | None) -> VenueOut | None:
@@ -61,14 +68,39 @@ def _summary(event: Event) -> EventSummaryOut:
     )
 
 
-def list_public_events(db: Session) -> list[EventSummaryOut]:
-    events = db.scalars(
-        select(Event)
-        .options(selectinload(Event.venue))
-        .where(Event.status.in_(PUBLIC_STATUSES))
-        .order_by(Event.starts_at.asc())
-    ).all()
+def list_public_events(
+    db: Session,
+    *,
+    q: str | None = None,
+    category: str | None = None,
+    featured: bool | None = None,
+    upcoming: bool = False,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[EventSummaryOut]:
+    query = select(Event).options(selectinload(Event.venue)).where(Event.status.in_(PUBLIC_STATUSES))
+    if q:
+        pattern = f"%{q.strip().lower()}%"
+        query = query.where(or_(func.lower(Event.title).like(pattern), func.lower(Event.subtitle).like(pattern)))
+    if category:
+        query = query.where(func.lower(Event.category) == category.strip().lower())
+    if featured is not None:
+        query = query.where(Event.featured.is_(featured))
+    if upcoming:
+        query = query.where(Event.ends_at >= datetime.now(UTC))
+    events = db.scalars(query.order_by(Event.starts_at.asc()).offset(offset).limit(limit)).all()
     return [_summary(event) for event in events]
+
+
+def get_public_program(db: Session, slug: str) -> ProgramOut:
+    event = db.scalar(select(Event).where(Event.slug == slug))
+    if event is None or event.status not in PUBLIC_STATUSES:
+        raise NotFoundError("Event not found.")
+    return ProgramOut(
+        event_slug=event.slug,
+        sessions=[event_admin.to_session_out(item) for item in event_admin.list_sessions(db, event.id)],
+        milestones=[event_admin.to_milestone_out(item) for item in event_admin.list_milestones(db, event.id)],
+    )
 
 
 def get_public_event(db: Session, slug: str) -> EventDetailOut:
@@ -132,7 +164,9 @@ def quote_ticket(db: Session, slug: str, code: str) -> TicketQuoteOut:
         available=max(ticket.capacity - sold, 0),
         payable_online=ticket.active
         and total >= MIN_AMOUNT_TZS
-        and event.status in (EventStatus.PUBLISHED, EventStatus.ONGOING),
+        and sold < ticket.capacity
+        and event.status in (EventStatus.PUBLISHED, EventStatus.ONGOING)
+        and _on_sale(event, ticket, datetime.now(UTC)),
     )
 
 

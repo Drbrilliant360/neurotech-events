@@ -26,12 +26,12 @@ Phase status:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
-| Phase 1 — Identity and authorization | In progress | Users, JWT/current-user flows, organization memberships, event assignments, scoped access endpoint and protected membership/assignment mutations exist; refresh/revocation and broader admin-route conversion remain |
-| Phase 2 — Public events and program | Partial | Event, venue and ticket tables, demo seed, public event listing/detail and ticket quote endpoints exist |
-| Phase 3 — Ticketing and registration | Partial | Authenticated payments attach registrations to attendee accounts; attendee list/detail/cancellation routes now exist; standalone checkout and refund workflows remain |
-| Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, polling verification, `payment_events` audit trail, super-admin transaction views |
+| Phase 1 — Identity and authorization | Mostly complete | Users, rotating refresh tokens with reuse detection, sign-out/sign-out-everywhere, password change, rate limits, audit log, organization memberships, event assignments and scoped `view`/`manage`/`finance`/`check_in` capabilities on every organiser route; email verification and password reset remain |
+| Phase 2 — Public events and program | Complete | Public event list with filters, detail, programme, speakers and ticket quotes; organiser CRUD for events, ticket types, sessions, milestones, speakers and venues with status transitions |
+| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout (row locks, capacity, sales and registration windows, seat holds), attendee registrations and signed QR tickets, complimentary tickets and organiser cancellations; provider refunds remain |
+| Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, throttled polling verification, late-payment recovery, `payment_events` audit trail, super-admin and event-scoped finance views; refunds remain |
 | Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
-| Phase 6 — Operations and check-in | Not started | Scoped check-in, audit history and exports |
+| Phase 6 — Operations and check-in | Mostly complete | QR/ticket-number check-in with undo, door lookup, attendee list and CSV export, event summary and per-event audit trail; offline check-in sync remains |
 | Phase 7 — Communications, media and scale | Not started | Workers, providers, storage, observability and retention |
 
 History lives in `git log main`; the identity work from `feat/backend` and the schema/payments work from `masterchanges` were unified in one merge so Alembic keeps a single revision chain.
@@ -190,6 +190,51 @@ Authenticated mobile payments now link the resulting attendee record to the acco
 Attendees can only read or cancel their own pending registrations. Confirmed
 registrations require a future refund workflow instead of direct cancellation.
 
+Implemented session routes:
+
+```text
+POST   /api/v1/auth/register | /auth/login      access token (30 min) + rotating refresh token (14 days)
+POST   /api/v1/auth/refresh                     rotate; replaying a used token revokes the whole session family
+POST   /api/v1/auth/logout                      revoke this session
+POST   /api/v1/auth/logout-all                  revoke every session and outstanding access token
+POST   /api/v1/auth/password                    change password, revoke other sessions, return fresh tokens
+```
+
+Implemented organiser routes (all require a bearer token; access is resolved per event):
+
+```text
+GET    /api/v1/admin/events                                   events visible through any role (filters, paging)
+POST   /api/v1/admin/events                                   create draft (organization owner/admin)
+GET    /api/v1/admin/events/{id}                              view
+PATCH  /api/v1/admin/events/{id}                              manage (slug frozen after publishing)
+POST   /api/v1/admin/events/{id}/status                       manage; draft→published→ongoing→completed, any→cancelled
+DELETE /api/v1/admin/events/{id}                              manage; draft/cancelled without registrations only
+GET|POST /api/v1/admin/events/{id}/ticket-types               view | manage
+PATCH|DELETE /api/v1/admin/events/{id}/ticket-types/{tid}     manage; capacity never below seats taken
+GET|POST /api/v1/admin/events/{id}/sessions                   view | manage
+PATCH|DELETE /api/v1/admin/events/{id}/sessions/{sid}         manage
+GET|POST /api/v1/admin/events/{id}/milestones                 view | manage
+PATCH|DELETE /api/v1/admin/events/{id}/milestones/{mid}       manage
+GET|POST /api/v1/admin/events/{id}/registrations              manage; search/filter | complimentary ticket
+GET    /api/v1/admin/events/{id}/registrations.csv            manage; formula-injection-safe export
+POST   /api/v1/admin/events/{id}/registrations/{rid}/cancel   manage; flags refund_required when money was collected
+POST   /api/v1/admin/events/{id}/check-ins                    check_in; signed QR payload or ticket number, admits once
+POST   /api/v1/admin/events/{id}/check-ins/{cid}/undo         check_in
+GET    /api/v1/admin/events/{id}/check-ins | /check-ins/lookup  check_in; lookup returns name/ticket only
+GET    /api/v1/admin/events/{id}/summary                      view; revenue only with finance access
+GET    /api/v1/admin/events/{id}/payments                     finance
+GET    /api/v1/admin/events/{id}/audit                        manage
+GET|POST /api/v1/admin/speakers, PATCH|DELETE /admin/speakers/{id}   organizer
+GET|POST /api/v1/admin/venues, PATCH /admin/venues/{id}              organizer
+GET    /api/v1/attendee/registrations/{id}/ticket             owner; signed QR payload once confirmed
+GET    /api/v1/events/{slug}/program | /speakers              public
+```
+
+Capabilities: `view` = any platform, organization or event role; `manage` = platform admin, organization
+owner/admin or event manager; `finance` = platform admin, organization owner/admin/finance; `check_in` =
+`manage` or event staff/check-in. Callers with no relationship to an event receive `404`, callers with a
+weaker role receive `403`.
+
 Use:
 
 - JSON request and response bodies;
@@ -318,10 +363,13 @@ Rules enforced:
 - payments below Snippe's 500 TZS minimum are refused (free tickets never touch the provider);
 - our payment reference doubles as the Snippe `Idempotency-Key` (max 30 characters);
 - every status change is appended to `payment_events`; terminal states never regress;
-- `paid` confirms the registration, `cancelled`/`expired` releases the seat, `failed` leaves it pending for retry;
+- `paid` confirms the registration; `cancelled`, `expired` and `failed` cancel it and release the seat;
+- a collection the provider confirms after local cancellation is still recorded as paid and the registration restored;
+- seats are counted from confirmed registrations plus pending ones inside the `PENDING_REGISTRATION_HOLD_MINUTES` window;
+- the ticket row is locked during checkout, and the hold is committed before the provider call;
 - webhooks are rejected unless `SNIPPE_WEBHOOK_SECRET` is set and the signature and timestamp verify;
   each event `id` is stored in `provider_webhook_events`, so redeliveries are no-ops;
-- `/admin/*` requires `Authorization: Bearer $ADMIN_API_TOKEN` (interim gate until Phase 1 identity).
+- `/admin/payments` and `/admin/catalogue` require a `platform_admin` JWT (the static `ADMIN_API_TOKEN` is accepted only in development/test); organiser routes use scoped event access instead.
 
 Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
 build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.

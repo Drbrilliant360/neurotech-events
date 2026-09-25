@@ -33,8 +33,8 @@ def upgrade() -> None:
         sa.Column("notify_on_registration", sa.Boolean(), nullable=False),
         sa.Column("notify_on_payment", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_organizations")),
     )
     op.create_table(
@@ -47,8 +47,8 @@ def upgrade() -> None:
         sa.Column("track", sa.String(length=120), nullable=True),
         sa.Column("social_url", sa.String(length=500), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_speakers")),
     )
     op.create_table(
@@ -73,8 +73,8 @@ def upgrade() -> None:
         sa.Column("logo_url", sa.String(length=500), nullable=True),
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_sponsors")),
     )
     op.create_table(
@@ -98,8 +98,8 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_users")),
         sa.UniqueConstraint("email", name=op.f("uq_users_email")),
     )
@@ -111,8 +111,8 @@ def upgrade() -> None:
         sa.Column("region", sa.String(length=120), nullable=True),
         sa.Column("country", sa.String(length=120), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_venues")),
     )
     op.create_table(
@@ -132,8 +132,8 @@ def upgrade() -> None:
         ),
         sa.Column("is_demo_user", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["user_id"], ["users.id"], name=op.f("fk_attendees_user_id_users"), ondelete="SET NULL"
         ),
@@ -184,8 +184,8 @@ def upgrade() -> None:
             "faqs", sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), "postgresql"), nullable=False
         ),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.CheckConstraint("capacity >= 0", name=op.f("ck_events_capacity_non_negative")),
         sa.CheckConstraint("ends_at >= starts_at", name=op.f("ck_events_ends_after_starts")),
         sa.ForeignKeyConstraint(
@@ -208,7 +208,7 @@ def upgrade() -> None:
         sa.Column("attendee_id", sa.Uuid(), nullable=False),
         sa.Column("event_id", sa.Uuid(), nullable=False),
         sa.Column("certificate_code", sa.String(length=40), nullable=False),
-        sa.Column("issued_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("issued_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
             ["attendee_id"], ["attendees.id"], name=op.f("fk_certificates_attendee_id_attendees"), ondelete="RESTRICT"
@@ -254,8 +254,8 @@ def upgrade() -> None:
         ),
         sa.Column("sent_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["created_by_user_id"],
             ["users.id"],
@@ -273,7 +273,7 @@ def upgrade() -> None:
         "connections",
         sa.Column("from_attendee_id", sa.Uuid(), nullable=False),
         sa.Column("to_attendee_id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.CheckConstraint("from_attendee_id <> to_attendee_id", name=op.f("ck_connections_not_self")),
         sa.ForeignKeyConstraint(
@@ -306,8 +306,8 @@ def upgrade() -> None:
         sa.Column("bio", sa.Text(), nullable=True),
         sa.Column("is_visible", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["attendee_id"],
             ["attendees.id"],
@@ -340,8 +340,8 @@ def upgrade() -> None:
         sa.Column("is_read", sa.Boolean(), nullable=False),
         sa.Column("read_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["attendee_id"], ["attendees.id"], name=op.f("fk_notifications_attendee_id_attendees"), ondelete="CASCADE"
         ),
@@ -382,8 +382,8 @@ def upgrade() -> None:
         ),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["event_id"], ["events.id"], name=op.f("fk_sessions_event_id_events"), ondelete="CASCADE"
         ),
@@ -398,7 +398,7 @@ def upgrade() -> None:
         "sponsor_events",
         sa.Column("sponsor_id", sa.Uuid(), nullable=False),
         sa.Column("event_id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["event_id"], ["events.id"], name=op.f("fk_sponsor_events_event_id_events"), ondelete="CASCADE"
         ),
@@ -421,8 +421,8 @@ def upgrade() -> None:
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column("sort_order", sa.Integer(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.CheckConstraint("capacity >= 0", name=op.f("ck_ticket_types_capacity_non_negative")),
         sa.CheckConstraint("price >= 0", name=op.f("ck_ticket_types_price_non_negative")),
         sa.ForeignKeyConstraint(
@@ -443,8 +443,8 @@ def upgrade() -> None:
         ),
         sa.Column("day_index", sa.Integer(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["event_id"], ["events.id"], name=op.f("fk_timeline_milestones_event_id_events"), ondelete="CASCADE"
         ),
@@ -473,8 +473,8 @@ def upgrade() -> None:
         sa.Column("accessibility", sa.Text(), nullable=True),
         sa.Column("cancelled_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["attendee_id"], ["attendees.id"], name=op.f("fk_registrations_attendee_id_attendees"), ondelete="RESTRICT"
         ),
@@ -499,7 +499,7 @@ def upgrade() -> None:
         "saved_sessions",
         sa.Column("attendee_id", sa.Uuid(), nullable=False),
         sa.Column("session_id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ["attendee_id"], ["attendees.id"], name=op.f("fk_saved_sessions_attendee_id_attendees"), ondelete="CASCADE"
         ),
@@ -514,7 +514,7 @@ def upgrade() -> None:
         sa.Column("attendee_id", sa.Uuid(), nullable=False),
         sa.Column("event_id", sa.Uuid(), nullable=False),
         sa.Column("ticket_number", sa.String(length=40), nullable=False),
-        sa.Column("checked_in_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("checked_in_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("checked_in_by_user_id", sa.Uuid(), nullable=True),
         sa.Column("undone", sa.Boolean(), nullable=False),
         sa.Column("undone_at", sa.DateTime(timezone=True), nullable=True),
@@ -584,8 +584,8 @@ def upgrade() -> None:
         sa.Column("paid_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("refunded_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.CheckConstraint("amount >= 0", name=op.f("ck_payments_amount_non_negative")),
         sa.ForeignKeyConstraint(
             ["attendee_id"], ["attendees.id"], name=op.f("fk_payments_attendee_id_attendees"), ondelete="RESTRICT"
@@ -639,7 +639,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("note", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(
             ["payment_id"], ["payments.id"], name=op.f("fk_payment_events_payment_id_payments"), ondelete="CASCADE"

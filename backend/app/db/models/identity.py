@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONList, TimestampMixin, UUIDPrimaryKeyMixin
@@ -68,6 +68,8 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Embedded in access tokens; incrementing it revokes every token issued before.
+    token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
 
     attendee: Mapped["Attendee | None"] = relationship(back_populates="user", uselist=False)
     organization_memberships: Mapped[list[OrganizationMembership]] = relationship(

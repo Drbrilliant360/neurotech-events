@@ -28,6 +28,8 @@ EXPECTED_TABLES = {
     "saved_sessions",
     "sponsors",
     "sponsor_events",
+    "refresh_tokens",
+    "audit_logs",
 }
 
 

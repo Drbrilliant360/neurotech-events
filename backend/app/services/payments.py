@@ -6,12 +6,15 @@ paid, and this service records every transition in `payment_events`.
 """
 
 import secrets
+import threading
+import time
 import uuid
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.config import Settings
@@ -34,26 +37,11 @@ from app.integrations.payments.snippe import (
     parse_gateway_payment,
 )
 from app.schemas.payments import MobilePaymentRequest, PaymentEventOut, PaymentOut
+from app.services import inventory
+from app.services.errors import ConflictError, DomainError, NotFoundError, ValidationError
 
-
-class PaymentError(Exception):
-    status_code = 400
-    code = "payment_error"
-
-
-class NotFoundError(PaymentError):
-    status_code = 404
-    code = "not_found"
-
-
-class ConflictError(PaymentError):
-    status_code = 409
-    code = "conflict"
-
-
-class ValidationError(PaymentError):
-    status_code = 400
-    code = "validation_error"
+# Re-exported so existing imports of these names from this module keep working.
+PaymentError = DomainError
 
 
 class GatewayError(PaymentError):
@@ -89,6 +77,7 @@ GATEWAY_METHOD_MAP: dict[str, PaymentMethod] = {
 }
 
 TERMINAL_STATUSES = {PaymentStatus.PAID, PaymentStatus.FAILED, PaymentStatus.CANCELLED, PaymentStatus.REFUNDED}
+LATE_PAYABLE_STATUSES = {PaymentStatus.CANCELLED, PaymentStatus.FAILED}
 OPEN_EVENT_STATUSES = {EventStatus.PUBLISHED, EventStatus.ONGOING}
 
 
@@ -104,7 +93,8 @@ def new_payment_reference() -> str:
 
 
 def new_ticket_number() -> str:
-    return f"NTS-{secrets.token_hex(3).upper()}"
+    # 40 random bits: ticket numbers are typed at the door, so they must not be guessable.
+    return f"NTS-{secrets.token_hex(5).upper()}"
 
 
 def _split_name(full_name: str) -> tuple[str, str]:
@@ -116,6 +106,29 @@ def _split_name(full_name: str) -> tuple[str, str]:
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _aware(value: datetime) -> datetime:
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+
+
+_last_sync: dict[uuid.UUID, float] = {}
+_last_sync_lock = threading.Lock()
+
+
+def _sync_due(payment_id: uuid.UUID, interval_seconds: float) -> bool:
+    """Throttle provider lookups while a client polls, so polling cannot amplify into provider load."""
+    now = time.monotonic()
+    with _last_sync_lock:
+        if len(_last_sync) > 10_000:
+            cutoff = now - interval_seconds
+            for key in [k for k, v in _last_sync.items() if v < cutoff]:
+                del _last_sync[key]
+        last = _last_sync.get(payment_id)
+        if last is not None and now - last < interval_seconds:
+            return False
+        _last_sync[payment_id] = now
+        return True
 
 
 class PaymentService:
@@ -130,27 +143,42 @@ class PaymentService:
         if self.gateway is None:
             raise GatewayUnavailable("Payments are not configured on this server.")
 
-        event = self.db.scalar(select(Event).where(Event.slug == request.event_slug))
+        event = self.db.scalar(
+            select(Event).options(selectinload(Event.organization)).where(Event.slug == request.event_slug)
+        )
         if event is None:
             raise NotFoundError("Event not found.")
         if event.status not in OPEN_EVENT_STATUSES:
             raise ConflictError("This event is not open for registration.")
+        now = _now()
+        if event.registration_opens_at and now < _aware(event.registration_opens_at):
+            raise ConflictError("Registration for this event has not opened yet.")
+        if event.registration_closes_at and now > _aware(event.registration_closes_at):
+            raise ConflictError("Registration for this event has closed.")
 
+        if event.capacity:
+            # Event-wide capacity spans ticket types, so serialise on the event row first.
+            self.db.refresh(event, with_for_update=True)
+        # Lock the ticket row so concurrent checkouts for the same ticket cannot both take the
+        # last seat (row lock on PostgreSQL; SQLite serialises writers anyway).
         ticket = self.db.scalar(
-            select(TicketType).where(TicketType.event_id == event.id, TicketType.code == request.ticket_code)
+            select(TicketType)
+            .where(TicketType.event_id == event.id, TicketType.code == request.ticket_code)
+            .with_for_update()
         )
         if ticket is None:
             raise NotFoundError("Ticket type not found for this event.")
         if not ticket.active:
             raise ConflictError("This ticket type is not on sale.")
-
-        sold = self.db.scalar(
-            select(func.count())
-            .select_from(Registration)
-            .where(Registration.ticket_type_id == ticket.id, Registration.status != RegistrationStatus.CANCELLED)
-        )
-        if (sold or 0) >= ticket.capacity:
-            raise ConflictError("This ticket type is sold out.")
+        if ticket.sales_start_at and now < _aware(ticket.sales_start_at):
+            raise ConflictError("Sales for this ticket type have not started yet.")
+        if ticket.sales_end_at and now > _aware(ticket.sales_end_at):
+            raise ConflictError("Sales for this ticket type have ended.")
+        taken = inventory.taken_by_ticket_type(self.db, [ticket.id], self.settings).get(ticket.id, 0)
+        if taken >= ticket.capacity:
+            raise ConflictError("This ticket type is sold out.", code="sold_out")
+        if event.capacity and inventory.taken_for_event(self.db, event.id, self.settings) >= event.capacity:
+            raise ConflictError("This event is at capacity.", code="sold_out")
 
         total = compute_total(ticket.price, event.organization.vat_percent)
         if total < MIN_AMOUNT_TZS:
@@ -180,6 +208,9 @@ class PaymentService:
         payment.events.append(
             PaymentEvent(from_status=None, to_status=PaymentStatus.PENDING, note="Payment intent created")
         )
+        # Commit the seat hold before the network call so the row lock is not held while the
+        # provider responds; a slow provider must not serialise every buyer of this ticket.
+        self.db.commit()
 
         first_name, last_name = _split_name(attendee.full_name)
         try:
@@ -200,23 +231,33 @@ class PaymentService:
             )
         except SnippeError as exc:
             self._transition(payment, PaymentStatus.FAILED, note=f"Provider rejected the payment intent: {exc}")
+            registration.status = RegistrationStatus.CANCELLED
+            registration.cancelled_at = _now()
             self.db.commit()
             raise GatewayError(str(exc)) from exc
 
+        self._lock(payment)
         payment.provider_reference = provider_payment.reference
         self._apply_gateway_payment(payment, provider_payment, note="Provider accepted the payment intent")
         self.db.commit()
         return self.get_payment(payment.id)
 
-    def sync_with_gateway(self, payment: Payment) -> Payment:
+    def sync_with_gateway(self, payment: Payment, *, force: bool = False) -> Payment:
         """Ask the provider for the current status. This is the real verification path when webhooks
         cannot reach us (for example in local development)."""
-        if payment.status in TERMINAL_STATUSES or not payment.provider_reference or self.gateway is None:
+        if not payment.provider_reference or self.gateway is None:
+            return payment
+        # Cancelled/failed payments are still checked: the payer may approve the prompt after a
+        # local cancellation, and without a webhook this is the only way to see the money.
+        if payment.status in TERMINAL_STATUSES and payment.status not in LATE_PAYABLE_STATUSES:
+            return payment
+        if not force and not _sync_due(payment.id, self.settings.payment_sync_interval_seconds):
             return payment
         try:
             provider_payment = self.gateway.get_payment(payment.provider_reference)
         except SnippeError as exc:
             raise GatewayError(str(exc)) from exc
+        self._lock(payment)
         self._apply_gateway_payment(payment, provider_payment, note="Status verified with provider")
         self.db.commit()
         return self.get_payment(payment.id)
@@ -242,10 +283,20 @@ class PaymentService:
             record.note = "No matching payment for this event."
         else:
             record.payment_id = payment.id
+            self._lock(payment)
             self._apply_gateway_payment(payment, parse_gateway_payment(data), note=f"Webhook {event_type}")
             record.processed_at = _now()
         self.db.add(record)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except IntegrityError:
+            # A concurrent delivery of the same event won the insert; it has been applied once.
+            self.db.rollback()
+            return self.db.scalar(
+                select(ProviderWebhookEvent).where(
+                    ProviderWebhookEvent.provider == provider, ProviderWebhookEvent.event_id == event_id
+                )
+            )
         return record
 
     # ------------------------------------------------------------------ queries
@@ -256,9 +307,14 @@ class PaymentService:
             raise NotFoundError("Payment not found.")
         return payment
 
-    def list_payments(self, *, status: str | None, page: int, page_size: int) -> tuple[list[Payment], int]:
+    def list_payments(
+        self, *, status: str | None, page: int, page_size: int, event_id: uuid.UUID | None = None
+    ) -> tuple[list[Payment], int]:
         query = self._payment_query()
         count_query = select(func.count()).select_from(Payment)
+        if event_id is not None:
+            query = query.where(Payment.event_id == event_id)
+            count_query = count_query.where(Payment.event_id == event_id)
         if status:
             try:
                 wanted = PaymentStatus(status)
@@ -374,19 +430,37 @@ class PaymentService:
         if provider_payment.external_reference and not payment.provider_reference:
             payment.provider_reference = provider_payment.reference
         target = GATEWAY_STATUS_MAP.get(provider_payment.status)
-        if target is None or target == payment.status or payment.status in TERMINAL_STATUSES:
+        if target is None or target == payment.status:
+            return
+        # The provider is authoritative for money. A completed collection must be recorded even
+        # when this payment was already closed locally (for example an attendee cancelled while
+        # the mobile-money prompt was still open), otherwise the customer pays for nothing.
+        late_payment = target == PaymentStatus.PAID and payment.status in LATE_PAYABLE_STATUSES
+        if payment.status in TERMINAL_STATUSES and not late_payment:
             return
         detail = f"{note} (provider status: {provider_payment.status})"
         if provider_payment.failure_reason:
             detail += f" — {provider_payment.failure_reason}"
+        if late_payment:
+            detail += " — collected after local cancellation; registration restored"
         self._transition(payment, target, note=detail)
         registration = payment.registration
         if target == PaymentStatus.PAID:
             payment.paid_at = _now()
             registration.status = RegistrationStatus.CONFIRMED
-        elif target == PaymentStatus.CANCELLED:
+            registration.cancelled_at = None
+        elif target in {PaymentStatus.CANCELLED, PaymentStatus.FAILED}:
             registration.status = RegistrationStatus.CANCELLED
             registration.cancelled_at = _now()
+
+    def _lock(self, payment: Payment) -> None:
+        """Re-read the payment under a row lock before applying a provider status.
+
+        A webhook, a client poll and checkout can race on one payment; applying a provider status
+        to a stale copy could otherwise overwrite PAID with PROCESSING. Call before any change.
+        """
+        self.db.refresh(payment, with_for_update=True)
+        self.db.refresh(payment.registration)
 
     def _transition(self, payment: Payment, to_status: PaymentStatus, *, note: str) -> None:
         payment.events.append(PaymentEvent(from_status=payment.status, to_status=to_status, note=note))

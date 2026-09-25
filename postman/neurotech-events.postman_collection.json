@@ -1778,6 +1778,823 @@
           }
         }
       ]
+    },
+    {
+      "name": "Sessions (implemented)",
+      "item": [
+        {
+          "name": "Refresh tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.access_token) pm.environment.set('access_token', body.access_token);",
+                  "if (body.refresh_token) pm.environment.set('refresh_token', body.refresh_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sign out this session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/auth/logout",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Sign out everywhere",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/auth/logout-all"
+          }
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/auth/password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"{{user_password}}\",\n  \"new_password\": \"a-new-password-123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.access_token) pm.environment.set('access_token', body.access_token);",
+                  "if (body.refresh_token) pm.environment.set('refresh_token', body.refresh_token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Organiser - Events (implemented)",
+      "item": [
+        {
+          "name": "List my events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events?status=published&page=1&page_size=25",
+            "body": {
+              "mode": "raw",
+              "raw": "\"\"",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create draft event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"neuro-ethics-forum\",\n  \"title\": \"Neuro Ethics Forum\",\n  \"format\": \"hybrid\",\n  \"starts_at\": \"2027-03-10T09:00:00+03:00\",\n  \"ends_at\": \"2027-03-11T17:00:00+03:00\",\n  \"capacity\": 150\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.environment.set('event_id', body.id);",
+                  "if (body.slug) pm.environment.set('event_slug', body.slug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}"
+          }
+        },
+        {
+          "name": "Update event",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subtitle\": \"Policy, consent and neural data\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Change status (publish)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete draft event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}"
+          }
+        },
+        {
+          "name": "List ticket types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types"
+          }
+        },
+        {
+          "name": "Create ticket type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Standard\",\n  \"tier\": \"standard\",\n  \"price\": 30000,\n  \"capacity\": 100\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.environment.set('ticket_type_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update ticket type",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types/{{ticket_type_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 35000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete ticket type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/ticket-types/{{ticket_type_id}}"
+          }
+        },
+        {
+          "name": "List sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions"
+          }
+        },
+        {
+          "name": "Create session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Opening keynote\",\n  \"session_date\": \"2027-03-10\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"10:00\",\n  \"session_type\": \"keynote\",\n  \"room\": \"Main hall\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.environment.set('session_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update session",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions/{{session_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room\": \"Hall B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/sessions/{{session_id}}"
+          }
+        },
+        {
+          "name": "List milestones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/milestones"
+          }
+        },
+        {
+          "name": "Create milestone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/milestones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Call for papers closes\",\n  \"milestone_date\": \"2027-01-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organiser - Directory (implemented)",
+      "item": [
+        {
+          "name": "List speakers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/speakers?q="
+          }
+        },
+        {
+          "name": "Create speaker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/speakers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr Neema Said\",\n  \"role\": \"Neuroscientist\",\n  \"social_url\": \"https://example.org/neema\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List venues",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/venues"
+          }
+        },
+        {
+          "name": "Create venue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/venues",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kilimanjaro Hall\",\n  \"city\": \"Moshi\",\n  \"country\": \"Tanzania\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organiser - Operations (implemented)",
+      "item": [
+        {
+          "name": "List registrations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/registrations?status=confirmed&q=&page=1"
+          }
+        },
+        {
+          "name": "Export registrations CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/registrations.csv"
+          }
+        },
+        {
+          "name": "Issue complimentary ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/registrations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attendee\": {\n    \"full_name\": \"Guest Speaker\",\n    \"email\": \"guest@example.org\"\n  },\n  \"ticket_type_id\": \"{{ticket_type_id}}\",\n  \"note\": \"Speaker\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.environment.set('registration_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel registration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/registrations/{{registration_id}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Duplicate booking\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check in (QR payload or ticket number)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"NTS-0000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.environment.set('check_in_id', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Undo check-in",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins/{{check_in_id}}/undo"
+          }
+        },
+        {
+          "name": "List check-ins",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins"
+          }
+        },
+        {
+          "name": "Door lookup",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins/lookup?q=guest"
+          }
+        },
+        {
+          "name": "Event summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/summary"
+          }
+        },
+        {
+          "name": "Event payments (finance)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/payments"
+          }
+        },
+        {
+          "name": "Event audit trail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/audit"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public and attendee additions (implemented)",
+      "item": [
+        {
+          "name": "Public programme",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}{{api_prefix}}/events/{{event_slug}}/program"
+          }
+        },
+        {
+          "name": "Public speakers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}{{api_prefix}}/events/{{event_slug}}/speakers"
+          }
+        },
+        {
+          "name": "Filtered event list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}{{api_prefix}}/events?upcoming=true&featured=true&limit=20"
+          }
+        },
+        {
+          "name": "My ticket with QR payload",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/attendee/registrations/{{registration_id}}/ticket"
+          }
+        }
+      ]
     }
   ]
 }

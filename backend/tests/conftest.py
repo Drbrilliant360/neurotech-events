@@ -2,14 +2,16 @@ from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.db.models  # noqa: F401
 from app.api.deps import database_session, payment_gateway, settings_dependency
 from app.config import Settings
+from app.core.rate_limit import limiter
 from app.db.base import Base
+from app.db.models import Event
 from app.db.seed import seed
 from app.integrations.payments.snippe import GatewayPayment
 from app.main import app
@@ -87,6 +89,12 @@ def db_factory(engine):
 def db(db_factory) -> Iterator[Session]:
     with db_factory() as session:
         seed(session)
+        # The seed carries real calendar dates; clear registration windows so tests do not start
+        # failing as those dates pass. Window rules have dedicated tests that set them explicitly.
+        for event in session.scalars(select(Event)):
+            event.registration_opens_at = None
+            event.registration_closes_at = None
+        session.commit()
         yield session
 
 
@@ -105,6 +113,7 @@ def test_settings() -> Settings:
         snippe_api_key="snp_test",
         snippe_webhook_secret=WEBHOOK_SECRET,
         public_base_url="https://api.example.org",
+        rate_limit_enabled=False,
     )
 
 
@@ -117,6 +126,8 @@ def client(db_factory, db, gateway, test_settings) -> Iterator[TestClient]:
     app.dependency_overrides[database_session] = _db
     app.dependency_overrides[payment_gateway] = lambda: gateway
     app.dependency_overrides[settings_dependency] = lambda: test_settings
+    limiter.reset()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    limiter.reset()

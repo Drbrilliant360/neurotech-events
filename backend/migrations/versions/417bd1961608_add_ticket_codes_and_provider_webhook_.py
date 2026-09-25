@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column(
             "payload", sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), "postgresql"), nullable=False
         ),
-        sa.Column("received_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column("received_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("note", sa.Text(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),

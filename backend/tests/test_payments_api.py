@@ -168,7 +168,7 @@ def test_validation_and_conflict_rules(client, db) -> None:
         json={**CHECKOUT, "ticket_code": "tix_vip", "attendee": {"full_name": "Juma K", "email": "juma@example.org"}},
     )
     assert second.status_code == 409
-    assert second.json()["error"]["code"] == "conflict"
+    assert second.json()["error"]["code"] == "sold_out"
 
 
 def test_gateway_rejection_is_recorded_as_failed(client, gateway, db) -> None:

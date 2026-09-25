@@ -13,6 +13,7 @@ from app.schemas.authorization_admin import (
     MembershipUpsertRequest,
     ScopedAssignmentResponse,
 )
+from app.services import audit
 from app.services.authorization import event_access, organization_roles
 
 router = APIRouter(prefix="/authorization", tags=["authorization"])
@@ -90,6 +91,10 @@ def upsert_membership(
         db.add(membership)
     membership.role = payload.role
     membership.is_active = True
+    audit.record(
+        db, "organization.membership_upserted", actor=user, target_type="user", target_id=user_id,
+        details={"organization_id": str(organization_id), "role": payload.role.value},
+    )
     db.commit()
     db.refresh(membership)
     return membership
@@ -112,6 +117,10 @@ def deactivate_membership(
     if membership is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Membership not found.")
     membership.is_active = False
+    audit.record(
+        db, "organization.membership_deactivated", actor=user, target_type="user", target_id=user_id,
+        details={"organization_id": str(organization_id)},
+    )
     db.commit()
 
 
@@ -139,6 +148,10 @@ def upsert_event_assignment(
         db.add(assignment)
     assignment.role = payload.role.value
     assignment.is_active = True
+    audit.record(
+        db, "event.assignment_upserted", actor=user, target_type="user", target_id=user_id, event_id=event_id,
+        details={"role": payload.role.value},
+    )
     db.commit()
     db.refresh(assignment)
     return assignment
@@ -161,4 +174,7 @@ def deactivate_event_assignment(
     if assignment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event assignment not found.")
     assignment.is_active = False
+    audit.record(
+        db, "event.assignment_deactivated", actor=user, target_type="user", target_id=user_id, event_id=event_id
+    )
     db.commit()
