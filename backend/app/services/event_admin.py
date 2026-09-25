@@ -604,3 +604,76 @@ def update_venue(db: Session, user: User, venue_id: uuid.UUID, payload: VenueUpd
     audit.record(db, "venue.updated", actor=user, target_type="venue", target_id=venue.id)
     db.commit()
     return venue
+
+
+def duplicate_event(db: Session, user: User, source: Event) -> Event:
+    """Copy an event, its ticket types and programme into a new draft."""
+    require_organization_manager(db, user, source.organization_id)
+    base = f"{source.slug}-copy"[:150]
+    slug, n = base, 2
+    while db.scalar(select(Event.id).where(Event.slug == slug)) is not None:
+        slug, n = f"{base}-{n}", n + 1
+    copy = Event(
+        organization_id=source.organization_id,
+        venue_id=source.venue_id,
+        slug=slug,
+        title=f"{source.title} (copy)"[:200],
+        subtitle=source.subtitle,
+        description=source.description,
+        theme=source.theme,
+        category=source.category,
+        status=EventStatus.DRAFT,
+        format=source.format,
+        starts_at=source.starts_at,
+        ends_at=source.ends_at,
+        capacity=source.capacity,
+        registration_opens_at=source.registration_opens_at,
+        registration_closes_at=source.registration_closes_at,
+        featured=False,
+        banner_label=source.banner_label,
+        highlights=list(source.highlights or []),
+        faqs=list(source.faqs or []),
+    )
+    db.add(copy)
+    db.flush()
+    for ticket in db.scalars(select(TicketType).where(TicketType.event_id == source.id)):
+        db.add(
+            TicketType(
+                event_id=copy.id, code=ticket.code, name=ticket.name, tier=ticket.tier, price=ticket.price,
+                currency=ticket.currency, perks=ticket.perks, capacity=ticket.capacity, active=ticket.active,
+                sort_order=ticket.sort_order,
+            )
+        )
+    for session in list_sessions(db, source.id):
+        db.add(
+            EventSession(
+                event_id=copy.id, speaker_id=session.speaker_id, title=session.title, day_index=session.day_index,
+                day_label=session.day_label, session_date=session.session_date, start_time=session.start_time,
+                end_time=session.end_time, speaker_label=session.speaker_label, room=session.room,
+                session_type=session.session_type, description=session.description,
+            )
+        )
+    audit.record(
+        db, "event.duplicated", actor=user, target_type="event", target_id=copy.id, event_id=copy.id,
+        details={"source": str(source.id)},
+    )
+    db.commit()
+    return copy
+
+
+def update_organization(db: Session, user: User, organization_id: uuid.UUID, changes: dict[str, Any]) -> Organization:
+    organization = db.get(Organization, organization_id)
+    if organization is None:
+        raise NotFoundError("Organization not found.")
+    require_organization_manager(db, user, organization.id)
+    _apply(
+        organization, changes,
+        {"name", "brand_name", "contact_email", "default_currency", "vat_percent",
+         "registration_open_by_default", "notify_on_registration", "notify_on_payment"},
+    )
+    audit.record(
+        db, "organization.updated", actor=user, target_type="organization", target_id=organization.id,
+        details={k: str(v) for k, v in changes.items()},
+    )
+    db.commit()
+    return organization

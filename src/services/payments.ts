@@ -5,7 +5,7 @@
  * prices, provider calls and confirmation; this module only relays requests and statuses.
  */
 import type { PaymentMethod, PaymentStatus } from "../domain/types";
-import { ApiError, apiRequest, isApiEnabled } from "./api";
+import { ApiError, apiRequest, isApiEnabled, optionalAuthRequest } from "./api";
 
 export const isLivePaymentsEnabled = isApiEnabled;
 export const PaymentApiError = ApiError;
@@ -42,6 +42,9 @@ export interface RemotePayment {
   provider_reference: string | null;
   registration_id: string;
   registration_status: string;
+  event_id: string;
+  attendee_id: string;
+  ticket_type_id: string;
   ticket_number: string;
   event_slug: string;
   event_title: string;
@@ -91,7 +94,8 @@ export interface ProviderBalance {
 }
 
 export function startMobilePayment(input: StartMobilePaymentInput): Promise<RemotePayment> {
-  return request<RemotePayment>("/payments/mobile", { method: "POST", body: JSON.stringify(input) });
+  // Signed-in buyers are linked to their account so the ticket shows up under "My tickets".
+  return optionalAuthRequest<RemotePayment>("/payments/mobile", { method: "POST", body: JSON.stringify(input) });
 }
 
 export function fetchPayment(paymentId: string): Promise<RemotePayment> {

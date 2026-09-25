@@ -17,6 +17,7 @@ API_VERSION = "2026-01-25"
 MIN_AMOUNT_TZS = 500
 IDEMPOTENCY_KEY_MAX_LENGTH = 30
 WEBHOOK_TOLERANCE_SECONDS = 300
+WEBHOOK_URL_MAX_LENGTH = 500
 
 
 class SnippeError(Exception):
@@ -65,6 +66,8 @@ class PaymentGateway(Protocol):
     def list_payments(self, **params: Any) -> dict[str, Any]: ...
 
     def get_balance(self) -> dict[str, Any]: ...
+
+    def resend_push(self, reference: str) -> None: ...
 
 
 def parse_gateway_payment(data: dict[str, Any]) -> GatewayPayment:
@@ -156,7 +159,7 @@ class SnippeClient:
             "customer": {"firstname": first_name, "lastname": last_name, "email": email},
             "metadata": metadata or {},
         }
-        if webhook_url:
+        if webhook_url and is_valid_webhook_url(webhook_url):
             payload["webhook_url"] = webhook_url
         data = self._request(
             "POST",
@@ -174,6 +177,36 @@ class SnippeClient:
 
     def get_balance(self) -> dict[str, Any]:
         return self._request("GET", "/v1/payments/balance")
+
+    def resend_push(self, reference: str) -> None:
+        """Re-trigger the USSD prompt for a pending mobile payment."""
+        self._request("POST", f"/v1/payments/{reference}/push")
+
+
+def is_valid_webhook_url(url: str) -> bool:
+    """Snippe rejects webhook URLs that are not HTTPS or exceed 500 characters."""
+    return url.startswith("https://") and len(url) <= WEBHOOK_URL_MAX_LENGTH
+
+
+# User-facing messages for provider failures. Configuration problems (bad key, missing scope)
+# are never echoed to customers; the raw provider message is logged by the caller instead.
+_CUSTOMER_MESSAGES = {
+    "unauthorized": "Payments are temporarily unavailable. Please try again later.",
+    "insufficient_scope": "Payments are temporarily unavailable. Please try again later.",
+    "rate_limit_exceeded": "The payment service is busy. Please try again in a minute.",
+    "PAY_001": "The mobile money network did not accept the request. Please try again shortly.",
+}
+
+
+def customer_message(error: "SnippeError") -> str:
+    if error.error_code in _CUSTOMER_MESSAGES:
+        return _CUSTOMER_MESSAGES[error.error_code]
+    if error.status_code in (401, 403) or (error.status_code or 0) >= 500 or error.status_code is None:
+        return "Payments are temporarily unavailable. Please try again later."
+    if error.status_code == 429:
+        return _CUSTOMER_MESSAGES["rate_limit_exceeded"]
+    # Validation errors (e.g. an invalid phone number) are actionable for the customer.
+    return str(error)
 
 
 def normalise_phone(phone: str) -> str:

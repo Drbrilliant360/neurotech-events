@@ -46,6 +46,11 @@ class UserResponse(BaseModel):
     role: str
     is_active: bool
     profile: ProfileFields | None = None
+    # The attendee record linked to this account (tickets, registrations).
+    attendee_id: uuid.UUID | None = None
+    # True when the user may open the organiser console: a platform admin, an organization
+    # owner/admin or an event manager. Authorization is still enforced per request.
+    organizer: bool = False
 
 
 class ProfileUpdateRequest(ProfileFields):

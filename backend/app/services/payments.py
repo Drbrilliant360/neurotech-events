@@ -5,6 +5,7 @@ ticket by code; the price comes from the database, the provider decides whether 
 paid, and this service records every transition in `payment_events`.
 """
 
+import logging
 import secrets
 import threading
 import time
@@ -15,7 +16,7 @@ from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import Settings
 from app.db.models import (
@@ -34,11 +35,20 @@ from app.integrations.payments.snippe import (
     GatewayPayment,
     PaymentGateway,
     SnippeError,
+    customer_message,
     parse_gateway_payment,
 )
-from app.schemas.payments import MobilePaymentRequest, PaymentEventOut, PaymentOut
+from app.schemas.payments import (
+    AttendeeInput,
+    FreeRegistrationRequest,
+    MobilePaymentRequest,
+    PaymentEventOut,
+    PaymentOut,
+)
 from app.services import inventory
 from app.services.errors import ConflictError, DomainError, NotFoundError, ValidationError
+
+logger = logging.getLogger("neurotech.payments")
 
 # Re-exported so existing imports of these names from this module keep working.
 PaymentError = DomainError
@@ -143,48 +153,12 @@ class PaymentService:
         if self.gateway is None:
             raise GatewayUnavailable("Payments are not configured on this server.")
 
-        event = self.db.scalar(
-            select(Event).options(selectinload(Event.organization)).where(Event.slug == request.event_slug)
-        )
-        if event is None:
-            raise NotFoundError("Event not found.")
-        if event.status not in OPEN_EVENT_STATUSES:
-            raise ConflictError("This event is not open for registration.")
-        now = _now()
-        if event.registration_opens_at and now < _aware(event.registration_opens_at):
-            raise ConflictError("Registration for this event has not opened yet.")
-        if event.registration_closes_at and now > _aware(event.registration_closes_at):
-            raise ConflictError("Registration for this event has closed.")
-
-        if event.capacity:
-            # Event-wide capacity spans ticket types, so serialise on the event row first.
-            self.db.refresh(event, with_for_update=True)
-        # Lock the ticket row so concurrent checkouts for the same ticket cannot both take the
-        # last seat (row lock on PostgreSQL; SQLite serialises writers anyway).
-        ticket = self.db.scalar(
-            select(TicketType)
-            .where(TicketType.event_id == event.id, TicketType.code == request.ticket_code)
-            .with_for_update()
-        )
-        if ticket is None:
-            raise NotFoundError("Ticket type not found for this event.")
-        if not ticket.active:
-            raise ConflictError("This ticket type is not on sale.")
-        if ticket.sales_start_at and now < _aware(ticket.sales_start_at):
-            raise ConflictError("Sales for this ticket type have not started yet.")
-        if ticket.sales_end_at and now > _aware(ticket.sales_end_at):
-            raise ConflictError("Sales for this ticket type have ended.")
-        taken = inventory.taken_by_ticket_type(self.db, [ticket.id], self.settings).get(ticket.id, 0)
-        if taken >= ticket.capacity:
-            raise ConflictError("This ticket type is sold out.", code="sold_out")
-        if event.capacity and inventory.taken_for_event(self.db, event.id, self.settings) >= event.capacity:
-            raise ConflictError("This event is at capacity.", code="sold_out")
-
+        event, ticket = self._reserve(request.event_slug, request.ticket_code)
         total = compute_total(ticket.price, event.organization.vat_percent)
         if total < MIN_AMOUNT_TZS:
             raise ValidationError(f"Mobile money payments must be at least {MIN_AMOUNT_TZS} TZS.")
 
-        attendee = self._upsert_attendee(request, user=user)
+        attendee = self._upsert_attendee(request.attendee, request.phone_number, user=user)
         registration = Registration(
             event_id=event.id,
             attendee_id=attendee.id,
@@ -230,17 +204,76 @@ class PaymentService:
                 webhook_url=self.settings.snippe_webhook_url,
             )
         except SnippeError as exc:
+            logger.warning("snippe create failed status=%s code=%s: %s", exc.status_code, exc.error_code, exc)
             self._transition(payment, PaymentStatus.FAILED, note=f"Provider rejected the payment intent: {exc}")
             registration.status = RegistrationStatus.CANCELLED
             registration.cancelled_at = _now()
             self.db.commit()
-            raise GatewayError(str(exc)) from exc
+            raise GatewayError(customer_message(exc)) from exc
 
         self._lock(payment)
         payment.provider_reference = provider_payment.reference
         self._apply_gateway_payment(payment, provider_payment, note="Provider accepted the payment intent")
         self.db.commit()
         return self.get_payment(payment.id)
+
+    def _reserve(self, event_slug: str, ticket_code: str) -> tuple[Event, TicketType]:
+        """Validate that one seat of this ticket can be sold now, holding row locks until commit."""
+        event = self.db.scalar(
+            select(Event).options(selectinload(Event.organization)).where(Event.slug == event_slug)
+        )
+        if event is None:
+            raise NotFoundError("Event not found.")
+        if event.status not in OPEN_EVENT_STATUSES:
+            raise ConflictError("This event is not open for registration.")
+        now = _now()
+        if event.registration_opens_at and now < _aware(event.registration_opens_at):
+            raise ConflictError("Registration for this event has not opened yet.")
+        if event.registration_closes_at and now > _aware(event.registration_closes_at):
+            raise ConflictError("Registration for this event has closed.")
+
+        if event.capacity:
+            # Event-wide capacity spans ticket types, so serialise on the event row first.
+            self.db.refresh(event, with_for_update=True)
+        # Lock the ticket row so concurrent checkouts for the same ticket cannot both take the
+        # last seat (row lock on PostgreSQL; SQLite serialises writers anyway).
+        ticket = self.db.scalar(
+            select(TicketType)
+            .where(TicketType.event_id == event.id, TicketType.code == ticket_code)
+            .with_for_update()
+        )
+        if ticket is None:
+            raise NotFoundError("Ticket type not found for this event.")
+        if not ticket.active:
+            raise ConflictError("This ticket type is not on sale.")
+        if ticket.sales_start_at and now < _aware(ticket.sales_start_at):
+            raise ConflictError("Sales for this ticket type have not started yet.")
+        if ticket.sales_end_at and now > _aware(ticket.sales_end_at):
+            raise ConflictError("Sales for this ticket type have ended.")
+        taken = inventory.taken_by_ticket_type(self.db, [ticket.id], self.settings).get(ticket.id, 0)
+        if taken >= ticket.capacity:
+            raise ConflictError("This ticket type is sold out.", code="sold_out")
+        if event.capacity and inventory.taken_for_event(self.db, event.id, self.settings) >= event.capacity:
+            raise ConflictError("This event is at capacity.", code="sold_out")
+
+        return event, ticket
+
+    def register_free(self, request: FreeRegistrationRequest, *, user: User | None = None) -> Registration:
+        """Confirm a registration for a ticket whose total is zero; no payment provider involved."""
+        event, ticket = self._reserve(request.event_slug, request.ticket_code)
+        if compute_total(ticket.price, event.organization.vat_percent) > 0:
+            raise ConflictError("This ticket requires payment.", code="payment_required")
+        attendee = self._upsert_attendee(request.attendee, request.phone_number, user=user)
+        registration = Registration(
+            event_id=event.id,
+            attendee_id=attendee.id,
+            ticket_type_id=ticket.id,
+            status=RegistrationStatus.CONFIRMED,
+            ticket_number=new_ticket_number(),
+        )
+        self.db.add(registration)
+        self.db.commit()
+        return registration
 
     def sync_with_gateway(self, payment: Payment, *, force: bool = False) -> Payment:
         """Ask the provider for the current status. This is the real verification path when webhooks
@@ -256,9 +289,24 @@ class PaymentService:
         try:
             provider_payment = self.gateway.get_payment(payment.provider_reference)
         except SnippeError as exc:
-            raise GatewayError(str(exc)) from exc
+            raise GatewayError(customer_message(exc)) from exc
         self._lock(payment)
         self._apply_gateway_payment(payment, provider_payment, note="Status verified with provider")
+        self.db.commit()
+        return self.get_payment(payment.id)
+
+    def resend_prompt(self, payment: Payment) -> Payment:
+        """Ask the provider to push the USSD prompt again for an open payment."""
+        if self.gateway is None:
+            raise GatewayUnavailable("Payments are not configured on this server.")
+        if payment.status not in {PaymentStatus.PENDING, PaymentStatus.PROCESSING} or not payment.provider_reference:
+            raise ConflictError("Only an open mobile payment can resend its prompt.")
+        try:
+            self.gateway.resend_push(payment.provider_reference)
+        except SnippeError as exc:
+            logger.warning("snippe push failed status=%s code=%s: %s", exc.status_code, exc.error_code, exc)
+            raise GatewayError(customer_message(exc)) from exc
+        payment.events.append(PaymentEvent(from_status=payment.status, to_status=payment.status, note="Prompt resent"))
         self.db.commit()
         return self.get_payment(payment.id)
 
@@ -358,6 +406,9 @@ class PaymentService:
             provider_reference=payment.provider_reference,
             registration_id=registration.id,
             registration_status=registration.status.value,
+            event_id=payment.event_id,
+            attendee_id=payment.attendee_id,
+            ticket_type_id=registration.ticket_type_id,
             ticket_number=registration.ticket_number,
             event_slug=registration.event.slug,
             event_title=registration.event.title,
@@ -381,15 +432,17 @@ class PaymentService:
     # ----------------------------------------------------------------- internals
 
     def _payment_query(self):
+        # Many-to-one paths are joined into the main query; only the event history needs a second one.
         return select(Payment).options(
             selectinload(Payment.events),
-            selectinload(Payment.registration).selectinload(Registration.attendee),
-            selectinload(Payment.registration).selectinload(Registration.event),
-            selectinload(Payment.registration).selectinload(Registration.ticket_type),
+            joinedload(Payment.registration).joinedload(Registration.attendee),
+            joinedload(Payment.registration).joinedload(Registration.event),
+            joinedload(Payment.registration).joinedload(Registration.ticket_type),
         )
 
-    def _upsert_attendee(self, request: MobilePaymentRequest, *, user: User | None = None) -> Attendee:
-        details = request.attendee
+    def _upsert_attendee(
+        self, details: AttendeeInput, phone_number: str | None, *, user: User | None = None
+    ) -> Attendee:
         attendee = self.db.scalar(select(Attendee).where(func.lower(Attendee.email) == details.email))
         if attendee is None:
             attendee = Attendee(email=details.email, full_name=details.full_name, interests=[])
@@ -399,7 +452,8 @@ class PaymentService:
         if user is not None and attendee.user_id is None:
             attendee.user_id = user.id
         attendee.full_name = details.full_name
-        attendee.phone = request.phone_number
+        if phone_number:
+            attendee.phone = phone_number
         if details.organization:
             attendee.organization = details.organization
         if details.job_title:

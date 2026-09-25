@@ -1,14 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { usePlatform } from "../../app/providers/PlatformProvider";
-import { ApiError, isApiEnabled } from "../../services/api";
-import { getAuthToken, updateMe } from "../../services/auth";
 
 function initials(name: string) {
   return name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
 }
 
 export function ProfilePage() {
-  const { db, attendeeId, saveProfile } = usePlatform();
+  const { db, attendeeId, saveProfile, live, user } = usePlatform();
   const me = db.attendees.find((item) => item.id === attendeeId);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(() => ({
@@ -24,8 +22,7 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   if (!me) return null;
 
-  const token = getAuthToken();
-  const syncsToServer = isApiEnabled() && Boolean(token);
+  const syncsToServer = live && Boolean(user);
 
   function startEdit() {
     setForm({ fullName: me!.fullName, phone: me!.phone, organization: me!.organization, jobTitle: me!.jobTitle, country: me!.country, interests: me!.interests.join(", ") });
@@ -48,25 +45,12 @@ export function ProfilePage() {
     };
     setSaving(true);
     setError(null);
-    try {
-      if (syncsToServer && token) {
-        await updateMe(token, {
-          full_name: patch.fullName,
-          phone: patch.phone || null,
-          organization: patch.organization || null,
-          job_title: patch.jobTitle || null,
-          country: patch.country || null,
-          interests,
-        });
-      }
-      saveProfile(patch);
-      setStatus(syncsToServer ? "Profile saved to your account." : "Profile saved in this browser.");
-      setEditing(false);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not save your profile.");
-    } finally {
-      setSaving(false);
-    }
+    // In live mode the provider saves to the API and surfaces server errors in its banner.
+    const saved = await saveProfile(patch);
+    setSaving(false);
+    if (!saved) return setError("Could not save your profile.");
+    setStatus(syncsToServer ? "Profile saved to your account." : "Profile saved in this browser.");
+    setEditing(false);
   }
 
   return (

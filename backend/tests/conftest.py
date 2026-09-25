@@ -15,6 +15,7 @@ from app.db.models import Event
 from app.db.seed import seed
 from app.integrations.payments.snippe import GatewayPayment
 from app.main import app
+from app.services import cache
 
 ADMIN_TOKEN = "test-admin-token"
 WEBHOOK_SECRET = "whsec_test_secret"
@@ -31,6 +32,7 @@ class FakeGateway:
         self.providers: dict[str, str] = {}
         self.fail_create: Exception | None = None
         self.counter = 0
+        self.pushed: list[str] = []
         self.balance = {"available": {"currency": "TZS", "value": 350}, "balance": {"currency": "TZS", "value": 350}}
         self.listed = {
             "items": [
@@ -68,6 +70,9 @@ class FakeGateway:
 
     def get_balance(self) -> dict:
         return self.balance
+
+    def resend_push(self, reference: str) -> None:
+        self.pushed.append(reference)
 
 
 @pytest.fixture
@@ -127,6 +132,7 @@ def client(db_factory, db, gateway, test_settings) -> Iterator[TestClient]:
     app.dependency_overrides[payment_gateway] = lambda: gateway
     app.dependency_overrides[settings_dependency] = lambda: test_settings
     limiter.reset()
+    cache.invalidate()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

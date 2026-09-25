@@ -8,10 +8,6 @@ import { formatMoney, paymentMethodLabel } from "../../lib/money";
 import type { CommunicationChannel, PaymentStatus, SponsorTier, TicketTier } from "../../domain/types";
 import { AdminEventFormPage } from "./AdminEventsPage";
 import { AdminEventPicker, ScopedAdminPage, type EditorProps } from "./AdminEventPicker";
-import { isApiEnabled, ApiError } from "../../services/api";
-import { getAuthToken } from "../../services/auth";
-import { buildCataloguePayload, readAdminCredential } from "../../services/catalogue";
-import { syncCatalogue } from "../../services/payments";
 import type { Event } from "../../domain/types";
 
 export function AdminEventEditPage() {
@@ -24,28 +20,8 @@ export function AdminEventNewPage() {
 }
 
 function AdminTicketsEditor({ events, event, setEventId }: EditorProps) {
-  const { db, saveTicket, deleteTicket } = usePlatform();
+  const { db, saveTicket, deleteTicket, live } = usePlatform();
   const eventId = event.id;
-  const [publishState, setPublishState] = useState<string | null>(null);
-  const [publishing, setPublishing] = useState(false);
-
-  async function publishCatalogue() {
-    const credential = readAdminCredential(getAuthToken());
-    if (!credential) {
-      setPublishState("Sign in as a platform admin or open All transactions and enter the admin token first.");
-      return;
-    }
-    setPublishing(true);
-    setPublishState(null);
-    try {
-      const result = await syncCatalogue(credential, buildCataloguePayload(db));
-      setPublishState(`Published ${result.events_upserted} events and ${result.ticket_types_upserted} ticket types to the payments server (${result.ticket_types_deactivated} retired).`);
-    } catch (err) {
-      setPublishState(err instanceof ApiError ? err.message : "Publishing failed.");
-    } finally {
-      setPublishing(false);
-    }
-  }
   const [name, setName] = useState("Professional");
   const [price, setPrice] = useState("100000");
   const [capacity, setCapacity] = useState("100");
@@ -57,16 +33,7 @@ function AdminTicketsEditor({ events, event, setEventId }: EditorProps) {
     <div style={{ maxWidth: 760 }}>
       <h1>Ticket types</h1>
       <AdminEventPicker events={events} event={event} onChange={setEventId} />
-      {isApiEnabled() ? (
-        <div className="nt-card" style={{ marginBottom: 16 }}>
-          <h3>Live payments</h3>
-          <p className="nt-muted">Tickets can only be sold online once this catalogue has been published to the payments server, which prices every checkout itself.</p>
-          <div className="nt-actions" style={{ marginTop: 10, alignItems: "center" }}>
-            <button type="button" className="nt-btn" onClick={publishCatalogue} disabled={publishing}>{publishing ? "Publishing…" : "Publish catalogue to payments server"}</button>
-            {publishState ? <span className="nt-muted" role="status">{publishState}</span> : null}
-          </div>
-        </div>
-      ) : null}
+      {live ? <p className="nt-muted" style={{ marginBottom: 16 }}>Ticket changes are saved to the server immediately and priced there at checkout.</p> : null}
       <div className="nt-card" style={{ marginBottom: 16 }}>
         <h3>Create ticket tier</h3>
         <div className="nt-grid" style={{ gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))" }}>
@@ -264,10 +231,15 @@ export function AdminCheckInPage() {
   const history = db.checkIns.filter((item) => !item.undone);
   const tickets = db.registrations.filter((item) => item.status === "confirmed");
 
-  function run(value: string) {
-    const result = checkIn(value);
+  const [busy, setBusy] = useState(false);
+
+  async function run(value: string) {
+    setBusy(true);
+    const result = await checkIn(value);
+    setBusy(false);
     setMessage(result.message);
     setDuplicate(Boolean(result.duplicate));
+    if (result.ok) setQuery("");
   }
 
   return (
@@ -279,8 +251,8 @@ export function AdminCheckInPage() {
             <span>Lookup name, email or ticket ID</span>
             <input value={query} onChange={(e) => setQuery(e.target.value)} />
           </label>
-          <button type="button" className="nt-btn" style={{ marginTop: 12 }} onClick={() => run(query)}>
-            Confirm check-in
+          <button type="button" className="nt-btn" style={{ marginTop: 12 }} disabled={busy} onClick={() => run(query)}>
+            {busy ? "Checking…" : "Confirm check-in"}
           </button>
           <button type="button" className="nt-btn ghost" style={{ marginTop: 8 }} onClick={() => setScanner(!scanner)}>
             {scanner ? "Close scanner" : "Mock QR scanner"}
@@ -373,9 +345,9 @@ function AdminScheduleEditor({ events, event, setEventId }: EditorProps) {
           type="button"
           className="nt-btn"
           style={{ marginTop: 12 }}
-          onClick={() => {
+          onClick={async () => {
             if (!title.trim()) return;
-            const found = saveSession({
+            const found = await saveSession({
               eventId: event.id,
               title,
               startTime,
@@ -529,7 +501,7 @@ function AdminPosterEditor({ events, event, setEventId }: EditorProps) {
 }
 
 function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
-  const { db, saveComms } = usePlatform();
+  const { db, saveComms, live } = usePlatform();
   const [channel, setChannel] = useState<CommunicationChannel>("email");
   const [body, setBody] = useState("Thank you for joining NeuroTech Summit.");
   const [subject, setSubject] = useState("Event reminder");
@@ -537,7 +509,7 @@ function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
     <div style={{ maxWidth: 720 }}>
       <h1>Communications</h1>
       <AdminEventPicker events={events} event={event} onChange={setEventId} />
-      <p className="nt-lede">Messages are simulated in local state. Nothing is sent.</p>
+      <p className="nt-lede">Messages are simulated in this browser. Nothing is sent{live ? " — communications are not on the server yet" : ""}.</p>
       <div className="nt-card">
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           {(["email", "sms", "push"] as const).map((item) => (
@@ -619,7 +591,7 @@ function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
 }
 
 export function AdminPaymentsPage() {
-  const { db, refund } = usePlatform();
+  const { db, refund, live } = usePlatform();
   const [status, setStatus] = useState<"all" | PaymentStatus>("all");
   const [query, setQuery] = useState("");
   const rows = db.payments.filter((item) => (status === "all" || item.status === status) && `${item.reference} ${item.attendeeId}`.toLowerCase().includes(query.toLowerCase()));
@@ -667,7 +639,7 @@ export function AdminPaymentsPage() {
                     <StatusPill value={item.status} />
                   </td>
                   <td>
-                    {item.status === "paid" ? (
+                    {item.status === "paid" && !live ? (
                       <button type="button" className="nt-chip" onClick={() => refund(item.id)}>
                         Simulate refund
                       </button>
@@ -754,12 +726,12 @@ export function AdminReportsPage() {
 }
 
 export function AdminSettingsPage() {
-  const { db, updateSettings } = usePlatform();
+  const { db, updateSettings, live } = usePlatform();
   const [settings, setSettings] = useState(db.settings);
   return (
     <div style={{ maxWidth: 640 }}>
       <h1>Settings</h1>
-      <p className="nt-lede">Organisation defaults used across the site. VAT and currency feed the checkout quote; publish the catalogue after changing them so the payments server matches.</p>
+      <p className="nt-lede">Organisation defaults used across the site. VAT and currency feed the checkout quote{live ? "; saving updates the server, which prices every checkout." : "."}</p>
       {(
         [
           ["organizationName", "Organization"],

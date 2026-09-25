@@ -81,6 +81,13 @@ def change_status(
     return event_admin.event_out(db, event_admin.change_event_status(db, user, event, payload))
 
 
+@router.post("/{event_id}/duplicate", response_model=AdminEventOut, status_code=status.HTTP_201_CREATED)
+def duplicate_event(event_id: uuid.UUID, user: CurrentUser, db: DbSession) -> AdminEventOut:
+    """Copy the event, its ticket types and sessions into a new draft."""
+    event = _event(db, user, event_id)
+    return event_admin.event_out(db, event_admin.duplicate_event(db, user, event))
+
+
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_event(event_id: uuid.UUID, user: CurrentUser, db: DbSession) -> None:
     event_admin.delete_event(db, user, _event(db, user, event_id))

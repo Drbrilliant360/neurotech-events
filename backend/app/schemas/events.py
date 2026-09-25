@@ -46,6 +46,7 @@ class TicketTypeOut(BaseModel):
 
 class EventSummaryOut(BaseModel):
     id: uuid.UUID
+    organization_id: uuid.UUID
     slug: str
     title: str
     subtitle: str | None
@@ -56,6 +57,7 @@ class EventSummaryOut(BaseModel):
     ends_at: datetime
     capacity: int
     featured: bool
+    banner_label: str | None
     venue: VenueOut | None
 
 

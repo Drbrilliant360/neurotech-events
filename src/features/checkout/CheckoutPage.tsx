@@ -6,6 +6,7 @@ import { EmptyState } from "../../components/shared/Widgets";
 import { formatMoney, isMobileMoney, paymentMethodLabel } from "../../lib/money";
 import { registrationBundle } from "../../repositories/platform";
 import { fetchTicketQuote, isLivePaymentsEnabled, PaymentApiError, startMobilePayment, type MobileMethod, type TicketQuote } from "../../services/payments";
+import { registerFree } from "../../services/platformApi";
 import type { PaymentMethod } from "../../domain/types";
 
 const LIVE = isLivePaymentsEnabled();
@@ -21,7 +22,7 @@ const OUTCOMES: Array<{ value: DemoOutcome; title: string; body: string }> = [
 
 export function CheckoutPage() {
   const { registrationId = "" } = useParams();
-  const { db, pay, linkRemote } = usePlatform();
+  const { db, pay, linkRemote, discardDraft, reload, user } = usePlatform();
   const navigate = useNavigate();
   const bundle = registrationBundle(db, registrationId);
   const [method, setMethod] = useState<PaymentMethod>(bundle?.payment?.method ?? "mpesa");
@@ -32,8 +33,9 @@ export function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<TicketQuote | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [freeConfirmed, setFreeConfirmed] = useState<{ ticketNumber: string; eventTitle: string; eventSlug: string; email: string } | null>(null);
   const quoteSlug = bundle?.event.slug;
-  const quoteCode = bundle?.ticket.id;
+  const quoteCode = bundle?.ticket.code ?? bundle?.ticket.id;
   const quoteNeeded = LIVE && Boolean(bundle?.payment) && (bundle?.ticket.price ?? 0) > 0 && bundle?.payment?.status !== "paid";
 
   useEffect(() => {
@@ -50,15 +52,29 @@ export function CheckoutPage() {
         if (cancelled) return;
         setQuote(null);
         setQuoteError(
-          err instanceof PaymentApiError && err.code === "not_found"
-            ? "This ticket has not been published to the payments server yet. Ask an administrator to publish the catalogue."
-            : err instanceof PaymentApiError ? err.message : "Could not verify the price with the payments server.",
+          err instanceof PaymentApiError ? err.message : "Could not verify the price with the payments server.",
         );
       });
     return () => {
       cancelled = true;
     };
   }, [quoteNeeded, quoteSlug, quoteCode]);
+
+  if (freeConfirmed) {
+    return (
+      <div className="nt-container nt-page nt-form-page" style={{ maxWidth: 720 }}>
+        <article className="nt-card nt-payment-state-card">
+          <div className="nt-payment-state-icon paid" aria-hidden="true">✓</div>
+          <h1>You’re registered</h1>
+          <p className="nt-lede">Ticket {freeConfirmed.ticketNumber} for {freeConfirmed.eventTitle} is confirmed. Create an account or sign in with {freeConfirmed.email} to see it under My tickets.</p>
+          <div className="nt-payment-actions">
+            <Link to="/register" className="nt-btn">Create an account</Link>
+            <Link to={`/events/${freeConfirmed.eventSlug}`} className="nt-btn ghost">Back to event</Link>
+          </div>
+        </article>
+      </div>
+    );
+  }
 
   if (!bundle?.payment) {
     return <div className="nt-container" style={{ padding: 48 }}><EmptyState title="Checkout not found" body="Start registration again from the event page." /></div>;
@@ -69,9 +85,42 @@ export function CheckoutPage() {
   const quoteBlocks = LIVE && !isFree && (quoteError !== null || (quote !== null && !quote.payable_online));
   const chargeAmount = quote?.total ?? payment.amount;
 
+  async function confirmFree() {
+    setBusy(true);
+    try {
+      const result = await registerFree({
+        event_slug: event.slug,
+        ticket_code: ticket.code ?? ticket.id,
+        phone_number: attendee.phone || undefined,
+        attendee: {
+          full_name: attendee.fullName,
+          email: attendee.email,
+          organization: attendee.organization || undefined,
+          job_title: attendee.jobTitle || undefined,
+          country: attendee.country || undefined,
+        },
+      });
+      discardDraft(registration.id);
+      if (user) {
+        await reload();
+        navigate(`/app/ticket?registration=${result.id}`);
+      } else {
+        setFreeConfirmed({ ticketNumber: result.ticket_number, eventTitle: event.title, eventSlug: event.slug, email: attendee.email });
+      }
+    } catch (err) {
+      setError(err instanceof PaymentApiError ? err.message : "Could not confirm your registration.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function startPay() {
     if (!accepted || busy) return;
     setError(null);
+    if (LIVE && isFree) {
+      await confirmFree();
+      return;
+    }
     if (payment.status === "paid" || isFree) {
       navigate(`/payment/${payment.id}`);
       return;
@@ -94,7 +143,7 @@ export function CheckoutPage() {
     try {
       const remote = await startMobilePayment({
         event_slug: event.slug,
-        ticket_code: ticket.id,
+        ticket_code: ticket.code ?? ticket.id,
         phone_number: phone,
         method: method as MobileMethod,
         attendee: {
@@ -114,7 +163,9 @@ export function CheckoutPage() {
         status: remote.status,
         amount: remote.amount,
       });
-      navigate(`/payment/${payment.id}`);
+      // The server now owns this registration; the browser draft is no longer needed.
+      discardDraft(registration.id);
+      navigate(`/payment/${remote.id}`);
     } catch (err) {
       setError(err instanceof PaymentApiError ? err.message : "Could not start the payment. Please try again.");
       setBusy(false);

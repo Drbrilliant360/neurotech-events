@@ -88,12 +88,12 @@ def _audit_user(db: DbSession, action: str, user: User, request: Request) -> Non
     audit.record(db, action, actor=user, target_type="user", target_id=user.id, ip_address=client_ip(request))
 
 
-def _token_response(user: User, tokens: TokenPair) -> TokenResponse:
+def _token_response(db: DbSession, user: User, tokens: TokenPair) -> TokenResponse:
     return TokenResponse(
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
         expires_in=tokens.expires_in,
-        user=user_response(user),
+        user=user_response(user, db),
     )
 
 
@@ -109,7 +109,7 @@ def register(payload: RegisterRequest, request: Request, db: DbSession, settings
             detail={"code": "email_in_use", "message": str(exc)},
         ) from exc
     _audit_user(db, "auth.register", user, request)
-    return _token_response(user, issue_tokens(db, user, settings))
+    return _token_response(db, user, issue_tokens(db, user, settings))
 
 
 @router.post("/login", response_model=TokenResponse, dependencies=[auth_rate_limit])
@@ -125,7 +125,7 @@ def login(payload: LoginRequest, request: Request, db: DbSession, settings: AppS
         db.commit()
         raise _unauthorized("invalid_credentials", str(exc)) from exc
     audit.record(db, "auth.login", actor=user, target_type="user", target_id=user.id, ip_address=ip)
-    return _token_response(user, issue_tokens(db, user, settings))
+    return _token_response(db, user, issue_tokens(db, user, settings))
 
 
 @router.post("/refresh", response_model=TokenResponse, dependencies=[auth_rate_limit])
@@ -135,7 +135,7 @@ def refresh(payload: RefreshRequest, db: DbSession, settings: AppSettings) -> To
         user, tokens = rotate_refresh_token(db, payload.refresh_token, settings)
     except AuthenticationError as exc:
         raise _unauthorized("invalid_refresh_token", str(exc)) from exc
-    return _token_response(user, tokens)
+    return _token_response(db, user, tokens)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -171,14 +171,14 @@ def update_password(
             status_code=status.HTTP_403_FORBIDDEN, detail={"code": "invalid_password", "message": str(exc)}
         ) from exc
     _audit_user(db, "auth.password_changed", user, request)
-    return _token_response(user, issue_tokens(db, user, settings))
+    return _token_response(db, user, issue_tokens(db, user, settings))
 
 
 @router.get("/me", response_model=UserResponse)
-def me(user: CurrentUser) -> UserResponse:
-    return user_response(user)
+def me(user: CurrentUser, db: DbSession) -> UserResponse:
+    return user_response(user, db)
 
 
 @router.patch("/me", response_model=UserResponse)
 def update_current_profile(payload: ProfileUpdateRequest, user: CurrentUser, db: DbSession) -> UserResponse:
-    return user_response(update_profile(db, user, payload))
+    return user_response(update_profile(db, user, payload), db)

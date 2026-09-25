@@ -54,6 +54,7 @@ def _venue_out(venue: Venue | None) -> VenueOut | None:
 def _summary(event: Event) -> EventSummaryOut:
     return EventSummaryOut(
         id=event.id,
+        organization_id=event.organization_id,
         slug=event.slug,
         title=event.title,
         subtitle=event.subtitle,
@@ -64,6 +65,7 @@ def _summary(event: Event) -> EventSummaryOut:
         ends_at=event.ends_at,
         capacity=event.capacity,
         featured=event.featured,
+        banner_label=event.banner_label,
         venue=_venue_out(event.venue),
     )
 
@@ -109,7 +111,10 @@ def get_public_event(db: Session, slug: str) -> EventDetailOut:
     )
     if event is None or event.status not in PUBLIC_STATUSES:
         raise NotFoundError("Event not found.")
-    sold = _sold_counts(db, [ticket.id for ticket in event.ticket_types])
+    return event_detail(event, _sold_counts(db, [ticket.id for ticket in event.ticket_types]))
+
+
+def event_detail(event: Event, sold: dict[uuid.UUID, int]) -> EventDetailOut:
     summary = _summary(event)
     return EventDetailOut(
         **summary.model_dump(),

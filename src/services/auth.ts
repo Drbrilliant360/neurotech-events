@@ -1,8 +1,6 @@
-/** Sign-in against the API. Tokens live in this browser session only. */
+/** Sign-in against the API. Tokens live in this browser session only (see `services/api`). */
 import type { DemoRole } from "../domain/types";
-import { apiRequest } from "./api";
-
-const TOKEN_KEY = "neurotech.events.auth-token";
+import { apiRequest, authRequest, readTokens, writeTokens } from "./api";
 
 export interface AuthProfile {
   phone?: string | null;
@@ -19,55 +17,70 @@ export interface AuthUser {
   role: string;
   is_active: boolean;
   profile: AuthProfile | null;
+  attendee_id: string | null;
+  organizer: boolean;
 }
 
 export interface TokenResponse {
   access_token: string;
+  refresh_token: string;
+  expires_in: number;
   token_type: string;
   user: AuthUser;
 }
 
-export function getAuthToken(): string | null {
-  try {
-    return sessionStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+function remember(result: TokenResponse): AuthUser {
+  writeTokens({ accessToken: result.access_token, refreshToken: result.refresh_token });
+  return result.user;
 }
 
-export function setAuthToken(token: string): void {
+export function hasSession(): boolean {
+  return readTokens() !== null;
+}
+
+/** Access token for the current session, or null. */
+export function getAuthToken(): string | null {
+  return readTokens()?.accessToken ?? null;
+}
+
+export async function login(email: string, password: string): Promise<AuthUser> {
+  return remember(await apiRequest<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }));
+}
+
+export async function register(input: { email: string; password: string; full_name: string; profile?: Partial<AuthProfile> }): Promise<AuthUser> {
+  return remember(await apiRequest<TokenResponse>("/auth/register", { method: "POST", body: JSON.stringify(input) }));
+}
+
+export function fetchMe(): Promise<AuthUser> {
+  return authRequest<AuthUser>("/me");
+}
+
+export function updateMe(patch: Partial<AuthProfile> & { full_name?: string }): Promise<AuthUser> {
+  return authRequest<AuthUser>("/me", { method: "PATCH", body: JSON.stringify(patch) });
+}
+
+/** Revoke this session on the server (best effort) and forget the tokens locally. */
+export async function logoutSession(): Promise<void> {
+  const tokens = readTokens();
+  writeTokens(null);
+  if (!tokens) return;
   try {
-    sessionStorage.setItem(TOKEN_KEY, token);
+    await apiRequest("/auth/logout", { method: "POST", body: JSON.stringify({ refresh_token: tokens.refreshToken }) });
   } catch {
-    // Session storage unavailable; the token still works for this page load.
+    // Already signed out locally; the refresh token also expires on its own.
   }
 }
 
 export function clearAuthToken(): void {
-  try {
-    sessionStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // ignore
-  }
+  writeTokens(null);
 }
 
-export function login(email: string, password: string): Promise<TokenResponse> {
-  return apiRequest<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+/** Map a server account onto the two workspaces the frontend renders. */
+export function workspaceFor(user: Pick<AuthUser, "role" | "organizer">): DemoRole {
+  return user.organizer || user.role === "platform_admin" ? "admin" : "attendee";
 }
 
-export function register(input: { email: string; password: string; full_name: string; profile?: Partial<AuthProfile> }): Promise<TokenResponse> {
-  return apiRequest<TokenResponse>("/auth/register", { method: "POST", body: JSON.stringify(input) });
-}
-
-export function fetchMe(token: string): Promise<AuthUser> {
-  return apiRequest<AuthUser>("/me", {}, token);
-}
-
-export function updateMe(token: string, patch: Partial<AuthProfile> & { full_name?: string }): Promise<AuthUser> {
-  return apiRequest<AuthUser>("/me", { method: "PATCH", body: JSON.stringify(patch) }, token);
-}
-
-/** Map server roles onto the two workspaces the frontend renders. */
+/** @deprecated kept for callers that only know the role string; prefer `workspaceFor`. */
 export function roleToDemoRole(role: string): DemoRole {
   return role === "platform_admin" || role === "event_admin" || role === "event_staff" ? "admin" : "attendee";
 }

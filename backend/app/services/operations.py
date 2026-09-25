@@ -87,6 +87,7 @@ def _to_out(
     check_in = check_ins.get(registration.id)
     return AdminRegistrationOut(
         id=registration.id,
+        event_id=registration.event_id,
         ticket_number=registration.ticket_number,
         status=registration.status.value,
         attendee_id=attendee.id,
@@ -285,6 +286,8 @@ def cancel_registration(
 def _check_in_out(check_in: CheckIn, registration: Registration, staff: User | None) -> CheckInOut:
     return CheckInOut(
         id=check_in.id,
+        event_id=check_in.event_id,
+        attendee_id=check_in.attendee_id,
         registration_id=registration.id,
         ticket_number=registration.ticket_number,
         attendee_name=registration.attendee.full_name,
