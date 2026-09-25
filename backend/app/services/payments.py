@@ -16,7 +16,7 @@ from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import Settings
 from app.db.models import (
@@ -432,11 +432,12 @@ class PaymentService:
     # ----------------------------------------------------------------- internals
 
     def _payment_query(self):
+        # Many-to-one paths are joined into the main query; only the event history needs a second one.
         return select(Payment).options(
             selectinload(Payment.events),
-            selectinload(Payment.registration).selectinload(Registration.attendee),
-            selectinload(Payment.registration).selectinload(Registration.event),
-            selectinload(Payment.registration).selectinload(Registration.ticket_type),
+            joinedload(Payment.registration).joinedload(Registration.attendee),
+            joinedload(Payment.registration).joinedload(Registration.event),
+            joinedload(Payment.registration).joinedload(Registration.ticket_type),
         )
 
     def _upsert_attendee(

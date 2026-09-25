@@ -7,7 +7,7 @@ can hydrate a whole screen in one round trip instead of one request per event.
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.models import (
     CheckIn,
@@ -50,7 +50,7 @@ def _programme(db: Session, event_ids: list[uuid.UUID]):
     sessions = list(
         db.scalars(
             select(EventSession)
-            .options(selectinload(EventSession.speaker))
+            .options(joinedload(EventSession.speaker))
             .where(EventSession.event_id.in_(event_ids))
             .order_by(EventSession.session_date, EventSession.start_time)
         )
@@ -69,7 +69,7 @@ def public_catalogue(db: Session) -> PublicCatalogueOut:
     events = list(
         db.scalars(
             select(Event)
-            .options(selectinload(Event.venue), selectinload(Event.ticket_types))
+            .options(joinedload(Event.venue), selectinload(Event.ticket_types))
             .where(Event.status.in_(PUBLIC_STATUSES))
             .order_by(Event.starts_at)
         )
@@ -103,7 +103,7 @@ def admin_workspace(db: Session, user: User, service: PaymentService) -> AdminWo
     events = list(
         db.scalars(
             select(Event)
-            .options(selectinload(Event.venue))
+            .options(joinedload(Event.venue))
             .where(visible_events_filter(db, user))
             .order_by(Event.starts_at.desc())
         )
@@ -135,7 +135,7 @@ def admin_workspace(db: Session, user: User, service: PaymentService) -> AdminWo
         rows = list(
             db.scalars(
                 select(Registration)
-                .options(selectinload(Registration.attendee), selectinload(Registration.ticket_type))
+                .options(joinedload(Registration.attendee), joinedload(Registration.ticket_type))
                 .where(Registration.event_id.in_(manage_ids))
                 .order_by(Registration.created_at.desc())
                 .limit(WORKSPACE_ROW_LIMIT)
@@ -151,9 +151,9 @@ def admin_workspace(db: Session, user: User, service: PaymentService) -> AdminWo
             db.scalars(
                 select(CheckIn)
                 .options(
-                    selectinload(CheckIn.registration).selectinload(Registration.attendee),
-                    selectinload(CheckIn.registration).selectinload(Registration.ticket_type),
-                    selectinload(CheckIn.checked_in_by),
+                    joinedload(CheckIn.registration).joinedload(Registration.attendee),
+                    joinedload(CheckIn.registration).joinedload(Registration.ticket_type),
+                    joinedload(CheckIn.checked_in_by),
                 )
                 .where(CheckIn.event_id.in_(check_in_ids))
                 .order_by(CheckIn.checked_in_at.desc())

@@ -99,3 +99,17 @@ def test_duplicate_event_copies_tickets_as_draft(client, db) -> None:
     again = client.post(f"/api/v1/admin/events/{SUMMIT_ID}/duplicate", headers=owner).json()
     assert again["slug"] == "neurotech-summit-2026-copy-2"
     assert db.get(Event, seed_id("evt_summit_2026")) is not None
+
+
+def test_catalogue_cache_is_dropped_when_the_programme_changes(client, db) -> None:
+    owner = org_member(client, db, "owner@example.org")
+    before = [event["slug"] for event in client.get("/api/v1/catalogue").json()["events"]]
+    created = client.post(
+        "/api/v1/admin/events",
+        json={"slug": "cache-check", "title": "Cache Check", "starts_at": "2027-01-10T09:00:00+03:00",
+              "ends_at": "2027-01-10T17:00:00+03:00"},
+        headers=owner,
+    ).json()
+    client.post(f"/api/v1/admin/events/{created['id']}/status", json={"status": "published"}, headers=owner)
+    after = [event["slug"] for event in client.get("/api/v1/catalogue").json()["events"]]
+    assert "cache-check" not in before and "cache-check" in after

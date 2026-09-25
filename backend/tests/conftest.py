@@ -15,6 +15,7 @@ from app.db.models import Event
 from app.db.seed import seed
 from app.integrations.payments.snippe import GatewayPayment
 from app.main import app
+from app.services import cache
 
 ADMIN_TOKEN = "test-admin-token"
 WEBHOOK_SECRET = "whsec_test_secret"
@@ -131,6 +132,7 @@ def client(db_factory, db, gateway, test_settings) -> Iterator[TestClient]:
     app.dependency_overrides[payment_gateway] = lambda: gateway
     app.dependency_overrides[settings_dependency] = lambda: test_settings
     limiter.reset()
+    cache.invalidate()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

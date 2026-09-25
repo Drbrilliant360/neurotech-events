@@ -11,6 +11,7 @@ from app.api.errors import register_error_handlers
 from app.api.v1.router import router as api_v1_router
 from app.config import get_settings
 from app.core.middleware import BodySizeLimitMiddleware, RequestContextMiddleware
+from app.services import cache  # noqa: F401  # registers catalogue invalidation listeners
 
 settings = get_settings()
 logging.basicConfig(

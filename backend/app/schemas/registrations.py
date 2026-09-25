@@ -9,6 +9,7 @@ class RegistrationOut(BaseModel):
     event_id: uuid.UUID
     event_slug: str
     event_title: str
+    event_status: str
     event_starts_at: datetime
     event_ends_at: datetime
     attendee_id: uuid.UUID

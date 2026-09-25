@@ -86,6 +86,7 @@ def to_outs(db: Session, registrations: list[Registration]) -> list[Registration
                 event_id=item.event_id,
                 event_slug=item.event.slug,
                 event_title=item.event.title,
+                event_status=item.event.status.value,
                 event_starts_at=item.event.starts_at,
                 event_ends_at=item.event.ends_at,
                 attendee_id=item.attendee_id,

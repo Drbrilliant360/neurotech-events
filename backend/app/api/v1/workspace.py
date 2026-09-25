@@ -5,7 +5,7 @@ from fastapi import APIRouter, Response
 from app.api.deps import AppSettings, DbSession, Gateway
 from app.api.v1.auth import CurrentUser
 from app.schemas.workspace import AdminWorkspaceOut, OrganizationOut, OrganizationUpdate, PublicCatalogueOut
-from app.services import event_admin, workspace
+from app.services import cache, event_admin, workspace
 from app.services.payments import PaymentService
 
 router = APIRouter(tags=["workspace"])
@@ -15,7 +15,7 @@ router = APIRouter(tags=["workspace"])
 def public_catalogue(db: DbSession, response: Response) -> PublicCatalogueOut:
     """Published events with tickets, sessions, speakers, milestones and organization settings."""
     response.headers["Cache-Control"] = "public, max-age=30, stale-while-revalidate=120"
-    return workspace.public_catalogue(db)
+    return cache.get_or_build(lambda: workspace.public_catalogue(db))
 
 
 @router.get("/admin/workspace", response_model=AdminWorkspaceOut, tags=["admin: events"])
