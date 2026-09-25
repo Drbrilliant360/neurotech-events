@@ -34,26 +34,10 @@ from app.integrations.payments.snippe import (
     parse_gateway_payment,
 )
 from app.schemas.payments import MobilePaymentRequest, PaymentEventOut, PaymentOut
+from app.services.errors import ConflictError, DomainError, NotFoundError, ValidationError
 
-
-class PaymentError(Exception):
-    status_code = 400
-    code = "payment_error"
-
-
-class NotFoundError(PaymentError):
-    status_code = 404
-    code = "not_found"
-
-
-class ConflictError(PaymentError):
-    status_code = 409
-    code = "conflict"
-
-
-class ValidationError(PaymentError):
-    status_code = 400
-    code = "validation_error"
+# Re-exported so existing imports of these names from this module keep working.
+PaymentError = DomainError
 
 
 class GatewayError(PaymentError):
