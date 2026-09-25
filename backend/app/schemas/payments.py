@@ -45,6 +45,15 @@ class MobilePaymentRequest(BaseModel):
         return digits
 
 
+class FreeRegistrationRequest(BaseModel):
+    """Register for a ticket that costs nothing; the server confirms the total is zero."""
+
+    event_slug: str = Field(min_length=1, max_length=160)
+    ticket_code: str = Field(min_length=1, max_length=60)
+    attendee: AttendeeInput
+    phone_number: str | None = Field(default=None, max_length=20)
+
+
 class PaymentEventOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -65,6 +74,9 @@ class PaymentOut(BaseModel):
     provider_reference: str | None
     registration_id: uuid.UUID
     registration_status: str
+    event_id: uuid.UUID
+    attendee_id: uuid.UUID
+    ticket_type_id: uuid.UUID
     ticket_number: str
     event_slug: str
     event_title: str

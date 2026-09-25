@@ -11,6 +11,7 @@ from app.schemas.payments import AttendeeInput
 
 class AdminRegistrationOut(BaseModel):
     id: uuid.UUID
+    event_id: uuid.UUID
     ticket_number: str
     status: str
     attendee_id: uuid.UUID
@@ -57,6 +58,8 @@ class CheckInRequest(BaseModel):
 
 class CheckInOut(BaseModel):
     id: uuid.UUID
+    event_id: uuid.UUID
+    attendee_id: uuid.UUID
     registration_id: uuid.UUID
     ticket_number: str
     attendee_name: str

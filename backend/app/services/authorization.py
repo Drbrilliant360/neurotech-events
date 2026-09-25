@@ -71,6 +71,12 @@ def event_access(db: Session, user: User, event: Event) -> EventAccess:
             )
         )
     )
+    return _compose(user, event, organization_roles, event_roles)
+
+
+def _compose(
+    user: User, event: Event, organization_roles: tuple[str, ...], event_roles: tuple[str, ...]
+) -> EventAccess:
     platform_admin = user.role == UserRole.PLATFORM_ADMIN
     organization_admin = any(role in ORGANIZATION_MANAGER_ROLES for role in organization_roles)
     can_manage_event = platform_admin or organization_admin or EventAssignmentRole.MANAGER.value in event_roles
@@ -91,6 +97,30 @@ def event_access(db: Session, user: User, event: Event) -> EventAccess:
         can_manage_finance=can_manage_finance,
         can_check_in=can_check_in,
     )
+
+
+def access_for_events(db: Session, user: User, events: list[Event]) -> dict[uuid.UUID, EventAccess]:
+    """Access for many events in two queries (instead of two per event)."""
+    by_org: dict[uuid.UUID, list[str]] = {}
+    for membership in db.scalars(
+        select(OrganizationMembership).where(
+            OrganizationMembership.user_id == user.id, OrganizationMembership.is_active.is_(True)
+        )
+    ):
+        by_org.setdefault(membership.organization_id, []).append(membership.role.value)
+    by_event: dict[uuid.UUID, list[str]] = {}
+    for assignment in db.scalars(
+        select(EventStaffAssignment).where(
+            EventStaffAssignment.user_id == user.id, EventStaffAssignment.is_active.is_(True)
+        )
+    ):
+        by_event.setdefault(assignment.event_id, []).append(assignment.role)
+    return {
+        event.id: _compose(
+            user, event, tuple(by_org.get(event.organization_id, ())), tuple(by_event.get(event.id, ()))
+        )
+        for event in events
+    }
 
 
 def require_event(

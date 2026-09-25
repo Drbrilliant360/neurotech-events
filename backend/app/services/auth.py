@@ -270,7 +270,9 @@ def change_password(db: Session, user: User, current_password: str, new_password
     revoke_all_sessions(db, user)
 
 
-def user_response(user: User) -> UserResponse:
+def user_response(user: User, db: Session | None = None) -> UserResponse:
+    from app.services.authorization import is_organizer
+
     profile = ProfileFields.model_validate(user.attendee) if user.attendee is not None else None
     return UserResponse(
         id=user.id,
@@ -279,4 +281,6 @@ def user_response(user: User) -> UserResponse:
         role=user.role.value,
         is_active=user.is_active,
         profile=profile,
+        attendee_id=user.attendee.id if user.attendee is not None else None,
+        organizer=is_organizer(db, user) if db is not None else user.role == UserRole.PLATFORM_ADMIN,
     )
