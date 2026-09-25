@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app.api.deps import DbSession
 from app.api.v1 import (
     admin_catalogue,
+    admin_directory,
+    admin_events,
     admin_payments,
     auth,
     authorization,
@@ -24,6 +26,8 @@ router.include_router(admin_catalogue.router)
 router.include_router(public_events.router)
 router.include_router(authorization.router)
 router.include_router(registrations.router)
+router.include_router(admin_events.router)
+router.include_router(admin_directory.router)
 
 
 @router.get("/meta", tags=["system"])
