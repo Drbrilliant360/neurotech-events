@@ -9,6 +9,7 @@ from sqlalchemy.pool import StaticPool
 import app.db.models  # noqa: F401
 from app.api.deps import database_session, payment_gateway, settings_dependency
 from app.config import Settings
+from app.core.rate_limit import limiter
 from app.db.base import Base
 from app.db.seed import seed
 from app.integrations.payments.snippe import GatewayPayment
@@ -105,6 +106,7 @@ def test_settings() -> Settings:
         snippe_api_key="snp_test",
         snippe_webhook_secret=WEBHOOK_SECRET,
         public_base_url="https://api.example.org",
+        rate_limit_enabled=False,
     )
 
 
@@ -117,6 +119,8 @@ def client(db_factory, db, gateway, test_settings) -> Iterator[TestClient]:
     app.dependency_overrides[database_session] = _db
     app.dependency_overrides[payment_gateway] = lambda: gateway
     app.dependency_overrides[settings_dependency] = lambda: test_settings
+    limiter.reset()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+    limiter.reset()

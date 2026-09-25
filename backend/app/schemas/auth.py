@@ -27,7 +27,16 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=20, max_length=200)
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class UserResponse(BaseModel):
@@ -46,4 +55,7 @@ class ProfileUpdateRequest(ProfileFields):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    # Seconds until the access token expires; refresh before then with `refresh_token`.
+    expires_in: int
+    refresh_token: str
     user: UserResponse
