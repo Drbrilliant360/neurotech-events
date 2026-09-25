@@ -297,9 +297,14 @@ class PaymentService:
             raise NotFoundError("Payment not found.")
         return payment
 
-    def list_payments(self, *, status: str | None, page: int, page_size: int) -> tuple[list[Payment], int]:
+    def list_payments(
+        self, *, status: str | None, page: int, page_size: int, event_id: uuid.UUID | None = None
+    ) -> tuple[list[Payment], int]:
         query = self._payment_query()
         count_query = select(func.count()).select_from(Payment)
+        if event_id is not None:
+            query = query.where(Payment.event_id == event_id)
+            count_query = count_query.where(Payment.event_id == event_id)
         if status:
             try:
                 wanted = PaymentStatus(status)
