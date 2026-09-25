@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { accountPathFor } from "../../lib/routes";
 import { ApiError, isApiEnabled } from "../../services/api";
-import { login as apiLogin, register as apiRegister, roleToDemoRole, setAuthToken, type AuthUser } from "../../services/auth";
+import { login as apiLogin, register as apiRegister, type AuthUser } from "../../services/auth";
 import { BrandLogo } from "../../components/shared/BrandLogo";
 
 const LIVE = isApiEnabled();
@@ -38,22 +38,12 @@ function AuthShell({ eyebrow, title, copy, children }: { eyebrow: string; title:
   );
 }
 
-/** Attach a server account to a local attendee record and open the right workspace. */
+/** Open the workspace the server says this account may use (organiser console or attendee). */
 function useEnterWorkspace() {
   const navigate = useNavigate();
-  const { signIn, ensureLocalAttendee } = usePlatform();
-  return (user: AuthUser) => {
-    const role = roleToDemoRole(user.role);
-    const attendeeId = ensureLocalAttendee({
-      email: user.email,
-      fullName: user.full_name,
-      phone: user.profile?.phone ?? undefined,
-      organization: user.profile?.organization ?? undefined,
-      jobTitle: user.profile?.job_title ?? undefined,
-      country: user.profile?.country ?? undefined,
-      interests: user.profile?.interests ?? undefined,
-    });
-    signIn(role, attendeeId);
+  const { signInWithAccount } = usePlatform();
+  return async (user: AuthUser) => {
+    const role = await signInWithAccount(user);
     navigate(accountPathFor(role));
   };
 }
@@ -81,9 +71,7 @@ export function LoginPage() {
     }
     setBusy(true);
     try {
-      const result = await apiLogin(email.trim(), password);
-      setAuthToken(result.access_token);
-      enter(result.user);
+      await enter(await apiLogin(email.trim(), password));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not sign in. Please try again.");
       setBusy(false);
@@ -137,9 +125,7 @@ export function CreateAccountPage() {
     }
     setBusy(true);
     try {
-      const result = await apiRegister({ email: email.trim(), password, full_name: fullName.trim() });
-      setAuthToken(result.access_token);
-      enter(result.user);
+      await enter(await apiRegister({ email: email.trim(), password, full_name: fullName.trim() }));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not create your account. Please try again.");
       setBusy(false);

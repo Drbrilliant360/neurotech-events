@@ -6,7 +6,7 @@ import { formatRange } from "../../lib/dates";
 import type { EventFormat, EventStatus } from "../../domain/types";
 
 export function AdminEventsPage() {
-  const { db, copyEvent, deleteEvent, saveEvent } = usePlatform();
+  const { db, copyEvent, deleteEvent, saveEvent, live, syncing } = usePlatform();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | EventStatus>("all");
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -64,11 +64,11 @@ export function AdminEventsPage() {
                 <td>
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                     <Link to={`/admin/events/${event.id}`} className="nt-chip">Edit</Link>
-                    <button type="button" className="nt-chip" onClick={() => saveEvent({ ...event, status: event.status === "published" ? "draft" : "published" })}>
+                    <button type="button" className="nt-chip" disabled={syncing} onClick={() => saveEvent({ ...event, status: event.status === "published" ? "draft" : "published" })}>
                       {event.status === "published" ? "Unpublish" : "Publish"}
                     </button>
-                    <button type="button" className="nt-chip" onClick={() => copyEvent(event.id)}>Duplicate</button>
-                    <button type="button" className="nt-chip" onClick={() => setPendingId(event.id)}>Delete</button>
+                    <button type="button" className="nt-chip" disabled={syncing} onClick={() => copyEvent(event.id)}>Duplicate</button>
+                    <button type="button" className="nt-chip" disabled={syncing} onClick={() => setPendingId(event.id)}>Delete</button>
                   </div>
                 </td>
               </tr>
@@ -84,7 +84,7 @@ export function AdminEventsPage() {
           <div className="nt-dialog-card">
             <p className="nt-kicker">Destructive action</p>
             <h2>Delete this event?</h2>
-            <p className="nt-muted">This removes the event from local demo data. This action cannot be undone in the current session.</p>
+            <p className="nt-muted">{live ? "Only draft or cancelled events without registrations can be deleted. This cannot be undone." : "This removes the event from local demo data. This action cannot be undone in the current session."}</p>
             <div className="nt-actions">
               <button type="button" className="nt-btn danger" onClick={() => { deleteEvent(pendingId); setPendingId(null); }}>Delete event</button>
               <button type="button" className="nt-btn ghost" onClick={() => setPendingId(null)}>Keep event</button>
@@ -119,12 +119,15 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
   const [faqs, setFaqs] = useState((event?.faqs ?? []).join("\n"));
   const [error, setError] = useState("");
 
-  function submit() {
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
     if (!title.trim()) {
       setError("Title is required.");
       return;
     }
-    saveEvent({
+    setSaving(true);
+    const saved = await saveEvent({
       id: event?.id,
       title: title.trim(),
       slug,
@@ -145,7 +148,9 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
       highlights: highlights.split(",").map((item) => item.trim()).filter(Boolean),
       faqs: faqs.split("\n").map((item) => item.trim()).filter(Boolean),
     });
-    navigate("/admin/events");
+    setSaving(false);
+    if (saved) navigate("/admin/events");
+    else setError("The event could not be saved. Check the highlighted message and try again.");
   }
 
   return (
@@ -184,7 +189,7 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
         </div>
         {error ? <p className="error">{error}</p> : null}
         <div className="nt-actions" style={{ marginTop: 20 }}>
-          <button type="button" className="nt-btn accent" onClick={submit}>Save event</button>
+          <button type="button" className="nt-btn accent" onClick={submit} disabled={saving}>{saving ? "Saving…" : "Save event"}</button>
           <button type="button" className="nt-btn ghost" onClick={() => navigate("/admin/events")}>Cancel</button>
         </div>
       </section>

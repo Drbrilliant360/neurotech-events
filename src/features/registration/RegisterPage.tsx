@@ -10,7 +10,8 @@ const STEPS = ["Ticket", "Details", "Review"];
 
 export function RegisterPage() {
   const { eventId = "" } = useParams();
-  const { db, register } = usePlatform();
+  const { db, register, attendeeId, role } = usePlatform();
+  const me = role === "attendee" ? db.attendees.find((item) => item.id === attendeeId) : undefined;
   const navigate = useNavigate();
   const event = eventBySlug(db, eventId) ?? db.events.find((item) => item.id === eventId);
   const tickets = event ? ticketsFor(db, event.id).filter((ticket) => ticket.active && ticket.sold < ticket.capacity) : [];
@@ -19,12 +20,12 @@ export function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    organization: "",
-    jobTitle: "",
-    country: "Tanzania",
+    fullName: me?.fullName ?? "",
+    email: me?.email ?? "",
+    phone: me?.phone ?? "",
+    organization: me?.organization ?? "",
+    jobTitle: me?.jobTitle ?? "",
+    country: me?.country || "Tanzania",
     roleTitle: "",
     dietary: "",
     accessibility: "",

@@ -125,6 +125,8 @@ export interface Session {
 
 export interface TicketType {
   id: string;
+  /** Server product code used for pricing and checkout (live mode). */
+  code?: string;
   eventId: string;
   name: string;
   tier: TicketTier;

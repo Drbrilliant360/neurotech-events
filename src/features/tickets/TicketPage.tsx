@@ -5,21 +5,29 @@ import { usePlatform } from "../../app/providers/PlatformProvider";
 import { EmptyState, StatusPill } from "../../components/shared/Widgets";
 import { formatRange } from "../../lib/dates";
 import { venueOf } from "../../repositories/platform";
+import { fetchMyTicket } from "../../services/platformApi";
 
 export function TicketPage() {
-  const { db, attendeeId } = usePlatform();
+  const { db, attendeeId, live } = usePlatform();
   const [params, setParams] = useSearchParams();
   const registrations = db.registrations.filter((item) => item.attendeeId === attendeeId && item.status !== "cancelled");
   const requested = params.get("registration");
   const registration = registrations.find((item) => item.id === requested) ?? registrations[0];
   const ticketNumber = registration?.ticketNumber;
+  const registrationId = registration?.id;
+  const confirmed = registration?.status === "confirmed";
   const [qr, setQr] = useState("");
 
   useEffect(() => {
-    if (!ticketNumber) return;
+    if (!ticketNumber || !registrationId) return;
     let cancelled = false;
-    // The QR carries the ticket number the check-in desk searches for.
-    QRCode.toDataURL(ticketNumber, { width: 240, margin: 1, color: { dark: "#12150c", light: "#ffffff" } })
+    // Live: the QR carries the server-signed payload the check-in desk verifies; it is only
+    // issued once the registration is confirmed. Demo: the plain ticket number.
+    const payload = live
+      ? confirmed ? fetchMyTicket(registrationId).then((ticket) => ticket.qr_payload) : Promise.reject(new Error("unconfirmed"))
+      : Promise.resolve(ticketNumber);
+    payload
+      .then((value) => QRCode.toDataURL(value, { width: 240, margin: 1, color: { dark: "#12150c", light: "#ffffff" } }))
       .then((url) => {
         if (!cancelled) setQr(url);
       })
@@ -29,7 +37,7 @@ export function TicketPage() {
     return () => {
       cancelled = true;
     };
-  }, [ticketNumber]);
+  }, [ticketNumber, registrationId, confirmed, live]);
 
   if (!registration) return <EmptyState title="No ticket yet" body="Register for an event to receive a ticket." />;
 
@@ -80,7 +88,7 @@ export function TicketPage() {
             ) : (
               <div className="nt-qr" role="img" aria-label={`Ticket ${registration.ticketNumber}`} />
             )}
-            <div className="nt-muted" style={{ marginTop: 16 }}>Present this code at the registration desk.</div>
+            <div className="nt-muted" style={{ marginTop: 16 }}>{qr ? "Present this code at the registration desk." : "Your entry code appears here once payment is confirmed."}</div>
           </div>
           <div style={{ borderTop: "1px dashed rgba(18,21,12,.16)", padding: "20px 28px" }}>
             <Row label="Ticket number" value={registration.ticketNumber} />
