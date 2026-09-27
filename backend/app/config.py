@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     jwt_audience: str = "neurotech-events"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 14
+    email_verification_expire_hours: int = 24
+    password_reset_expire_minutes: int = 30
+    identity_rate_limit_per_minute: int = 5
+    # Delivery is intentionally a port. "console" is development-only; "disabled" is safe by default.
+    notification_provider: str = "disabled"
+    frontend_base_url: str = "http://localhost:5173"
 
     # HMAC key for attendee ticket QR payloads. Keep separate from authentication keys so
     # either credential can be rotated without expanding the impact to the other domain.
@@ -76,6 +82,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
         if self.is_hardened:
+            if self.notification_provider == "console":
+                raise ValueError("NOTIFICATION_PROVIDER=console is not allowed in production/staging.")
             if self.jwt_secret_key == DEVELOPMENT_JWT_SECRET or len(self.jwt_secret_key) < 32:
                 raise ValueError("JWT_SECRET_KEY must be a unique secret with at least 32 characters.")
             if self.ticket_signing_key == DEVELOPMENT_TICKET_SIGNING_KEY or len(self.ticket_signing_key) < 32:

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.core.rate_limit import limiter
 from app.db.session import get_db
+from app.integrations.messaging import NotificationProvider, notification_provider
 from app.integrations.payments.snippe import PaymentGateway, SnippeClient
 from app.services.errors import RateLimitedError
 
@@ -38,6 +39,13 @@ def payment_gateway(settings: AppSettings) -> PaymentGateway | None:
 
 
 Gateway = Annotated[PaymentGateway | None, Depends(payment_gateway)]
+
+
+def identity_notification_provider(settings: AppSettings) -> NotificationProvider:
+    return notification_provider(settings)
+
+
+IdentityNotifier = Annotated[NotificationProvider, Depends(identity_notification_provider)]
 
 
 def require_super_admin(

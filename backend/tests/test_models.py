@@ -32,6 +32,7 @@ EXPECTED_TABLES = {
     "sponsor_events",
     "refresh_tokens",
     "audit_logs",
+    "identity_tokens",
 }
 
 

@@ -22,6 +22,9 @@ Application Security Risks and OWASP API Security Top 10.
   digests, rotate on every use and revoke their whole family when a used token is replayed.
   Login spends equal time for unknown emails. Auth routes are rate-limited per IP, and failed
   (never successful) sign-ins lock an account per client IP with a looser account-wide ceiling.
+  Email verification and password-reset links are single-use, expire, are stored only as SHA-256
+  digests, and supersede older links. Reset requests return the same response for known and unknown
+  addresses; resets revoke all refresh tokens and increment `token_version`.
 - **Broken object-level authorization:** every organiser route resolves the event through one
   capability check (`view`, `manage`, `finance`, `check_in`) and loads child records scoped to
   that event. Users with no relationship to an event get `404`; door staff see names and ticket
@@ -72,7 +75,8 @@ migration and validation against SQLite tests and Neon PostgreSQL before release
 
 - Add rate limiting and abuse monitoring at the deployment edge (the in-process limiter is
   per worker).
-- Add email verification and a password-reset flow (needs an email provider contract).
+- Configure and implement a production `NotificationProvider` adapter before launch; the built-in
+  console provider is development-only and hardened settings reject it.
 - Move the refresh token to an `HttpOnly`, `Secure`, `SameSite` cookie once the frontend and
   API share a site; until then the frontend must keep it out of `localStorage` where possible.
 - Replace the legacy `PUT /admin/catalogue` super-admin sync with the scoped organiser API.

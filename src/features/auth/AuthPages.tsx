@@ -1,9 +1,16 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { accountPathFor } from "../../lib/routes";
 import { ApiError, isApiEnabled } from "../../services/api";
-import { login as apiLogin, register as apiRegister, type AuthUser } from "../../services/auth";
+import {
+  confirmEmailVerification,
+  confirmPasswordReset,
+  login as apiLogin,
+  register as apiRegister,
+  requestPasswordReset,
+  type AuthUser,
+} from "../../services/auth";
 import { BrandLogo } from "../../components/shared/BrandLogo";
 
 const LIVE = isApiEnabled();
@@ -151,40 +158,82 @@ export function CreateAccountPage() {
 }
 
 export function ForgotPasswordPage() {
-  const { db } = usePlatform();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
-  function submit(event: FormEvent) {
+  const [busy, setBusy] = useState(false);
+
+  async function submit(event: FormEvent) {
     event.preventDefault();
     if (!isEmail(email)) return setError("Enter a valid email address.");
     setError("");
-    setSent(true);
+    if (!LIVE) return setSent(true);
+    setBusy(true);
+    try {
+      await requestPasswordReset(email.trim());
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not request a reset. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <AuthShell eyebrow="Password reset" title="Get back to your events." copy={LIVE ? "Self-service password reset is not available yet. The events team can reset your password for you." : "Enter your email and we’ll show the reset step a connected authentication service would send."}>
-      {LIVE ? (
-        <div className="nt-auth-success" role="status">
-          <span aria-hidden="true">✉</span>
-          <div><strong>Contact the events team</strong><p>Email {db.settings.contactEmail} from the address on your account and we will reset your password.</p></div>
-          <a href={`mailto:${db.settings.contactEmail}?subject=Password%20reset`} className="nt-btn accent">Email {db.settings.contactEmail}</a>
-        </div>
-      ) : sent ? (
+    <AuthShell eyebrow="Password reset" title="Get back to your events." copy="Enter your email and we’ll send reset instructions if an eligible account exists.">
+      {sent ? (
         <div className="nt-auth-success" role="status">
           <span aria-hidden="true">✓</span>
-          <div><strong>Reset link prepared</strong><p>In production, a reset email would be sent to {email}. No email is sent from this frontend demo.</p></div>
+          <div><strong>Check your email</strong><p>If an eligible account exists for {email}, reset instructions are on their way.</p></div>
           <Link to="/login" className="nt-btn accent">Back to sign in</Link>
         </div>
       ) : (
         <form className="nt-auth-form" onSubmit={submit} noValidate>
           <label className="nt-field"><span>Email address</span><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
           {error ? <p className="nt-auth-error" role="alert">{error}</p> : null}
-          <button type="submit" className="nt-btn accent">Send reset instructions</button>
+          <button type="submit" className="nt-btn accent" disabled={busy}>{busy ? "Sending…" : "Send reset instructions"}</button>
         </form>
       )}
       <p className="nt-auth-switch"><Link to="/login">← Back to sign in</Link></p>
     </AuthShell>
   );
+}
+
+export function ResetPasswordPage() {
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const [password, setPassword] = useState("");
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!token) return setError("This reset link is incomplete.");
+    if (password.length < 8) return setError("Use at least 8 characters.");
+    setBusy(true); setError("");
+    try { await confirmPasswordReset(token, password); setDone(true); }
+    catch (err) { setError(err instanceof ApiError ? err.message : "Could not reset your password."); }
+    finally { setBusy(false); }
+  }
+  return <AuthShell eyebrow="Password reset" title="Choose a new password." copy="This link can be used once and expires shortly.">
+    {done ? <div className="nt-auth-success" role="status"><span>✓</span><div><strong>Password updated</strong><p>All existing sessions were signed out.</p></div><Link className="nt-btn accent" to="/login">Sign in</Link></div> :
+      <form className="nt-auth-form" onSubmit={submit}><label className="nt-field"><span>New password</span><input type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>{error ? <p className="nt-auth-error" role="alert">{error}</p> : null}<button className="nt-btn accent" disabled={busy}>{busy ? "Updating…" : "Update password"}</button></form>}
+  </AuthShell>;
+}
+
+export function VerifyEmailPage() {
+  const [params] = useSearchParams();
+  const token = params.get("token") ?? "";
+  const [state, setState] = useState<"ready" | "busy" | "done">("ready");
+  const [error, setError] = useState("");
+  async function confirm() {
+    if (!token) return setError("This verification link is incomplete.");
+    setState("busy"); setError("");
+    try { await confirmEmailVerification(token); setState("done"); }
+    catch (err) { setError(err instanceof ApiError ? err.message : "Could not verify your email."); setState("ready"); }
+  }
+  return <AuthShell eyebrow="Email verification" title="Confirm your email." copy="Verification protects your account and event history.">
+    {state === "done" ? <div className="nt-auth-success" role="status"><span>✓</span><div><strong>Email verified</strong><p>You can now sign in.</p></div><Link className="nt-btn accent" to="/login">Sign in</Link></div> : <div className="nt-auth-form">{error ? <p className="nt-auth-error" role="alert">{error}</p> : null}<button className="nt-btn accent" onClick={confirm} disabled={state === "busy"}>{state === "busy" ? "Verifying…" : "Verify email"}</button></div>}
+  </AuthShell>;
 }

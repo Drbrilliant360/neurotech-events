@@ -127,7 +127,7 @@ def update_profile(db: Session, user: User, payload: ProfileUpdateRequest) -> Us
     return user
 
 
-def authenticate_user(db: Session, payload: LoginRequest) -> User:
+def authenticate_user(db: Session, payload: LoginRequest, settings: Settings | None = None) -> User:
     email = normalize_email(str(payload.email))
     user = db.scalar(select(User).where(User.email == email))
     if not user or not user.password_hash:
@@ -136,6 +136,12 @@ def authenticate_user(db: Session, payload: LoginRequest) -> User:
     valid, upgraded_hash = password_hash.verify_and_update(payload.password, user.password_hash)
     if not valid or not user.is_active:
         raise AuthenticationError("Invalid email or password.")
+    settings = settings or get_settings()
+    if settings.is_hardened and user.email_verified_at is None:
+        from app.services.authorization import is_organizer
+
+        if user.role != UserRole.PLATFORM_ADMIN and not is_organizer(db, user):
+            raise AuthenticationError("Verify your email before signing in.")
     if upgraded_hash:
         user.password_hash = upgraded_hash
     user.last_login_at = _now()
@@ -199,9 +205,7 @@ def issue_tokens(db: Session, user: User, settings: Settings, *, family_id: uuid
     )
 
 
-def _new_refresh_token(
-    db: Session, user: User, settings: Settings, family_id: uuid.UUID
-) -> tuple[str, RefreshToken]:
+def _new_refresh_token(db: Session, user: User, settings: Settings, family_id: uuid.UUID) -> tuple[str, RefreshToken]:
     raw = secrets.token_urlsafe(48)
     record = RefreshToken(
         user_id=user.id,
@@ -224,9 +228,7 @@ def _revoke_family(db: Session, family_id: uuid.UUID) -> None:
 
 def rotate_refresh_token(db: Session, raw_token: str, settings: Settings) -> tuple[User, TokenPair]:
     """Exchange a refresh token for a new pair. Replaying a rotated token revokes its family."""
-    record = db.scalar(
-        select(RefreshToken).where(RefreshToken.token_hash == _digest(raw_token)).with_for_update()
-    )
+    record = db.scalar(select(RefreshToken).where(RefreshToken.token_hash == _digest(raw_token)).with_for_update())
     if record is None:
         raise AuthenticationError("Invalid refresh token.")
     if record.revoked_at is not None:
@@ -288,6 +290,7 @@ def user_response(user: User, db: Session | None = None) -> UserResponse:
         full_name=user.full_name,
         role=user.role.value,
         is_active=user.is_active,
+        email_verified=user.email_verified_at is not None,
         profile=profile,
         attendee_id=user.attendee.id if user.attendee is not None else None,
         organizer=is_organizer(db, user) if db is not None else user.role == UserRole.PLATFORM_ADMIN,

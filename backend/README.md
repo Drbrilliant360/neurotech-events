@@ -26,7 +26,7 @@ Phase status:
 | Phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
-| Phase 1 — Identity and authorization | Mostly complete | Users, rotating refresh tokens with reuse detection, sign-out/sign-out-everywhere, password change, rate limits, audit log, organization memberships, event assignments and scoped `view`/`manage`/`finance`/`check_in` capabilities on every organiser route; email verification and password reset remain |
+| Phase 1 — Identity and authorization | Complete | Users, sessions, email verification, self-service password reset, rate limits, audit log and scoped organiser authorization. Production mail delivery remains provider/configuration-dependent. |
 | Phase 2 — Public events and program | Complete | Public event list with filters, detail, programme, speakers and ticket quotes; organiser CRUD for events, ticket types, sessions, milestones, speakers and venues with status transitions |
 | Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout, attendee registrations and signed QR tickets, complimentary tickets, organiser cancellations and provider-backed refunds |
 | Phase 4 — Payments | Mostly complete | Snippe collections and refund payouts, signed idempotent webhooks, polling recovery, audit trails, and scoped finance views |
@@ -198,7 +198,22 @@ POST   /api/v1/auth/refresh                     rotate; replaying a used token r
 POST   /api/v1/auth/logout                      revoke this session
 POST   /api/v1/auth/logout-all                  revoke every session and outstanding access token
 POST   /api/v1/auth/password                    change password, revoke other sessions, return fresh tokens
+POST   /api/v1/auth/email-verification/request  generic response; invalidate and send a new single-use link
+POST   /api/v1/auth/email-verification/confirm  consume a hashed, expiring verification token
+POST   /api/v1/auth/password-reset/request       generic response that does not reveal account existence
+POST   /api/v1/auth/password-reset/confirm       consume token, replace password and revoke every session
 ```
+
+Identity links are random opaque values; only SHA-256 digests are stored. Requesting a new link
+invalidates earlier links of the same type, and successful consumption invalidates every remaining
+link of that type. Hardened environments require verified email for attendee sign-in. Existing
+organisers and platform administrators are exempt so deployment/bootstrap cannot lock out operators.
+
+Delivery uses the `NotificationProvider` port under `app/integrations/messaging`. The built-in
+`console` adapter is strictly for development and may expose links in local logs; settings reject it
+in production/staging. No third-party service is claimed or fabricated. Set `NOTIFICATION_PROVIDER=disabled`
+until a real adapter and credentials are supplied; token lifecycle and API behavior remain complete,
+but messages will not be delivered.
 
 Implemented organiser routes (all require a bearer token; access is resolved per event):
 

@@ -6,6 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.api.deps import (
     AppSettings,
     DbSession,
+    IdentityNotifier,
     check_login_lockout,
     client_ip,
     rate_limit,
@@ -13,8 +14,12 @@ from app.api.deps import (
 )
 from app.db.models import User
 from app.schemas.auth import (
+    IdentityEmailRequest,
+    IdentityTokenRequest,
     LoginRequest,
+    MessageResponse,
     PasswordChangeRequest,
+    PasswordResetConfirmRequest,
     ProfileUpdateRequest,
     RefreshRequest,
     RegisterRequest,
@@ -38,10 +43,20 @@ from app.services.auth import (
     update_profile,
     user_response,
 )
+from app.services.identity_tokens import (
+    RESET,
+    VERIFY,
+    InvalidIdentityToken,
+    request_identity_link,
+    reset_password,
+    verify_email,
+)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 bearer = HTTPBearer(auto_error=False)
 auth_rate_limit = Depends(rate_limit("auth", "auth_rate_limit_per_minute"))
+identity_rate_limit = Depends(rate_limit("identity", "identity_rate_limit_per_minute"))
+GENERIC_IDENTITY_MESSAGE = "If the account is eligible, instructions have been sent."
 
 
 def _unauthorized(code: str, message: str) -> HTTPException:
@@ -100,7 +115,13 @@ def _token_response(db: DbSession, user: User, tokens: TokenPair) -> TokenRespon
 @router.post(
     "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED, dependencies=[auth_rate_limit]
 )
-def register(payload: RegisterRequest, request: Request, db: DbSession, settings: AppSettings) -> TokenResponse:
+def register(
+    payload: RegisterRequest,
+    request: Request,
+    db: DbSession,
+    settings: AppSettings,
+    notifier: IdentityNotifier,
+) -> TokenResponse:
     try:
         user = register_user(db, payload)
     except RegistrationConflictError as exc:
@@ -109,6 +130,8 @@ def register(payload: RegisterRequest, request: Request, db: DbSession, settings
             detail={"code": "email_in_use", "message": str(exc)},
         ) from exc
     _audit_user(db, "auth.register", user, request)
+    db.commit()
+    request_identity_link(db, settings, notifier, email=user.email, purpose=VERIFY)
     return _token_response(db, user, issue_tokens(db, user, settings))
 
 
@@ -118,7 +141,7 @@ def login(payload: LoginRequest, request: Request, db: DbSession, settings: AppS
     ip = client_ip(request)
     check_login_lockout(settings, email, ip)
     try:
-        user = authenticate_user(db, payload)
+        user = authenticate_user(db, payload, settings)
     except AuthenticationError as exc:
         record_login_failure(settings, email, ip)
         audit.record(db, "auth.login_failed", ip_address=ip, details={"email": email})
@@ -182,3 +205,43 @@ def me(user: CurrentUser, db: DbSession) -> UserResponse:
 @router.patch("/me", response_model=UserResponse)
 def update_current_profile(payload: ProfileUpdateRequest, user: CurrentUser, db: DbSession) -> UserResponse:
     return user_response(update_profile(db, user, payload), db)
+
+
+@router.post(
+    "/email-verification/request", response_model=MessageResponse, status_code=202, dependencies=[identity_rate_limit]
+)
+def request_email_verification(
+    payload: IdentityEmailRequest, db: DbSession, settings: AppSettings, notifier: IdentityNotifier
+) -> MessageResponse:
+    request_identity_link(db, settings, notifier, email=str(payload.email), purpose=VERIFY)
+    return MessageResponse(message=GENERIC_IDENTITY_MESSAGE)
+
+
+@router.post("/email-verification/confirm", response_model=MessageResponse, dependencies=[identity_rate_limit])
+def confirm_email_verification(payload: IdentityTokenRequest, db: DbSession) -> MessageResponse:
+    try:
+        verify_email(db, payload.token)
+    except InvalidIdentityToken as exc:
+        raise HTTPException(status_code=400, detail={"code": "invalid_identity_token", "message": str(exc)}) from exc
+    return MessageResponse(message="Email address verified. You can now sign in.")
+
+
+@router.post(
+    "/password-reset/request", response_model=MessageResponse, status_code=202, dependencies=[identity_rate_limit]
+)
+def request_password_reset(
+    payload: IdentityEmailRequest, db: DbSession, settings: AppSettings, notifier: IdentityNotifier
+) -> MessageResponse:
+    request_identity_link(db, settings, notifier, email=str(payload.email), purpose=RESET)
+    return MessageResponse(message=GENERIC_IDENTITY_MESSAGE)
+
+
+@router.post("/password-reset/confirm", response_model=MessageResponse, dependencies=[identity_rate_limit])
+def confirm_password_reset(payload: PasswordResetConfirmRequest, request: Request, db: DbSession) -> MessageResponse:
+    try:
+        user = reset_password(db, payload.token, payload.new_password)
+    except InvalidIdentityToken as exc:
+        raise HTTPException(status_code=400, detail={"code": "invalid_identity_token", "message": str(exc)}) from exc
+    _audit_user(db, "auth.password_reset", user, request)
+    db.commit()
+    return MessageResponse(message="Password reset complete. Sign in with your new password.")
