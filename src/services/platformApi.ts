@@ -85,6 +85,29 @@ export interface OrganizationDto {
   notify_on_payment: boolean;
 }
 
+export interface SponsorDto {
+  id: string;
+  name: string;
+  tier: string;
+  website: string | null;
+  /** Organiser views only; the public catalogue omits contact details. */
+  contact?: string | null;
+  active?: boolean;
+  event_ids: string[];
+}
+
+export interface CommunicationDto {
+  id: string;
+  event_id: string;
+  channel: string;
+  audience: string;
+  subject: string;
+  body: string;
+  status: string;
+  created_at: string;
+  sent_at: string | null;
+}
+
 export interface CatalogueDto {
   organization: OrganizationDto | null;
   events: EventDto[];
@@ -92,6 +115,7 @@ export interface CatalogueDto {
   sessions: SessionDto[];
   speakers: SpeakerDto[];
   milestones: MilestoneDto[];
+  sponsors?: SponsorDto[];
 }
 
 export interface EventAccessDto {
@@ -148,6 +172,8 @@ export interface WorkspaceDto {
   registrations: AdminRegistrationDto[];
   check_ins: CheckInDto[];
   payments: RemotePayment[];
+  sponsors?: SponsorDto[];
+  communications?: CommunicationDto[];
 }
 
 export interface AttendeeRegistrationDto {
@@ -345,3 +371,96 @@ export const addEventStaff = (eventId: string, email: string, role: EventStaffRo
   authRequest<EventStaffDto>(`/admin/events/${eventId}/staff`, { method: "POST", ...json({ email, role }) });
 export const removeEventStaff = (eventId: string, userId: string) =>
   authRequest<void>(`/authorization/events/${eventId}/assignments/${userId}`, { method: "DELETE" });
+
+// --------------------------------------------------------------- engagement
+
+export interface SavedSessionDto { session_id: string; event_id: string; saved_at: string }
+export interface NotificationDto { id: string; title: string; body: string | null; category: string; is_read: boolean; created_at: string }
+export interface NetworkingProfileDto {
+  attendee_id: string;
+  public_name: string;
+  initials: string | null;
+  job_title: string | null;
+  organization: string | null;
+  interests: string[];
+  bio: string | null;
+  is_visible?: boolean;
+}
+export interface NetworkingDto { profile: NetworkingProfileDto | null; people: NetworkingProfileDto[]; connections: string[] }
+export interface CertificateDto { id: string; certificate_code: string; event_id: string; event_title: string; event_slug: string; issued_at: string }
+export interface CertificateVerificationDto {
+  certificate_code: string;
+  attendee_name: string;
+  event_title: string;
+  event_starts_on: string;
+  event_ends_on: string;
+  issued_at: string;
+}
+
+/** Everything the attendee workspace needs beyond registrations, loaded in parallel. */
+export interface EngagementDto {
+  schedule: SavedSessionDto[];
+  notifications: NotificationDto[];
+  networking: NetworkingDto;
+  certificates: CertificateDto[];
+}
+
+export async function fetchEngagement(): Promise<EngagementDto> {
+  const [schedule, notifications, networking, certificates] = await Promise.all([
+    authRequest<SavedSessionDto[]>("/me/schedule"),
+    authRequest<NotificationDto[]>("/me/notifications"),
+    authRequest<NetworkingDto>("/me/networking"),
+    authRequest<CertificateDto[]>("/me/certificates"),
+  ]);
+  return { schedule, notifications, networking, certificates };
+}
+
+export const saveSession = (sessionId: string) => authRequest<void>(`/me/schedule/${sessionId}`, { method: "PUT" });
+export const unsaveSession = (sessionId: string) => authRequest<void>(`/me/schedule/${sessionId}`, { method: "DELETE" });
+export const markNotificationRead = (id: string) =>
+  authRequest<NotificationDto>(`/me/notifications/${id}/read`, { method: "POST" });
+export const markAllNotificationsRead = () => authRequest<{ updated: number }>("/me/notifications/read-all", { method: "POST" });
+export const connectWith = (attendeeId: string) =>
+  authRequest<void>("/me/networking/connections", { method: "POST", ...json({ attendee_id: attendeeId }) });
+export const disconnectFrom = (attendeeId: string) =>
+  authRequest<void>(`/me/networking/connections/${attendeeId}`, { method: "DELETE" });
+
+export interface NetworkingProfileInput {
+  public_name: string;
+  job_title?: string | null;
+  organization?: string | null;
+  interests: string[];
+  bio?: string | null;
+  is_visible: boolean;
+}
+
+export const saveNetworkingProfile = (input: NetworkingProfileInput) =>
+  authRequest<NetworkingProfileDto>("/me/networking/profile", { method: "PUT", ...json(input) });
+export const verifyCertificate = (code: string) =>
+  apiRequest<CertificateVerificationDto>(`/certificates/${encodeURIComponent(code)}/verify`);
+
+// ------------------------------------------------------------------ outreach
+
+export interface SponsorInput {
+  name?: string;
+  tier?: string;
+  website?: string | null;
+  contact?: string | null;
+  active?: boolean;
+  event_ids?: string[];
+}
+
+export const createSponsor = (input: SponsorInput) => authRequest<SponsorDto>("/admin/sponsors", { method: "POST", ...json(input) });
+export const updateSponsor = (id: string, input: SponsorInput) =>
+  authRequest<SponsorDto>(`/admin/sponsors/${id}`, { method: "PATCH", ...json(input) });
+export const deleteSponsor = (id: string) => authRequest<void>(`/admin/sponsors/${id}`, { method: "DELETE" });
+
+export interface CommunicationInput { channel: string; audience: string; subject: string; body: string }
+
+export const createCommunication = (eventId: string, input: CommunicationInput) =>
+  authRequest<CommunicationDto>(`/admin/events/${eventId}/communications`, { method: "POST", ...json(input) });
+export const sendCommunication = (id: string) =>
+  authRequest<CommunicationDto & { recipients: number; external_delivery: string }>(`/admin/communications/${id}/send`, { method: "POST" });
+export const deleteCommunication = (id: string) => authRequest<void>(`/admin/communications/${id}`, { method: "DELETE" });
+export const issueCertificates = (eventId: string) =>
+  authRequest<{ issued: number; total: number }>(`/admin/events/${eventId}/certificates/issue`, { method: "POST" });
