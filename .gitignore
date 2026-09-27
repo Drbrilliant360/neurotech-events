@@ -31,3 +31,6 @@ neurotech-events.pub
 *.sln
 *.sw?
 .neon
+
+# Local test account passwords (never commit)
+TEST_CREDENTIALS.md
