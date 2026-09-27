@@ -84,6 +84,7 @@ def test_organization_settings_update_requires_owner(client, db) -> None:
     assert client.patch(url, json={"vat_percent": "16"}, headers=finance).status_code == 403
     updated = client.patch(url, json={"vat_percent": "16", "contact_phone": "+255 700 000 000"}, headers=owner)
     assert updated.status_code == 200 and updated.json()["vat_percent"] == "16.00"
+    assert updated.json()["contact_phone"] == "+255 700 000 000"
     quote = client.get(f"/api/v1/events/{CHECKOUT['event_slug']}/tickets/{CHECKOUT['ticket_code']}/quote").json()
     assert quote["total"] == 116000
 
