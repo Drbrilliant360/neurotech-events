@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.models import (
     CheckIn,
+    Communication,
     Event,
     EventSession,
     Organization,
@@ -26,8 +27,9 @@ from app.db.models import (
 from app.db.models.enums import UserRole
 from app.schemas.admin_events import SpeakerOut, VenueOut
 from app.schemas.authorization import EventAccessResponse
+from app.schemas.engagement import CommunicationOut
 from app.schemas.workspace import AdminWorkspaceOut, OrganizationOut, PublicCatalogueOut
-from app.services import event_admin, inventory, operations
+from app.services import event_admin, inventory, operations, outreach
 from app.services.authorization import access_for_events, is_organizer, visible_events_filter
 from app.services.catalogue import PUBLIC_STATUSES, event_detail
 from app.services.payments import PaymentService
@@ -87,6 +89,7 @@ def public_catalogue(db: Session) -> PublicCatalogueOut:
         sessions=[event_admin.to_session_out(item) for item in sessions],
         speakers=sorted((SpeakerOut.model_validate(item) for item in speakers.values()), key=lambda s: s.name),
         milestones=[event_admin.to_milestone_out(item) for item in milestones],
+        sponsors=outreach.public_sponsors(db),
     )
 
 
@@ -123,7 +126,8 @@ def admin_workspace(db: Session, user: User, service: PaymentService) -> AdminWo
     sold = inventory.taken_by_ticket_type(db, [ticket.id for ticket in tickets])
     sessions, milestones = _programme(db, event_ids)
 
-    if is_organizer(db, user):
+    organizer = is_organizer(db, user)
+    if organizer:
         speakers = list(db.scalars(select(Speaker).order_by(Speaker.name)))
         venues = list(db.scalars(select(Venue).order_by(Venue.name)))
     else:
@@ -196,5 +200,17 @@ def admin_workspace(db: Session, user: User, service: PaymentService) -> AdminWo
         registrations=registrations,
         check_ins=check_ins,
         payments=payments,
+        sponsors=[outreach.to_sponsor_out(item) for item in outreach.all_sponsors(db)] if organizer else [],
+        communications=[
+            CommunicationOut.model_validate(item)
+            for item in db.scalars(
+                select(Communication)
+                .where(Communication.event_id.in_(manage_ids))
+                .order_by(Communication.created_at.desc())
+                .limit(WORKSPACE_ROW_LIMIT)
+            )
+        ]
+        if manage_ids
+        else [],
     )
 

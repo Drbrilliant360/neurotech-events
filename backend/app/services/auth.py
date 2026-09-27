@@ -102,6 +102,14 @@ def register_user(db: Session, payload: RegisterRequest, *, role: UserRole = Use
     return user
 
 
+def ensure_attendee(db: Session, user: User) -> Attendee:
+    """The attendee record behind a login, created on first use (older accounts may lack one)."""
+    if user.attendee is None:
+        user.attendee = _attendee_for(db, user.email, user.full_name)
+        db.flush()
+    return user.attendee
+
+
 def update_profile(db: Session, user: User, payload: ProfileUpdateRequest) -> User:
     changes = payload.model_dump(exclude_unset=True)
     if "full_name" in changes:

@@ -29,7 +29,7 @@ from app.db.models import (
     TicketType,
     User,
 )
-from app.db.models.enums import EventStatus, PaymentMethod, PaymentStatus, RegistrationStatus
+from app.db.models.enums import EventStatus, NotificationCategory, PaymentMethod, PaymentStatus, RegistrationStatus
 from app.integrations.payments.snippe import (
     MIN_AMOUNT_TZS,
     GatewayPayment,
@@ -47,6 +47,7 @@ from app.schemas.payments import (
 )
 from app.services import inventory
 from app.services.errors import ConflictError, DomainError, NotFoundError, ValidationError
+from app.services.notifications import notify
 
 logger = logging.getLogger("neurotech.payments")
 
@@ -272,6 +273,10 @@ class PaymentService:
             ticket_number=new_ticket_number(),
         )
         self.db.add(registration)
+        notify(
+            self.db, attendee.id, NotificationCategory.REGISTRATION, "Registration confirmed",
+            f"{event.title} · ticket {registration.ticket_number}",
+        )
         self.db.commit()
         return registration
 
@@ -503,6 +508,10 @@ class PaymentService:
             payment.paid_at = _now()
             registration.status = RegistrationStatus.CONFIRMED
             registration.cancelled_at = None
+            notify(
+                self.db, registration.attendee_id, NotificationCategory.PAYMENT, "Payment received",
+                f"{payment.currency} {payment.amount:,.0f} · ticket {registration.ticket_number} is confirmed",
+            )
         elif target in {PaymentStatus.CANCELLED, PaymentStatus.FAILED}:
             registration.status = RegistrationStatus.CANCELLED
             registration.cancelled_at = _now()

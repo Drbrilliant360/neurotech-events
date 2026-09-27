@@ -14,9 +14,23 @@ from typing import Any
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
-from app.db.models import Event, EventSession, Organization, Registration, Speaker, TicketType, TimelineMilestone, Venue
+from app.db.models import (
+    Event,
+    EventSession,
+    Organization,
+    Registration,
+    Speaker,
+    Sponsor,
+    SponsorEvent,
+    TicketType,
+    TimelineMilestone,
+    Venue,
+)
 
-CATALOGUE_TABLES = (Event, EventSession, Organization, Registration, Speaker, TicketType, TimelineMilestone, Venue)
+CATALOGUE_TABLES = (
+    Event, EventSession, Organization, Registration, Speaker, Sponsor, SponsorEvent, TicketType, TimelineMilestone,
+    Venue,
+)
 TTL_SECONDS = 15.0
 
 _lock = threading.Lock()

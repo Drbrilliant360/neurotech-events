@@ -6,10 +6,12 @@ from app.api.v1 import (
     admin_directory,
     admin_events,
     admin_operations,
+    admin_outreach,
     admin_payments,
     admin_team,
     auth,
     authorization,
+    engagement,
     payments,
     public_events,
     public_registrations,
@@ -35,6 +37,8 @@ router.include_router(admin_events.router)
 router.include_router(admin_directory.router)
 router.include_router(admin_operations.router)
 router.include_router(admin_team.router)
+router.include_router(admin_outreach.router)
+router.include_router(engagement.router)
 router.include_router(workspace.router)
 
 

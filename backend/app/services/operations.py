@@ -22,7 +22,7 @@ from app.db.models import (
     TicketType,
     User,
 )
-from app.db.models.enums import EventStatus, PaymentStatus, RegistrationStatus
+from app.db.models.enums import EventStatus, NotificationCategory, PaymentStatus, RegistrationStatus
 from app.schemas.operations import (
     AdminRegistrationOut,
     AttendeeTicketOut,
@@ -36,6 +36,7 @@ from app.schemas.operations import (
 from app.services import audit, inventory
 from app.services.authorization import EventAccess
 from app.services.errors import ConflictError, NotFoundError, ValidationError
+from app.services.notifications import notify
 from app.services.payments import new_ticket_number
 
 CHECK_IN_STATUSES = {EventStatus.PUBLISHED, EventStatus.ONGOING}
@@ -243,6 +244,10 @@ def create_complimentary_registration(
     )
     db.add(registration)
     db.flush()
+    notify(
+        db, attendee.id, NotificationCategory.REGISTRATION, "You have a complimentary ticket",
+        f"{event.title} · ticket {registration.ticket_number}",
+    )
     audit.record(
         db, "registration.complimentary", actor=user, target_type="registration", target_id=registration.id,
         event_id=event.id, details={"ticket_type": ticket.code, "note": payload.note},
