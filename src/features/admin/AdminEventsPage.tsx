@@ -181,7 +181,7 @@ export function AdminEventFormPage({ mode, eventId }: { mode: "new" | "edit"; ev
           <label className="nt-field"><span>Banner label</span><input value={bannerLabel} onChange={(e) => setBannerLabel(e.target.value)} placeholder="Defaults to the category" /></label>
           <label className="nt-field"><span>Registration opens</span><input type="datetime-local" value={registrationOpensAt} onChange={(e) => setRegistrationOpensAt(e.target.value)} /></label>
           <label className="nt-field"><span>Registration closes</span><input type="datetime-local" value={registrationClosesAt} onChange={(e) => setRegistrationClosesAt(e.target.value)} /></label>
-          <label className="nt-field" style={{ gridColumn: "1 / -1" }}><span>Highlights (comma-separated)</span><input value={highlights} onChange={(e) => setHighlights(e.target.value)} placeholder="Neuroscience, BCI, Healthcare" /></label>
+          <label className="nt-field" style={{ gridColumn: "1 / -1" }}><span>Highlights (comma-separated)</span><input value={highlights} onChange={(e) => setHighlights(e.target.value)} placeholder="AI agents, WhatsApp commerce, Payments" /></label>
           <label className="nt-field" style={{ gridColumn: "1 / -1" }}><span>FAQ questions (one per line)</span><textarea rows={3} value={faqs} onChange={(e) => setFaqs(e.target.value)} /></label>
           <label className="nt-field" style={{ gridColumn: "1 / -1" }}>
             <span><input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} /> Feature this event on the home page</span>

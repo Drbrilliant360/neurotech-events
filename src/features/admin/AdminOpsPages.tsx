@@ -503,7 +503,7 @@ function AdminPosterEditor({ events, event, setEventId }: EditorProps) {
 function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveComms, live } = usePlatform();
   const [channel, setChannel] = useState<CommunicationChannel>("email");
-  const [body, setBody] = useState("Thank you for joining NeuroTech Summit.");
+  const [body, setBody] = useState("Thank you for joining us at Neurotech Events.");
   const [subject, setSubject] = useState("Event reminder");
   return (
     <div style={{ maxWidth: 720 }}>

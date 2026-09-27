@@ -89,7 +89,7 @@ export function ProfilePage() {
             ))}
             <label className="nt-field" style={{ gridColumn: "1 / -1" }}>
               <span>Interests (comma-separated)</span>
-              <input value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} placeholder="Neuroscience, BCI, AI" />
+              <input value={form.interests} onChange={(e) => setForm({ ...form, interests: e.target.value })} placeholder="AI agents, Payments, Generative AI" />
             </label>
           </div>
           <p className="nt-muted" style={{ marginTop: 8 }}>Email: {me.email}. Contact the events team to change the email on your account.</p>

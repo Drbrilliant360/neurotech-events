@@ -49,7 +49,7 @@ export const MEDIA = {
     unsplash("photo-1569830904560-2afd7062213c", 1000, 800),
     /** Networking lounge: attendees talking over a laptop. */
     unsplash("photo-1655720357872-ce227e4164ba", 1000, 800),
-    /** BCI workshop: pair programming at a laptop. */
+    /** Workshop: pair programming at a laptop. */
     unsplash("photo-1637856794303-d864ce316444", 1000, 800),
   ],
   /** Portraits ordered to match the demo speaker roster (woman, man, woman, man, ...). */
