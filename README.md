@@ -142,7 +142,7 @@ npm install
 npm run dev -- --host 127.0.0.1
 ```
 
-Attendees create an account at `/register` and land in `/app`; organisers sign in at `/login` and land in `/admin`. Organisers can grant colleagues console access from **Team & roles** once those colleagues have an account.
+Attendees create an account at `/register` and land in `/app`; organisers sign in at `/login` and land in `/admin`. Door staff scan ticket QR codes from **Check-in** with the device camera; browsers only allow the camera on HTTPS or `localhost`, so phone testing needs the site served over HTTPS. Local test accounts can be kept in an untracked `TEST_CREDENTIALS.md` (git-ignored). Organisers can grant colleagues console access from **Team & roles** once those colleagues have an account.
 
 Navigation: on phones and tablets the public site uses a menu drawer, the attendee and admin workspaces use a bottom navigation bar with a "More" drawer, deep pages carry breadcrumbs that collapse to a back control, and event pages pin a Register bar to the bottom of the screen. `src/styles/mobile.css` is loaded last and owns the small-screen rules. During development, `/?as=admin` or `/?as=attendee` opens a workspace directly (ignored in production builds), and in demo mode the sign-in page offers shortcuts into both workspaces.
 

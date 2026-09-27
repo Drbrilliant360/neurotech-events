@@ -1,9 +1,11 @@
+import hmac
 from functools import lru_cache
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEVELOPMENT_JWT_SECRET = "unsafe-development-secret-change-me-32"
+DEVELOPMENT_TICKET_SIGNING_KEY = "unsafe-development-ticket-signing-key-change-me"
 HARDENED_ENVIRONMENTS = {"production", "staging"}
 
 
@@ -27,6 +29,10 @@ class Settings(BaseSettings):
     jwt_audience: str = "neurotech-events"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 14
+
+    # HMAC key for attendee ticket QR payloads. Keep separate from authentication keys so
+    # either credential can be rotated without expanding the impact to the other domain.
+    ticket_signing_key: str = DEVELOPMENT_TICKET_SIGNING_KEY
 
     # Per-client request budgets. In-process, so each worker keeps its own window; put an
     # edge limiter (load balancer / CDN) in front for multi-instance deployments.
@@ -72,6 +78,10 @@ class Settings(BaseSettings):
         if self.is_hardened:
             if self.jwt_secret_key == DEVELOPMENT_JWT_SECRET or len(self.jwt_secret_key) < 32:
                 raise ValueError("JWT_SECRET_KEY must be a unique secret with at least 32 characters.")
+            if self.ticket_signing_key == DEVELOPMENT_TICKET_SIGNING_KEY or len(self.ticket_signing_key) < 32:
+                raise ValueError("TICKET_SIGNING_KEY must be a unique secret with at least 32 characters.")
+            if hmac.compare_digest(self.ticket_signing_key, self.jwt_secret_key):
+                raise ValueError("TICKET_SIGNING_KEY must be distinct from JWT_SECRET_KEY.")
             if "*" in self.cors_origin_list:
                 raise ValueError("CORS_ORIGINS must explicitly list trusted origins.")
             if self.debug:

@@ -1,32 +1,29 @@
 # Implementation Plan — NeuroTech Events
 
-This plan converts the current NeuroTech Events frontend prototype into a maintainable production application incrementally. It is intentionally structured so each phase can be delivered through small commits and reviewed PRs.
+This plan converts the original NeuroTech Events frontend prototype into a maintainable production application incrementally. It is intentionally structured so each phase can be delivered through small commits and reviewed PRs.
 
 ## Current implementation snapshot
 
-The repository already demonstrates the intended product breadth across three user modes:
+_Last updated: 2026-09-27._
 
-- public visitor;
-- attendee;
-- administrator.
+The product covers three user modes (public visitor, attendee, administrator) end to end against a real backend:
 
-Current implementation characteristics:
+- **Frontend:** React 19 + TypeScript + Vite with React Router, typed domain models (`src/domain/types.ts`), feature folders (`src/features/`), and an API client (`src/services/`). With `VITE_API_BASE_URL` set, every collection comes from the API; without it the app runs as a local demo.
+- **Backend:** FastAPI modular monolith in `backend/` with SQLAlchemy 2, Alembic migrations, 126 automated tests, and a Postman collection. See `backend/README.md` and `backend/IMPLEMENTATION_LOG.md`.
+- **Identity:** accounts with Argon2 passwords, rotating refresh tokens, revocation, rate limits, audit log, and scoped roles (platform, organization, per-event staff) enforced server-side.
+- **Payments:** Snippe mobile money with server-side pricing, signed webhooks and polling; the browser never marks anything paid.
+- **Operations:** organiser CRUD for events, tickets, programme, speakers, venues, sponsors, team roles, communications; camera QR check-in with signed tickets; CSV export and reports.
+- **Attendee:** tickets with signed QR, personal agenda, opt-in networking, in-app notifications, certificates with public verification.
+- **Databases:** local PostgreSQL for testing; Neon serverless PostgreSQL reserved for production (deferred while testing).
+- **Prototype artefacts** (`src/design/`, `src/lib/dcRender.tsx`, `src/lib/useAppModel.ts`) are kept as visual reference only.
 
-- React 19 + TypeScript + Vite;
-- Framer Motion for transitions;
-- Oxlint + TypeScript build checks;
-- screen selection and mock product state concentrated in `src/lib/useAppModel.ts`;
-- design-driven rendering via `src/design/blocks.json` and `src/lib/dcRender.tsx`;
-- no established production backend/API contract in this repository;
-- no established production authentication, persistence, payment, or notification implementation.
-
-The objective is to retain the existing product experience while progressively replacing prototype-only state and rendering concerns with typed production boundaries.
+Not yet built: refunds, email/SMS delivery (and therefore password reset and email verification), offline check-in, media uploads, frontend automated tests, deployment.
 
 ## Delivery principles
 
 Every implementation increment should:
 
-1. be performed on `masterchanges`;
+1. be performed on the working branch (`feat/backend`) and reach `main` through a reviewed PR;
 2. solve one coherent problem;
 3. preserve currently working flows unless the change intentionally replaces them;
 4. introduce explicit types/contracts before external integrations;
@@ -37,6 +34,8 @@ Every implementation increment should:
 ---
 
 # Phase 0 — Repository engineering baseline
+
+**Status (2026-09-27):** Complete.
 
 **Goal:** make future implementation predictable and reviewable.
 
@@ -58,6 +57,8 @@ New contributors can determine how to work, where to add code, how to validate i
 ---
 
 # Phase 1 — Stabilize the frontend architecture
+
+**Status (2026-09-27):** Complete. React Router routes, shared domain types, feature folders and reusable widgets are in place; `useAppModel` remains only for the prototype renderer.
 
 **Goal:** separate prototype navigation/state from production domain code without changing the visible product unnecessarily.
 
@@ -164,6 +165,8 @@ Do this only as repeated patterns justify it; avoid building an abstract design 
 
 # Phase 2 — API boundary and data access
 
+**Status (2026-09-27):** Complete. `src/services/api.ts` handles base URL, typed JSON, auth, refresh and normalised errors; `src/repositories/remote.ts` builds the page model from the API for every migrated domain.
+
 **Goal:** make the frontend ready to connect to a real backend without binding components to raw HTTP calls.
 
 ## 2.1 Add API client infrastructure
@@ -218,6 +221,8 @@ Components consume domain services/hooks rather than embedded demo data for migr
 
 # Phase 3 — Identity and access
 
+**Status (2026-09-27):** Mostly complete. Sign-in/out, rotating refresh tokens, protected attendee/admin routes, server-side scoped permissions (ADR 0001) and expired-session handling are done. Remaining: email verification and self-service password reset (need an email provider).
+
 **Goal:** establish real public, attendee, and admin boundaries.
 
 ## Deliverables
@@ -239,6 +244,8 @@ A user cannot obtain protected resources merely by changing a frontend route or 
 ---
 
 # Phase 4 — Registration and ticketing
+
+**Status (2026-09-27):** Complete. Oversell-safe checkout with seat holds and sales windows, free and complimentary tickets, persisted ownership, and signed QR tickets.
 
 **Goal:** turn public interest into a durable attendee registration and ticket.
 
@@ -268,6 +275,8 @@ Registration status and ticket ownership are persisted server-side and recoverab
 
 # Phase 5 — Payments
 
+**Status (2026-09-27):** Mostly complete. Snippe mobile money (server-created payments, signed race-safe webhooks, polling, late-payment recovery, receipts). Remaining: provider refunds; card and bank methods.
+
 **Goal:** implement payment without placing trust or secrets in the browser.
 
 ## Deliverables
@@ -289,6 +298,8 @@ The browser never independently marks a registration as paid. Payment truth come
 ---
 
 # Phase 6 — Admin event operations
+
+**Status (2026-09-27):** Complete for the listed sequence: event CRUD and publishing, tickets, speakers/venues/sessions, attendees, check-in, sponsors, communications (in-app delivery), payments, reports and CSV export, plus team and role management.
 
 **Goal:** replace admin demo screens with real operational workflows.
 
@@ -314,6 +325,8 @@ An event operator can configure and run an event without direct database interve
 
 # Phase 7 — Check-in and live-event resilience
 
+**Status (2026-09-27):** Mostly complete. Camera QR scanning (native BarcodeDetector with jsQR fallback), signed-payload server validation, duplicate-scan handling with cooldown, manual lookup, undo, audit trail and scoped check-in staff. Remaining: offline/poor-network strategy and throughput testing.
+
 **Goal:** support high-pressure event-day operations reliably.
 
 ## Deliverables
@@ -332,6 +345,8 @@ If offline check-in is required, design it explicitly; do not silently cache aut
 ---
 
 # Phase 8 — Communications, networking, certificates
+
+**Status (2026-09-27):** Mostly complete. Organiser announcements and transactional notifications are delivered in-app; networking is opt-in and limited to people who share a confirmed registration; certificates are issued for checked-in attendees of completed events and verifiable at `/verify/:code`. Remaining: email/SMS/push delivery and notification preferences; downloadable certificate artefact beyond print.
 
 **Goal:** complete attendee engagement features after the operational core is stable.
 
@@ -357,6 +372,8 @@ Define privacy and consent rules before exposing attendee profiles to other atte
 
 # Phase 9 — Reporting and analytics
 
+**Status (2026-09-27):** Partial. Event summary, registrations, payments and check-in counts, and CSV export exist. Remaining: conversion funnel, attribution and session attendance.
+
 **Goal:** provide operational visibility from trusted backend data.
 
 Potential reports:
@@ -374,6 +391,8 @@ Reports should identify source, timeframe, and metric definitions so dashboards 
 ---
 
 # Phase 10 — Production hardening
+
+**Status (2026-09-27):** In progress. Backend has 126 tests and CI; accessibility basics are applied to new screens. Remaining: frontend test harness and E2E suite, dependency/secret scanning in CI, a focused security review, performance budgets, deployment and observability.
 
 ## Automated testing
 
@@ -424,20 +443,19 @@ Complete a focused review covering:
 
 ---
 
-# Suggested first implementation tickets
+# Next implementation work
 
-After the documentation baseline, the first technical PRs should be small and ordered roughly as follows:
+The original first tickets (domain types, routing, service layer, CI) are done. Remaining work, in suggested order:
 
-1. `refactor: add shared event domain types`
-2. `refactor: extract navigation definitions from useAppModel`
-3. `feat: add route-based navigation shell`
-4. `feat: add event service interface and mock implementation`
-5. `refactor: migrate public event list to event service`
-6. `refactor: migrate schedule data to typed session model`
-7. `chore: add CI validation for npm run check`
-8. `test: establish frontend test harness`
+1. `feat(api): refunds through Snippe for organiser cancellations flagged refund_required`
+2. `feat: choose an email/SMS provider (ADR), then deliver communications, password reset and email verification`
+3. `test: establish a frontend test harness and E2E tests for registration, payment recovery, tickets and check-in`
+4. `ci: add dependency audit, secret scanning and SAST`
+5. `feat: offline/poor-network check-in strategy (explicit conflict rules)`
+6. `feat: media uploads for event artwork and speaker photos`
+7. `chore: deployment (API, web) and Neon production migration`
 
-Avoid starting with payment or authentication before the application boundaries and backend contract have been agreed.
+Completed milestones are recorded in `backend/IMPLEMENTATION_LOG.md`.
 
 # Documentation update rule
 

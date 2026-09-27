@@ -69,5 +69,11 @@ migration and validation against SQLite tests and Neon PostgreSQL before release
   API share a site; until then the frontend must keep it out of `localStorage` where possible.
 - Replace the legacy `PUT /admin/catalogue` super-admin sync with the scoped organiser API.
 - Add dependency, secret, SAST and DAST checks to CI.
-- Rotating `JWT_SECRET_KEY` also invalidates issued ticket QR codes; introduce a dedicated,
-  versioned signing key before the first large event.
+- Ticket QR payloads use `TICKET_SIGNING_KEY`, which hardened environments require to be at
+  least 32 characters, non-default and distinct from `JWT_SECRET_KEY`. Generate both independently.
+- There is intentionally no fallback to `JWT_SECRET_KEY` or a previous ticket key: accepting an
+  old compromised key would preserve its ability to forge admission. Rotating `TICKET_SIGNING_KEY`
+  therefore invalidates previously rendered/downloaded QR payloads. Existing confirmed registrations
+  remain valid and the attendee ticket endpoint immediately issues a fresh QR under the current key;
+  operators must notify attendees to refresh/re-download tickets and replace any printed tickets as
+  part of a planned rotation. Ticket-number lookup remains available as the controlled recovery path.

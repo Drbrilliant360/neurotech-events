@@ -89,6 +89,26 @@ class PaymentOut(BaseModel):
     events: list[PaymentEventOut]
 
 
+class RefundRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
+
+
+class RefundOut(BaseModel):
+    id: uuid.UUID
+    payment_id: uuid.UUID
+    registration_id: uuid.UUID
+    event_id: uuid.UUID
+    amount: int
+    currency: str
+    recipient_name: str
+    status: str
+    provider_reference: str | None
+    failure_reason: str | None
+    created_at: datetime
+    updated_at: datetime
+    completed_at: datetime | None
+
+
 class PaymentPageOut(BaseModel):
     items: list[PaymentOut]
     total: int

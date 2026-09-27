@@ -13,7 +13,7 @@ from app.core.rate_limit import limiter
 from app.db.base import Base
 from app.db.models import Event
 from app.db.seed import seed
-from app.integrations.payments.snippe import GatewayPayment
+from app.integrations.payments.snippe import GatewayPayment, GatewayPayout
 from app.main import app
 from app.services import cache
 
@@ -33,6 +33,9 @@ class FakeGateway:
         self.fail_create: Exception | None = None
         self.counter = 0
         self.pushed: list[str] = []
+        self.payouts: list[dict] = []
+        self.payout_statuses: dict[str, str] = {}
+        self.fail_payout: Exception | None = None
         self.balance = {"available": {"currency": "TZS", "value": 350}, "balance": {"currency": "TZS", "value": 350}}
         self.listed = {
             "items": [
@@ -73,6 +76,18 @@ class FakeGateway:
 
     def resend_push(self, reference: str) -> None:
         self.pushed.append(reference)
+
+    def create_mobile_payout(self, **kwargs) -> GatewayPayout:
+        if self.fail_payout:
+            raise self.fail_payout
+        reference = f"PO-TEST-{len(self.payouts) + 1}"
+        self.payouts.append(kwargs)
+        self.payout_statuses[reference] = "pending"
+        return GatewayPayout(reference=reference, status="pending", amount=kwargs["amount"], currency="TZS")
+
+    def get_payout(self, reference: str) -> GatewayPayout:
+        return GatewayPayout(reference=reference, status=self.payout_statuses.get(reference, "pending"),
+                             amount=0, currency="TZS")
 
 
 @pytest.fixture
@@ -118,6 +133,7 @@ def test_settings() -> Settings:
         snippe_api_key="snp_test",
         snippe_webhook_secret=WEBHOOK_SECRET,
         public_base_url="https://api.example.org",
+        ticket_signing_key="test-ticket-signing-key-that-is-distinct",
         rate_limit_enabled=False,
     )
 

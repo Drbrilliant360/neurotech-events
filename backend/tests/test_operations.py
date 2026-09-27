@@ -10,7 +10,6 @@ from tests.helpers import SUMMIT_ID, event_staff, org_member, signup
 from tests.test_payments_api import CHECKOUT, _webhook
 
 BASE = f"/api/v1/admin/events/{SUMMIT_ID}"
-SECRET = "unsafe-development-secret-change-me-32"
 PRO_TICKET = seed_id("tix_pro")
 
 
@@ -56,11 +55,11 @@ def test_complimentary_registration_respects_capacity(client, db) -> None:
     assert response.status_code == 409
 
 
-def test_qr_check_in_admits_once_and_undo_reopens(client, db) -> None:
+def test_qr_check_in_admits_once_and_undo_reopens(client, db, test_settings) -> None:
     owner = org_member(client, db, "owner@example.org")
     door = event_staff(client, db, "door@example.org", "check_in")
     registration = _comp(client, owner)
-    qr = sign_ticket(SECRET, uuid.UUID(registration["id"]))
+    qr = sign_ticket(test_settings.ticket_signing_key, uuid.UUID(registration["id"]))
 
     admitted = client.post(f"{BASE}/check-ins", json={"code": qr}, headers=door)
     assert admitted.status_code == 201, admitted.text
@@ -75,7 +74,7 @@ def test_qr_check_in_admits_once_and_undo_reopens(client, db) -> None:
     assert client.get(f"{BASE}/check-ins", headers=door).json()["total"] == 2
 
 
-def test_forged_or_foreign_tickets_are_rejected(client, db) -> None:
+def test_forged_or_foreign_tickets_are_rejected(client, db, test_settings) -> None:
     owner = org_member(client, db, "owner@example.org")
     door = event_staff(client, db, "door@example.org", "check_in")
     registration = _comp(client, owner)
@@ -92,9 +91,21 @@ def test_forged_or_foreign_tickets_are_rejected(client, db) -> None:
         headers=owner,
     )
     assert other.status_code == 201, other.text
-    qr = sign_ticket(SECRET, uuid.UUID(other.json()["id"]))
+    qr = sign_ticket(test_settings.ticket_signing_key, uuid.UUID(other.json()["id"]))
     wrong = client.post(f"{BASE}/check-ins", json={"code": qr}, headers=door)
     assert wrong.status_code == 409 and wrong.json()["error"]["code"] == "wrong_event"
+
+
+def test_check_in_does_not_accept_ticket_signed_with_jwt_secret(client, db, test_settings) -> None:
+    owner = org_member(client, db, "owner@example.org")
+    door = event_staff(client, db, "door@example.org", "check_in")
+    registration = _comp(client, owner)
+    legacy_qr = sign_ticket(test_settings.jwt_secret_key, uuid.UUID(registration["id"]))
+
+    response = client.post(f"{BASE}/check-ins", json={"code": legacy_qr}, headers=door)
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "invalid_ticket"
 
 
 def test_unpaid_registration_cannot_check_in(client, db) -> None:
@@ -175,7 +186,10 @@ def test_attendee_ticket_carries_verifiable_qr(client, test_settings) -> None:
     _webhook(client, {"id": "evt_ticket_1", "type": "payment.completed",
                       "data": {"reference": payment["provider_reference"], "status": "completed"}})
     ticket = client.get(url, headers=headers).json()
-    assert verify_ticket(test_settings.jwt_secret_key, ticket["qr_payload"]) == uuid.UUID(payment["registration_id"])
+    assert verify_ticket(test_settings.ticket_signing_key, ticket["qr_payload"]) == uuid.UUID(
+        payment["registration_id"]
+    )
+    assert verify_ticket(test_settings.jwt_secret_key, ticket["qr_payload"]) is None
 
 
 def test_audit_trail_records_event_operations(client, db) -> None:

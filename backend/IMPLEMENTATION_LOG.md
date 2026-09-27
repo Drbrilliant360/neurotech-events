@@ -9,8 +9,8 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - API prefix: `/api/v1`
 - Database foundation: SQLAlchemy with Alembic migrations
 - Current completed phases: Phase 0, Phase 2
-- Current active phases: Phase 1 (email verification/reset), Phase 3 and 4 (refunds), Phase 6 (offline check-in)
-- Next priority: camera QR check-in, then refunds; Neon is deferred while testing runs on local PostgreSQL
+- Current active phases: Phase 1 (email verification/reset), Phase 6 (offline check-in), Phase 7 (external delivery)
+- Next priority: email verification/reset and an email/SMS provider; Neon is deferred while testing runs on local PostgreSQL
 
 ## Phase status
 
@@ -19,10 +19,10 @@ This is the durable handoff record for backend work. Add a new entry after each 
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, database foundation, tests, Dockerfile and CI |
 | Phase 1 — Identity and authorization | Mostly complete | Rotating refresh tokens, revocation, password change, rate limits, audit log, scoped capabilities on every organiser route and team management by email; email verification and password reset remain |
 | Phase 2 — Public events and program | Complete | Public list/detail/programme/speakers/quotes; organiser CRUD for events, tickets, sessions, milestones, speakers and venues |
-| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout with seat holds and sales windows, attendee QR tickets, complimentary tickets and organiser cancellation; refunds remain |
-| Phase 4 — Payments | In progress | Snippe adapter, server-side pricing, throttled polling, signed race-safe webhooks, late-payment recovery, audit events, platform and event-scoped finance views; refunds remain |
+| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout, attendee QR tickets, complimentary tickets, cancellation and provider-backed refunds |
+| Phase 4 — Payments | Mostly complete | Snippe collections/refund payouts, polling, signed race-safe webhooks, late-payment recovery, audit events and scoped finance views |
 | Phase 5 — Attendee experience | Mostly complete | Saved sessions, opt-in networking, in-app notifications, certificates with public verification; external notification channels remain |
-| Phase 6 — Operations and check-in | Mostly complete | Signed-QR/ticket-number check-in with undo, door lookup, attendee list, CSV export, event summary and audit trail; offline check-in remains |
+| Phase 6 — Operations and check-in | Mostly complete | Camera QR scanning in the console, signed-QR/ticket-number check-in with undo, door lookup, attendee list, CSV export, event summary and audit trail; offline check-in remains |
 | Phase 7 — Communications, media and scale | In progress | Organiser communications and sponsors on the server with in-app delivery; email/SMS providers, workers, storage, observability and retention remain |
 
 ## Completed work
@@ -146,7 +146,17 @@ admin reads. Not yet validated: migrations `b7e1c4d2a9f3` and `c5a2f8e7d1b4` aga
 PostgreSQL; run them on a Neon branch before production.
 
 Follow-up: frontend refresh-token handling and organiser screens; provider refunds; email
-verification and password reset; offline check-in; dedicated QR signing key; CI security scans.
+verification and password reset; offline check-in; CI security scans.
+
+### 2026-09-27 — Dedicated ticket QR signing key
+
+- Added `TICKET_SIGNING_KEY` and moved ticket issuance and check-in verification off the JWT key.
+- Hardened environments reject the development default, keys shorter than 32 characters, and a
+  ticket key equal to `JWT_SECRET_KEY`.
+- Rotation deliberately has no JWT/old-key verification fallback: existing registrations can fetch
+  a freshly signed QR, while old rendered or printed QR payloads are invalidated. Ticket-number lookup
+  remains the recovery path during a planned rotation.
+- Added focused configuration, issuance, signing-boundary and check-in rejection coverage.
 
 ### 2026-09-27 — Organiser team, Neurotech Africa catalogue and end-to-end check
 
@@ -197,10 +207,38 @@ uvicorn + local PostgreSQL 18 (admin creates a sponsor that appears on /partners
 attendee receives, attendee marks notices read, saves a session that survives reload, creates a
 networking profile, loads certificates, and verification rejects an unknown code), no console errors.
 
+### 2026-09-27 — Camera QR check-in
+
+Phase 6 (frontend only; the API already verified signed payloads).
+
+- `src/components/shared/QrScanner.tsx`: rear camera via `getUserMedia`, native `BarcodeDetector` where
+  available, lazy-loaded `jsqr` fallback (Apache-2.0) otherwise; 3-second repeat cooldown; scanning
+  pauses during a request; tracks stop on close; clear messages for blocked permission, missing or busy
+  camera, and insecure origins (the camera needs HTTPS or localhost).
+- Check-in page: colour-coded result in one polite live region; mock scanner kept for demo mode only.
+- Signed `NTQ1` payloads are routed to their event by registration id before calling the API.
+- `docs/IMPLEMENTATION_PLAN.md` now records the current snapshot and a status for every phase.
+
+Validation: frontend lint and build; headless Chrome with a fake camera streaming a real signed ticket
+QR against uvicorn + local PostgreSQL, run twice (native detector, and with `BarcodeDetector` removed to
+force jsQR): the scan checks the attendee in, the ticket still in frame is then reported as already
+checked in, jsQR downloads only for the fallback, closing the camera resets the page, no page errors.
+
+### 2026-09-27 — Snippe-backed organiser refunds
+
+Phases 3 and 4.
+
+- Added one-refund-per-payment persistence with database uniqueness, stable provider idempotency keys and row locking.
+- Finance-authorized endpoints create and verify Snippe mobile-money payouts tied to the original paid payment, cancelled registration and attendee phone.
+- Payments remain `paid` while the payout is pending and become `refunded` only after provider completion; failed and reversed payouts are retained and audited.
+- Signed payout webhooks are deduplicated through the existing provider event ledger; GET verification recovers status when webhooks cannot reach local deployments.
+- Provider errors are logged without exposing provider details or credentials to clients.
+- Added organiser UI action, Postman requests, migration, adapter/service tests and API authorization/idempotency tests.
+
 ## Next implementation slices
 
 1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to Neon production (development is at head).
-2. Real camera QR scanning on the check-in page (the API already accepts signed QR payloads).
+2. Offline/poor-network check-in strategy.
 3. Refund workflow through the provider for organiser cancellations flagged `refund_required`.
 4. Email verification and password reset once an email provider contract exists.
 5. Email/SMS provider for communications, password reset and verification.

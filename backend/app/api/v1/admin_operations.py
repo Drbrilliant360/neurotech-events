@@ -21,10 +21,11 @@ from app.schemas.operations import (
     ComplimentaryRegistrationRequest,
     EventSummaryReport,
 )
-from app.schemas.payments import PaymentPageOut
+from app.schemas.payments import PaymentPageOut, RefundOut, RefundRequest
 from app.services import operations
 from app.services.authorization import Capability, require_event
 from app.services.payments import PaymentService
+from app.services.refunds import RefundService
 
 router = APIRouter(prefix="/admin/events/{event_id}", tags=["admin: operations"])
 
@@ -160,6 +161,34 @@ def event_payments(
     service = PaymentService(db, gateway, settings)
     items, total = service.list_payments(status=status_filter, page=page, page_size=page_size, event_id=event.id)
     return PaymentPageOut(items=[service.to_out(item) for item in items], total=total, page=page, page_size=page_size)
+
+
+@router.post("/payments/{payment_id}/refund", response_model=RefundOut, status_code=status.HTTP_201_CREATED)
+def request_refund(
+    event_id: uuid.UUID, payment_id: uuid.UUID, payload: RefundRequest, user: CurrentUser,
+    db: DbSession, gateway: Gateway, settings: AppSettings,
+) -> RefundOut:
+    event, _ = require_event(db, user, event_id, Capability.FINANCE)
+    payment = PaymentService(db, gateway, settings).get_payment(payment_id)
+    if payment.event_id != event.id:
+        from app.services.errors import NotFoundError
+        raise NotFoundError("Payment not found.")
+    service = RefundService(db, gateway, settings)
+    return service.to_out(service.request(payment_id, user, payload.reason))
+
+
+@router.get("/payments/{payment_id}/refund", response_model=RefundOut)
+def get_refund(
+    event_id: uuid.UUID, payment_id: uuid.UUID, user: CurrentUser, db: DbSession,
+    gateway: Gateway, settings: AppSettings,
+) -> RefundOut:
+    event, _ = require_event(db, user, event_id, Capability.FINANCE)
+    payment = PaymentService(db, gateway, settings).get_payment(payment_id)
+    if payment.event_id != event.id:
+        from app.services.errors import NotFoundError
+        raise NotFoundError("Refund not found.")
+    service = RefundService(db, gateway, settings)
+    return service.to_out(service.verify(payment_id, actor=user))
 
 
 @router.get("/audit", response_model=AuditPage)

@@ -28,8 +28,8 @@ Phase status:
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, SQLAlchemy/Alembic foundation, tests, Dockerfile and backend CI |
 | Phase 1 — Identity and authorization | Mostly complete | Users, rotating refresh tokens with reuse detection, sign-out/sign-out-everywhere, password change, rate limits, audit log, organization memberships, event assignments and scoped `view`/`manage`/`finance`/`check_in` capabilities on every organiser route; email verification and password reset remain |
 | Phase 2 — Public events and program | Complete | Public event list with filters, detail, programme, speakers and ticket quotes; organiser CRUD for events, ticket types, sessions, milestones, speakers and venues with status transitions |
-| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout (row locks, capacity, sales and registration windows, seat holds), attendee registrations and signed QR tickets, complimentary tickets and organiser cancellations; provider refunds remain |
-| Phase 4 — Payments | In progress | Snippe mobile money live: server-side pricing, signed webhooks, throttled polling verification, late-payment recovery, `payment_events` audit trail, super-admin and event-scoped finance views; refunds remain |
+| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout, attendee registrations and signed QR tickets, complimentary tickets, organiser cancellations and provider-backed refunds |
+| Phase 4 — Payments | Mostly complete | Snippe collections and refund payouts, signed idempotent webhooks, polling recovery, audit trails, and scoped finance views |
 | Phase 5 — Attendee experience | Not started | Dashboard, schedule, networking, notifications and certificates |
 | Phase 6 — Operations and check-in | Mostly complete | QR/ticket-number check-in with undo, door lookup, attendee list and CSV export, event summary and per-event audit trail; offline check-in sync remains |
 | Phase 7 — Communications, media and scale | Not started | Workers, providers, storage, observability and retention |
@@ -218,6 +218,8 @@ PATCH|DELETE /api/v1/admin/events/{id}/milestones/{mid}       manage
 GET|POST /api/v1/admin/events/{id}/registrations              manage; search/filter | complimentary ticket
 GET    /api/v1/admin/events/{id}/registrations.csv            manage; formula-injection-safe export
 POST   /api/v1/admin/events/{id}/registrations/{rid}/cancel   manage; flags refund_required when money was collected
+POST   /api/v1/admin/events/{id}/payments/{pid}/refund         finance; idempotent Snippe mobile payout
+GET    /api/v1/admin/events/{id}/payments/{pid}/refund         finance; verify payout status with provider
 POST   /api/v1/admin/events/{id}/check-ins                    check_in; signed QR payload or ticket number, admits once
 POST   /api/v1/admin/events/{id}/check-ins/{cid}/undo         check_in
 GET    /api/v1/admin/events/{id}/check-ins | /check-ins/lookup  check_in; lookup returns name/ticket only
@@ -373,6 +375,10 @@ Rules enforced:
 
 Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
 build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.
+
+Ticket QR payloads are signed with `TICKET_SIGNING_KEY`, not `JWT_SECRET_KEY`. Production and staging
+require independently generated, distinct values of at least 32 characters. See `SECURITY.md` for the
+deliberately invalidating ticket-key rotation procedure.
 
 The admin console publishes its catalogue with `PUT /api/v1/admin/catalogue` (button on the
 Tickets page when `VITE_API_BASE_URL` is set). Events are matched by slug and tickets by code, so

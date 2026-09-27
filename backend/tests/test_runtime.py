@@ -82,11 +82,22 @@ def test_validation_errors_do_not_echo_submitted_secrets(client) -> None:
 
 
 def test_docs_are_hidden_by_default_in_production() -> None:
-    settings = Settings(_env_file=None, environment="production", jwt_secret_key="x" * 64)
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        jwt_secret_key="x" * 64,
+        ticket_signing_key="t" * 64,
+    )
     assert settings.docs_visible is False
     assert Settings(_env_file=None).docs_visible is True
 
 
 def test_production_rejects_debug_mode() -> None:
     with pytest.raises(ValidationError, match="DEBUG"):
-        Settings(_env_file=None, environment="production", jwt_secret_key="x" * 64, debug=True)
+        Settings(
+            _env_file=None,
+            environment="production",
+            jwt_secret_key="x" * 64,
+            ticket_signing_key="t" * 64,
+            debug=True,
+        )

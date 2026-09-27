@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
+import { QrScanner } from "../../components/shared/QrScanner";
 import { StatusPill } from "../../components/shared/Widgets";
 import { downloadTextFile, toCsv } from "../../lib/csv";
 import { formatDateTime, minutesBetween } from "../../lib/dates";
@@ -223,23 +224,24 @@ export function AdminAttendeesPage() {
 }
 
 export function AdminCheckInPage() {
-  const { db, checkIn, undoScan } = usePlatform();
+  const { db, checkIn, undoScan, live } = usePlatform();
   const [query, setQuery] = useState("");
   const [scanner, setScanner] = useState(false);
-  const [message, setMessage] = useState("");
-  const [duplicate, setDuplicate] = useState(false);
+  const [result, setResult] = useState<{ tone: "ok" | "duplicate" | "error"; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
   const history = db.checkIns.filter((item) => !item.undone);
   const tickets = db.registrations.filter((item) => item.status === "confirmed");
 
-  const [busy, setBusy] = useState(false);
-
   async function run(value: string) {
+    if (!value.trim()) return;
     setBusy(true);
-    const result = await checkIn(value);
+    const outcome = await checkIn(value);
     setBusy(false);
-    setMessage(result.message);
-    setDuplicate(Boolean(result.duplicate));
-    if (result.ok) setQuery("");
+    setResult({
+      tone: outcome.ok ? "ok" : outcome.duplicate ? "duplicate" : "error",
+      text: outcome.duplicate ? `Already checked in: ${outcome.message}` : outcome.message,
+    });
+    if (outcome.ok) setQuery("");
   }
 
   return (
@@ -247,26 +249,37 @@ export function AdminCheckInPage() {
       <h1>Check-in</h1>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 20 }}>
         <div className="nt-card">
-          <label className="nt-field">
-            <span>Lookup name, email or ticket ID</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} />
-          </label>
-          <button type="button" className="nt-btn" style={{ marginTop: 12 }} disabled={busy} onClick={() => run(query)}>
-            {busy ? "Checking…" : "Confirm check-in"}
-          </button>
-          <button type="button" className="nt-btn ghost" style={{ marginTop: 8 }} onClick={() => setScanner(!scanner)}>
-            {scanner ? "Close scanner" : "Mock QR scanner"}
-          </button>
           {scanner ? (
-            <div className="nt-grid" style={{ marginTop: 12 }}>
-              {tickets.slice(0, 8).map((item) => (
-                <button key={item.id} type="button" className="nt-choice" onClick={() => run(item.ticketNumber)}>
-                  Scan {item.ticketNumber}
-                </button>
-              ))}
-            </div>
+            <QrScanner onScan={run} onClose={() => setScanner(false)} />
+          ) : (
+            <button type="button" className="nt-btn accent" style={{ width: "100%", marginBottom: 14 }} onClick={() => setScanner(true)}>
+              Scan ticket QR with camera
+            </button>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); void run(query); }} style={{ marginTop: scanner ? 14 : 0 }}>
+            <label className="nt-field">
+              <span>Or look up a name, email or ticket number</span>
+              <input value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" />
+            </label>
+            <button type="submit" className="nt-btn" style={{ marginTop: 12 }} disabled={busy || !query.trim()}>
+              {busy ? "Checking…" : "Confirm check-in"}
+            </button>
+          </form>
+          <div role="status" aria-live="polite">
+            {result ? <div className={`nt-checkin-result is-${result.tone}`}>{result.text}</div> : null}
+          </div>
+          {!live ? (
+            <details style={{ marginTop: 14 }}>
+              <summary className="nt-muted">Demo tickets (simulate a scan)</summary>
+              <div className="nt-grid" style={{ marginTop: 12 }}>
+                {tickets.slice(0, 8).map((item) => (
+                  <button key={item.id} type="button" className="nt-choice" onClick={() => run(item.ticketNumber)}>
+                    Scan {item.ticketNumber}
+                  </button>
+                ))}
+              </div>
+            </details>
           ) : null}
-          {message ? <p className={duplicate ? "error" : ""}>{duplicate ? `Duplicate: ${message}` : message}</p> : null}
         </div>
         <div>
           <div className="nt-card" style={{ background: "#111510", color: "#fbfaf0", marginBottom: 12 }}>
@@ -275,15 +288,16 @@ export function AdminCheckInPage() {
           </div>
           <div className="nt-card">
             <div className="nt-kicker">History</div>
+            {history.length === 0 ? <p className="nt-muted">No check-ins yet.</p> : null}
             {history.slice(0, 8).map((item) => {
               const attendee = db.attendees.find((person) => person.id === item.attendeeId);
               return (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0" }}>
                   <span>
-                    {attendee?.fullName}
-                    <div className="nt-muted">{item.ticketNumber}</div>
+                    {attendee?.fullName ?? "Attendee"}
+                    <div className="nt-muted">{item.ticketNumber} · {formatDateTime(item.checkedInAt)}</div>
                   </span>
-                  <button type="button" className="nt-chip" onClick={() => undoScan(item.id)}>
+                  <button type="button" className="nt-chip" onClick={() => undoScan(item.id)} aria-label={`Undo check-in for ${attendee?.fullName ?? item.ticketNumber}`}>
                     Undo
                   </button>
                 </div>
@@ -659,9 +673,9 @@ export function AdminPaymentsPage() {
                     <StatusPill value={item.status} />
                   </td>
                   <td>
-                    {item.status === "paid" && !live ? (
+                    {item.status === "paid" ? (
                       <button type="button" className="nt-chip" onClick={() => refund(item.id)}>
-                        Simulate refund
+                        {live ? "Refund" : "Simulate refund"}
                       </button>
                     ) : null}
                   </td>

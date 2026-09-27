@@ -1,7 +1,11 @@
+import json
 import time
 from decimal import Decimal
 
+import httpx
+
 from app.integrations.payments.snippe import (
+    SnippeClient,
     compute_webhook_signature,
     normalise_phone,
     parse_gateway_payment,
@@ -60,6 +64,34 @@ def test_normalise_phone() -> None:
     assert normalise_phone("+255 712 345 678") == "255712345678"
     assert normalise_phone("0712345678") == "255712345678"
     assert normalise_phone("255712345678") == "255712345678"
+
+
+def test_mobile_payout_uses_documented_contract_and_idempotency() -> None:
+    captured = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["path"] = request.url.path
+        captured["key"] = request.headers["Idempotency-Key"]
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(201, json={"status": "success", "data": {
+            "reference": "po_123", "status": "pending",
+            "amount": {"value": 5000, "currency": "TZS"},
+        }})
+
+    client = SnippeClient("test", transport=httpx.MockTransport(handler))
+    payout = client.create_mobile_payout(
+        amount=5000, recipient_phone="0712345678", recipient_name="Asha Mwinyi",
+        narration="Ticket refund", idempotency_key="RF-123", metadata={"payment_id": "pay_1"},
+        webhook_url="https://api.example.org/api/v1/webhooks/snippe",
+    )
+    assert payout.reference == "po_123" and payout.amount == 5000
+    assert captured["path"] == "/v1/payouts/send" and captured["key"] == "RF-123"
+    assert captured["body"] == {
+        "amount": 5000, "channel": "mobile", "recipient_phone": "255712345678",
+        "recipient_name": "Asha Mwinyi", "narration": "Ticket refund",
+        "metadata": {"payment_id": "pay_1"},
+        "webhook_url": "https://api.example.org/api/v1/webhooks/snippe",
+    }
 
 
 def test_compute_total_matches_frontend_rounding() -> None:
