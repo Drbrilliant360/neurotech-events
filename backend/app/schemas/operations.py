@@ -87,6 +87,46 @@ class CheckInLookupOut(BaseModel):
     checked_in_at: datetime | None
 
 
+class OfflineManifestEntry(BaseModel):
+    registration_id: uuid.UUID
+    ticket_number: str
+    qr_payload: str
+    attendee_name: str
+    ticket_name: str
+
+
+class OfflineManifestOut(BaseModel):
+    manifest_id: uuid.UUID
+    event_id: uuid.UUID
+    issued_at: datetime
+    expires_at: datetime
+    entries: list[OfflineManifestEntry]
+    token: str
+
+
+class OfflineScan(BaseModel):
+    client_operation_id: uuid.UUID
+    code: str = Field(min_length=6, max_length=120)
+    scanned_at: datetime
+
+
+class OfflineReconcileRequest(BaseModel):
+    manifest_token: str = Field(min_length=20, max_length=1_000_000)
+    device_id: str = Field(min_length=8, max_length=100)
+    operations: list[OfflineScan] = Field(min_length=1, max_length=200)
+
+
+class OfflineReconcileOutcome(BaseModel):
+    client_operation_id: uuid.UUID
+    status: str
+    message: str
+    check_in: CheckInOut | None = None
+
+
+class OfflineReconcileOut(BaseModel):
+    outcomes: list[OfflineReconcileOutcome]
+
+
 class TicketTypeSummary(BaseModel):
     ticket_type_id: uuid.UUID
     name: str

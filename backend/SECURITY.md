@@ -85,3 +85,15 @@ migration and validation against SQLite tests and Neon PostgreSQL before release
   remain valid and the attendee ticket endpoint immediately issues a fresh QR under the current key;
   operators must notify attendees to refresh/re-download tickets and replace any printed tickets as
   part of a planned rotation. Ticket-number lookup remains available as the controlled recovery path.
+
+## Offline check-in boundary
+
+Offline manifests are short-lived, event-scoped and signed with a domain-separated HMAC key.
+They intentionally contain only minimum door data and are limited to 5,000 confirmed tickets to
+bound response/storage size. The browser cannot create authoritative check-ins: offline matches
+are provisional until the authenticated reconciliation endpoint validates the manifest and current
+server state. Reconciliation requires event `check_in` capability, uses unique client operation IDs,
+and audits the operator plus a SHA-256 device pseudonym (not user-agent, location, or hardware data).
+Manifest and queue persistence is limited to IndexedDB; access/refresh tokens are not copied there.
+A compromised unlocked door device can expose the cached display names and ticket identifiers until
+site data is cleared, so operators should use managed devices and clear storage after the event.

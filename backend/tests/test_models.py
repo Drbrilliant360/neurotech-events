@@ -21,6 +21,7 @@ EXPECTED_TABLES = {
     "refunds",
     "provider_webhook_events",
     "check_ins",
+    "offline_check_in_operations",
     "certificates",
     "notifications",
     "communications",

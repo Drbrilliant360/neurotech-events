@@ -10,7 +10,16 @@ from app.db.models.identity import Attendee, EventStaffAssignment, Organization,
 from app.db.models.integrations import ProviderWebhookEvent
 from app.db.models.security import AuditLog, RefreshToken
 from app.db.models.sponsors import Sponsor, SponsorEvent
-from app.db.models.ticketing import Certificate, CheckIn, Payment, PaymentEvent, Refund, Registration, TicketType
+from app.db.models.ticketing import (
+    Certificate,
+    CheckIn,
+    OfflineCheckInOperation,
+    Payment,
+    PaymentEvent,
+    Refund,
+    Registration,
+    TicketType,
+)
 
 __all__ = [
     "Attendee",
@@ -24,6 +33,7 @@ __all__ = [
     "EventSession",
     "NetworkingProfile",
     "Notification",
+    "OfflineCheckInOperation",
     "Organization",
     "OrganizationMembership",
     "Payment",

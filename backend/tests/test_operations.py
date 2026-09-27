@@ -1,8 +1,9 @@
 import csv
 import io
 import uuid
+from datetime import UTC, datetime
 
-from app.core.signing import sign_ticket, verify_ticket
+from app.core.signing import sign_offline_manifest, sign_ticket, verify_offline_manifest, verify_ticket
 from app.db.models import TicketType
 from app.db.models.enums import OrganizationRole
 from app.db.seed import seed_id
@@ -72,6 +73,56 @@ def test_qr_check_in_admits_once_and_undo_reopens(client, db, test_settings) -> 
     readmitted = client.post(f"{BASE}/check-ins", json={"code": registration["ticket_number"]}, headers=door)
     assert readmitted.status_code == 201
     assert client.get(f"{BASE}/check-ins", headers=door).json()["total"] == 2
+
+
+def test_offline_manifest_is_minimal_and_reconciliation_is_idempotent(client, db) -> None:
+    owner = org_member(client, db, "owner@example.org")
+    door = event_staff(client, db, "offline-door@example.org", "check_in")
+    registration = _comp(client, owner)
+    manifest_response = client.get(f"{BASE}/check-ins/offline-manifest", headers=door)
+    assert manifest_response.status_code == 200
+    manifest = manifest_response.json()
+    entry = next(item for item in manifest["entries"] if item["registration_id"] == registration["id"])
+    assert set(entry) == {"registration_id", "ticket_number", "qr_payload", "attendee_name", "ticket_name"}
+
+    operation_id = str(uuid.uuid4())
+    payload = {"manifest_token": manifest["token"], "device_id": "door-tablet-01",
+               "operations": [{"client_operation_id": operation_id, "code": entry["qr_payload"],
+                               "scanned_at": datetime.now(UTC).isoformat()}]}
+    first = client.post(f"{BASE}/check-ins/reconcile", json=payload, headers=door)
+    assert first.status_code == 200 and first.json()["outcomes"][0]["status"] == "accepted"
+    replay = client.post(f"{BASE}/check-ins/reconcile", json=payload, headers=door)
+    assert replay.status_code == 200 and replay.json() == first.json()
+
+
+def test_offline_manifest_rejects_forgery_expiry_and_wrong_event(client, db, test_settings) -> None:
+    owner = org_member(client, db, "owner@example.org")
+    door = event_staff(client, db, "offline-door@example.org", "check_in")
+    registration = _comp(client, owner)
+    manifest = client.get(f"{BASE}/check-ins/offline-manifest", headers=door).json()
+    request = {"manifest_token": manifest["token"] + "x", "device_id": "door-tablet-01",
+               "operations": [{"client_operation_id": str(uuid.uuid4()), "code": registration["ticket_number"],
+                               "scanned_at": datetime.now(UTC).isoformat()}]}
+    forged = client.post(f"{BASE}/check-ins/reconcile", json=request, headers=door)
+    assert forged.status_code == 400 and forged.json()["error"]["code"] == "forged_manifest"
+
+    claims = verify_offline_manifest(test_settings.ticket_signing_key, manifest["token"])
+    assert claims is not None
+    claims["expires_at"] = 1
+    request["manifest_token"] = sign_offline_manifest(test_settings.ticket_signing_key, claims)
+    expired = client.post(f"{BASE}/check-ins/reconcile", json=request, headers=door)
+    assert expired.status_code == 409 and expired.json()["error"]["code"] == "expired_manifest"
+
+    claims["expires_at"] = int(datetime.now(UTC).timestamp()) + 3600
+    claims["event_id"] = str(seed_id("evt_bci_workshop"))
+    request["manifest_token"] = sign_offline_manifest(test_settings.ticket_signing_key, claims)
+    wrong = client.post(f"{BASE}/check-ins/reconcile", json=request, headers=door)
+    assert wrong.status_code == 409 and wrong.json()["error"]["code"] == "wrong_event"
+
+
+def test_offline_routes_require_event_check_in_access(client, db) -> None:
+    attendee, _ = signup(client, "offline-outsider@example.org")
+    assert client.get(f"{BASE}/check-ins/offline-manifest", headers=attendee).status_code == 404
 
 
 def test_forged_or_foreign_tickets_are_rejected(client, db, test_settings) -> None:

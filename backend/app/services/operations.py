@@ -1,21 +1,23 @@
 """Event operations: attendee management, complimentary tickets, door check-in and reporting."""
 
 import csv
+import hashlib
 import io
 import uuid
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.config import Settings
-from app.core.signing import sign_ticket, verify_ticket
+from app.core.signing import sign_offline_manifest, sign_ticket, verify_offline_manifest, verify_ticket
 from app.db.models import (
     Attendee,
     AuditLog,
     CheckIn,
     Event,
+    OfflineCheckInOperation,
     Payment,
     PaymentEvent,
     Registration,
@@ -31,6 +33,11 @@ from app.schemas.operations import (
     CheckInOut,
     ComplimentaryRegistrationRequest,
     EventSummaryReport,
+    OfflineManifestEntry,
+    OfflineManifestOut,
+    OfflineReconcileOut,
+    OfflineReconcileOutcome,
+    OfflineReconcileRequest,
     TicketTypeSummary,
 )
 from app.services import audit, inventory
@@ -183,20 +190,45 @@ def export_registrations_csv(db: Session, user: User, event: Event) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(
-        ["ticket_number", "status", "name", "email", "phone", "organization", "ticket", "amount_paid",
-         "registered_at", "checked_in_at"]
+        [
+            "ticket_number",
+            "status",
+            "name",
+            "email",
+            "phone",
+            "organization",
+            "ticket",
+            "amount_paid",
+            "registered_at",
+            "checked_in_at",
+        ]
     )
     for item in registrations:
         row = _to_out(item, paid, check_ins)
         writer.writerow(
-            [_csv_safe(value) for value in (
-                row.ticket_number, row.status, row.attendee_name, row.attendee_email, row.attendee_phone,
-                row.attendee_organization, row.ticket_name, row.amount_paid, row.created_at.isoformat(),
-                row.checked_in_at.isoformat() if row.checked_in_at else "",
-            )]
+            [
+                _csv_safe(value)
+                for value in (
+                    row.ticket_number,
+                    row.status,
+                    row.attendee_name,
+                    row.attendee_email,
+                    row.attendee_phone,
+                    row.attendee_organization,
+                    row.ticket_name,
+                    row.amount_paid,
+                    row.created_at.isoformat(),
+                    row.checked_in_at.isoformat() if row.checked_in_at else "",
+                )
+            ]
         )
     audit.record(
-        db, "registrations.exported", actor=user, target_type="event", target_id=event.id, event_id=event.id,
+        db,
+        "registrations.exported",
+        actor=user,
+        target_type="event",
+        target_id=event.id,
+        event_id=event.id,
         details={"rows": len(registrations)},
     )
     db.commit()
@@ -245,12 +277,20 @@ def create_complimentary_registration(
     db.add(registration)
     db.flush()
     notify(
-        db, attendee.id, NotificationCategory.REGISTRATION, "You have a complimentary ticket",
+        db,
+        attendee.id,
+        NotificationCategory.REGISTRATION,
+        "You have a complimentary ticket",
         f"{event.title} · ticket {registration.ticket_number}",
     )
     audit.record(
-        db, "registration.complimentary", actor=user, target_type="registration", target_id=registration.id,
-        event_id=event.id, details={"ticket_type": ticket.code, "note": payload.note},
+        db,
+        "registration.complimentary",
+        actor=user,
+        target_type="registration",
+        target_id=registration.id,
+        event_id=event.id,
+        details={"ticket_type": ticket.code, "note": payload.note},
     )
     db.commit()
     return _registration(db, event, registration.id)
@@ -278,8 +318,13 @@ def cancel_registration(
         check_in.undone = True
         check_in.undone_at = _now()
     audit.record(
-        db, "registration.cancelled", actor=user, target_type="registration", target_id=registration.id,
-        event_id=event.id, details={"reason": reason, "refund_required": paid > 0, "amount_paid": paid},
+        db,
+        "registration.cancelled",
+        actor=user,
+        target_type="registration",
+        target_id=registration.id,
+        event_id=event.id,
+        details={"reason": reason, "refund_required": paid > 0, "amount_paid": paid},
     )
     db.commit()
     return _registration(db, event, registration.id), paid > 0
@@ -320,25 +365,21 @@ def _resolve_code(db: Session, settings: Settings, event: Event, code: str) -> u
     return found
 
 
-def check_in(db: Session, settings: Settings, user: User, event: Event, code: str) -> CheckInOut:
+def check_in(
+    db: Session, settings: Settings, user: User, event: Event, code: str, *, commit: bool = True
+) -> CheckInOut:
     if event.status not in CHECK_IN_STATUSES:
         raise ConflictError(f"Check-in is closed for a {event.status.value} event.")
     registration_id = _resolve_code(db, settings, event, code)
-    registration = db.scalar(
-        _registration_query().where(Registration.id == registration_id).with_for_update()
-    )
+    registration = db.scalar(_registration_query().where(Registration.id == registration_id).with_for_update())
     if registration is None or registration.event_id != event.id:
         # A genuine ticket for another event must not be admitted here.
         raise ConflictError("This ticket belongs to a different event.", code="wrong_event")
     if registration.status != RegistrationStatus.CONFIRMED:
-        raise ConflictError(
-            f"This registration is {registration.status.value}, not confirmed.", code="not_confirmed"
-        )
+        raise ConflictError(f"This registration is {registration.status.value}, not confirmed.", code="not_confirmed")
     existing = _active_check_ins(db, [registration.id]).get(registration.id)
     if existing is not None:
-        raise ConflictError(
-            f"Already checked in at {existing.checked_in_at.isoformat()}.", code="already_checked_in"
-        )
+        raise ConflictError(f"Already checked in at {existing.checked_in_at.isoformat()}.", code="already_checked_in")
     record = CheckIn(
         registration_id=registration.id,
         attendee_id=registration.attendee_id,
@@ -352,7 +393,8 @@ def check_in(db: Session, settings: Settings, user: User, event: Event, code: st
     audit.record(
         db, "check_in.created", actor=user, target_type="registration", target_id=registration.id, event_id=event.id
     )
-    db.commit()
+    if commit:
+        db.commit()
     return _check_in_out(record, registration, user)
 
 
@@ -364,7 +406,11 @@ def undo_check_in(db: Session, user: User, event: Event, check_in_id: uuid.UUID)
         record.undone = True
         record.undone_at = _now()
         audit.record(
-            db, "check_in.undone", actor=user, target_type="registration", target_id=record.registration_id,
+            db,
+            "check_in.undone",
+            actor=user,
+            target_type="registration",
+            target_id=record.registration_id,
             event_id=event.id,
         )
         db.commit()
@@ -410,6 +456,151 @@ def lookup_for_check_in(db: Session, event: Event, q: str) -> list[CheckInLookup
     ]
 
 
+def create_offline_manifest(db: Session, settings: Settings, user: User, event: Event) -> OfflineManifestOut:
+    """Create a short-lived door roster. It deliberately excludes email, phone and organization."""
+    if event.status not in CHECK_IN_STATUSES:
+        raise ConflictError(f"Check-in is closed for a {event.status.value} event.")
+    registrations = list(
+        db.scalars(
+            _registration_query()
+            .where(
+                Registration.event_id == event.id,
+                Registration.status == RegistrationStatus.CONFIRMED,
+            )
+            .order_by(Registration.created_at)
+            .limit(5000)
+        )
+    )
+    issued_at = _now()
+    event_end = event.ends_at.replace(tzinfo=event.ends_at.tzinfo or UTC)
+    expires_at = min(issued_at + timedelta(hours=8), event_end + timedelta(hours=2))
+    manifest_id = uuid.uuid4()
+    entries = [
+        OfflineManifestEntry(
+            registration_id=item.id,
+            ticket_number=item.ticket_number,
+            qr_payload=sign_ticket(settings.ticket_signing_key, item.id),
+            attendee_name=item.attendee.full_name,
+            ticket_name=item.ticket_type.name,
+        )
+        for item in registrations
+    ]
+    claims = {
+        "manifest_id": str(manifest_id),
+        "event_id": str(event.id),
+        "issued_at": int(issued_at.timestamp()),
+        "expires_at": int(expires_at.timestamp()),
+        "entries": [entry.model_dump(mode="json") for entry in entries],
+    }
+    token = sign_offline_manifest(settings.ticket_signing_key, claims)
+    audit.record(
+        db,
+        "check_in.offline_manifest_issued",
+        actor=user,
+        target_type="event",
+        target_id=event.id,
+        event_id=event.id,
+        details={"manifest_id": str(manifest_id), "entries": len(entries), "expires_at": expires_at.isoformat()},
+    )
+    db.commit()
+    return OfflineManifestOut(
+        manifest_id=manifest_id,
+        event_id=event.id,
+        issued_at=issued_at,
+        expires_at=expires_at,
+        entries=entries,
+        token=token,
+    )
+
+
+def reconcile_offline(
+    db: Session, settings: Settings, user: User, event: Event, payload: OfflineReconcileRequest
+) -> OfflineReconcileOut:
+    claims = verify_offline_manifest(settings.ticket_signing_key, payload.manifest_token)
+    if claims is None:
+        raise ValidationError("Offline manifest integrity check failed.", code="forged_manifest")
+    try:
+        manifest_id = uuid.UUID(claims["manifest_id"])
+        manifest_event_id = uuid.UUID(claims["event_id"])
+        expires_at = datetime.fromtimestamp(int(claims["expires_at"]), UTC)
+        allowed_codes = {entry["qr_payload"] for entry in claims["entries"]} | {
+            entry["ticket_number"].upper() for entry in claims["entries"]
+        }
+    except (KeyError, TypeError, ValueError):
+        raise ValidationError("Offline manifest is malformed.", code="forged_manifest") from None
+    if manifest_event_id != event.id:
+        raise ConflictError("Offline manifest belongs to a different event.", code="wrong_event")
+    if expires_at < _now():
+        raise ConflictError("Offline manifest has expired; download a fresh roster.", code="expired_manifest")
+
+    device_hash = hashlib.sha256(payload.device_id.encode()).hexdigest()
+    outcomes: list[OfflineReconcileOutcome] = []
+    for operation in payload.operations:
+        existing = db.scalar(
+            select(OfflineCheckInOperation).where(
+                OfflineCheckInOperation.client_operation_id == operation.client_operation_id
+            )
+        )
+        if existing is not None:
+            if existing.event_id != event.id:
+                raise ConflictError(
+                    "Client operation id was already used for another event.", code="operation_id_conflict"
+                )
+            outcomes.append(OfflineReconcileOutcome.model_validate(existing.outcome))
+            continue
+        normalized = operation.code.strip()
+        if normalized not in allowed_codes and normalized.upper() not in allowed_codes:
+            outcome = OfflineReconcileOutcome(
+                client_operation_id=operation.client_operation_id,
+                status="invalid_ticket",
+                message="Ticket was not present in the signed event manifest.",
+            )
+        else:
+            try:
+                admitted = check_in(db, settings, user, event, normalized, commit=False)
+                outcome = OfflineReconcileOutcome(
+                    client_operation_id=operation.client_operation_id,
+                    status="accepted",
+                    message="Check-in accepted by the server.",
+                    check_in=admitted,
+                )
+            except ConflictError as exc:
+                outcome = OfflineReconcileOutcome(
+                    client_operation_id=operation.client_operation_id, status=exc.code, message=str(exc)
+                )
+            except (NotFoundError, ValidationError) as exc:
+                outcome = OfflineReconcileOutcome(
+                    client_operation_id=operation.client_operation_id, status=exc.code, message=str(exc)
+                )
+        db.add(
+            OfflineCheckInOperation(
+                client_operation_id=operation.client_operation_id,
+                event_id=event.id,
+                operator_user_id=user.id,
+                manifest_id=manifest_id,
+                device_id_hash=device_hash,
+                outcome=outcome.model_dump(mode="json"),
+            )
+        )
+        audit.record(
+            db,
+            "check_in.offline_reconciled",
+            actor=user,
+            target_type="offline_operation",
+            target_id=operation.client_operation_id,
+            event_id=event.id,
+            details={
+                "manifest_id": str(manifest_id),
+                "device_id_hash": device_hash,
+                "outcome": outcome.status,
+                "scanned_at": operation.scanned_at.isoformat(),
+            },
+        )
+        db.commit()
+        outcomes.append(outcome)
+    return OfflineReconcileOut(outcomes=outcomes)
+
+
 # ------------------------------------------------------------------ reporting
 
 
@@ -433,11 +624,14 @@ def event_summary(db: Session, event: Event, access: EventAccess) -> EventSummar
             .group_by(Registration.ticket_type_id)
         )
     }
-    checked_in = db.scalar(
-        select(func.count(func.distinct(CheckIn.registration_id))).where(
-            CheckIn.event_id == event.id, CheckIn.undone.is_(False)
+    checked_in = (
+        db.scalar(
+            select(func.count(func.distinct(CheckIn.registration_id))).where(
+                CheckIn.event_id == event.id, CheckIn.undone.is_(False)
+            )
         )
-    ) or 0
+        or 0
+    )
 
     def total(status: RegistrationStatus) -> int:
         return sum(counts.get(status, 0) for counts in by_ticket.values())
@@ -473,7 +667,10 @@ def event_audit_log(db: Session, event: Event, *, page: int, page_size: int) -> 
     condition = AuditLog.event_id == event.id
     total = db.scalar(select(func.count()).select_from(AuditLog).where(condition)) or 0
     rows: Iterable[AuditLog] = db.scalars(
-        select(AuditLog).where(condition).order_by(AuditLog.created_at.desc()).offset((page - 1) * page_size)
+        select(AuditLog)
+        .where(condition)
+        .order_by(AuditLog.created_at.desc())
+        .offset((page - 1) * page_size)
         .limit(page_size)
     )
     return [
