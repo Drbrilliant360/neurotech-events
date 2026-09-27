@@ -5,6 +5,7 @@ import { formatRange } from "../../lib/dates";
 import { MEDIA, eventImage, sceneImage } from "../../lib/media";
 import { fromLowestPrice } from "../../lib/money";
 import { publicEvents, ticketsFor, venueOf } from "../../repositories/platform";
+import { COMMUNITY_STATS, COMPANY, PRODUCTS } from "../../lib/company";
 
 export function HomePage() {
   const { db, role } = usePlatform();
@@ -29,7 +30,7 @@ export function HomePage() {
               Where Africa&apos;s technology community meets <em>what&apos;s next.</em>
             </h1>
             <p className="nt-home-copy">
-              Discover Neurotech Africa workshops, product sessions, partner gatherings and community events. Register once, keep your tickets in one place and build a history of every event you attend with us.
+              Neurotech Africa builds the AI agents, WhatsApp commerce, cloud voice and payment rails African businesses run on. Join our summits, product workshops and Generative AI Tanzania meetups: register once, keep your tickets in one place and build a history of every event you attend with us.
             </p>
             <div className="nt-actions">
               {featured ? (
@@ -117,7 +118,7 @@ export function HomePage() {
               })}
             </div>
           ) : (
-            <div className="nt-empty">There are no published upcoming events in the demo data yet.</div>
+            <div className="nt-empty">No upcoming events are published yet. Check back soon.</div>
           )}
         </div>
       </section>
@@ -127,23 +128,28 @@ export function HomePage() {
           <div className="nt-section-heading">
             <div>
               <p className="nt-kicker" style={{ color: "#8ad356" }}>Built for more than conferences</p>
-              <h2>One event platform, multiple Neurotech experiences.</h2>
+              <h2>Learn the stack African businesses run on.</h2>
+              <p style={{ color: "rgba(255,255,255,.72)" }}>{COMPANY.tagline}. Our events go deep on the products behind it.</p>
             </div>
           </div>
           <div className="nt-format-grid">
-            {[
-              ["01", "Product sessions", "Launches, live demos and deeper product conversations around Sarufi, SemaCall, Ghala and Snippe."],
-              ["02", "Workshops", "Focused technical and business sessions with practical participation and limited-capacity registration."],
-              ["03", "Partner events", "Sessions created with enterprises, institutions, banks, telcos and ecosystem partners."],
-              ["04", "Community gatherings", "Meetups, talks and learning experiences that keep builders and operators connected."],
-            ].map(([number, title, body]) => (
-              <article key={number} className="nt-format-card">
-                <div className="nt-format-number">{number}</div>
-                <h3>{title}</h3>
-                <p>{body}</p>
+            {PRODUCTS.map((product, index) => (
+              <article key={product.name} className="nt-format-card">
+                <div className="nt-format-number">{String(index + 1).padStart(2, "0")} · {product.kind}</div>
+                <h3>{product.name}</h3>
+                <p>{product.body}</p>
               </article>
             ))}
           </div>
+          <div className="nt-home-stats" aria-label="Generative AI Tanzania community" style={{ marginTop: 32 }}>
+            {COMMUNITY_STATS.map(([value, label]) => (
+              <div key={label}><strong>{value}</strong><span style={{ color: "rgba(255,255,255,.72)" }}>{label}</span></div>
+            ))}
+          </div>
+          <p style={{ color: "rgba(255,255,255,.72)", marginTop: 16 }}>
+            Through meetups and hackathons, the Generative AI Tanzania community brings together students, professionals and builders.{" "}
+            <a href={COMPANY.meetupUrl} target="_blank" rel="noreferrer" style={{ color: "#8ad356" }}>About the meetup ↗</a>
+          </p>
         </div>
       </section>
 

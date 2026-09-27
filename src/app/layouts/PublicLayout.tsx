@@ -4,6 +4,7 @@ import { Icon } from "../../components/shared/Icon";
 import { BrandLogo } from "../../components/shared/BrandLogo";
 import { MobileDrawer, useDrawer } from "../../components/shared/MobileNav";
 import { accountPathFor } from "../../lib/routes";
+import { COMPANY } from "../../lib/company";
 
 const NAV = [
   ["/", "Home"],
@@ -140,13 +141,15 @@ export function PublicLayout() {
               <div className="nt-footer-heading">Neurotech Africa</div>
               <NavLink to="/about">About the platform</NavLink>
               <NavLink to="/help">Help centre</NavLink>
-              <a href="https://www.neurotech.africa" target="_blank" rel="noreferrer">Company website</a>
-              <span className="nt-footer-location">Dar es Salaam, Tanzania</span>
+              <a href={COMPANY.website} target="_blank" rel="noreferrer">Company website</a>
+              <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>
+              <a href={`tel:${COMPANY.phone.replace(/\s+/g, "")}`}>{COMPANY.phone}</a>
+              <span className="nt-footer-location">{COMPANY.address}</span>
             </div>
           </div>
           <div className="nt-footer-bottom">
             <span>Neurotech Events · Neurotech Africa</span>
-            <span>Discovery · Registration · Attendance · Event history</span>
+            <span>{COMPANY.tagline}</span>
           </div>
         </div>
       </footer>
