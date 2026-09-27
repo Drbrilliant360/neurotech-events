@@ -89,6 +89,13 @@ class PaymentStatus(StrEnum):
     REFUNDED = "refunded"
 
 
+class RefundStatus(StrEnum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    REVERSED = "reversed"
+
+
 class PaymentMethod(StrEnum):
     MPESA = "mpesa"
     AIRTEL = "airtel"

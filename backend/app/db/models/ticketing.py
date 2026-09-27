@@ -20,7 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
-from app.db.models.enums import PaymentMethod, PaymentStatus, RegistrationStatus, string_enum
+from app.db.models.enums import PaymentMethod, PaymentStatus, RefundStatus, RegistrationStatus, string_enum
 
 if TYPE_CHECKING:
     from app.db.models.events import Event
@@ -124,6 +124,45 @@ class Payment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     events: Mapped[list["PaymentEvent"]] = relationship(
         back_populates="payment", cascade="all, delete-orphan", order_by="PaymentEvent.created_at"
     )
+    refund: Mapped["Refund | None"] = relationship(back_populates="payment", uselist=False)
+
+
+class Refund(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """One provider payout returning a paid registration's funds to its attendee."""
+
+    __tablename__ = "refunds"
+    __table_args__ = (
+        CheckConstraint("amount > 0", name="amount_positive"),
+        UniqueConstraint("payment_id", name="uq_refunds_payment_id"),
+        UniqueConstraint("idempotency_key", name="uq_refunds_idempotency_key"),
+    )
+
+    payment_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("payments.id", ondelete="RESTRICT"), nullable=False)
+    registration_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("registrations.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    requested_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    recipient_phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    recipient_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    reason: Mapped[str] = mapped_column(String(500), nullable=False)
+    status: Mapped[RefundStatus] = mapped_column(
+        string_enum(RefundStatus, "refund_status"), nullable=False, default=RefundStatus.PENDING, index=True
+    )
+    idempotency_key: Mapped[str] = mapped_column(String(30), nullable=False)
+    provider_reference: Mapped[str | None] = mapped_column(String(120), unique=True)
+    failure_reason: Mapped[str | None] = mapped_column(String(500))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    payment: Mapped["Payment"] = relationship(back_populates="refund")
+    registration: Mapped["Registration"] = relationship()
+    requested_by: Mapped["User | None"] = relationship()
 
 
 class PaymentEvent(UUIDPrimaryKeyMixin, Base):

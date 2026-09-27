@@ -18,6 +18,7 @@ EXPECTED_TABLES = {
     "registrations",
     "payments",
     "payment_events",
+    "refunds",
     "provider_webhook_events",
     "check_ins",
     "certificates",

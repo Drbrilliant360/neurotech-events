@@ -45,6 +45,17 @@ class GatewayPayment:
     raw: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True)
+class GatewayPayout:
+    reference: str
+    status: str
+    amount: int
+    currency: str
+    failure_reason: str | None = None
+    completed_at: str | None = None
+    raw: dict[str, Any] = field(default_factory=dict)
+
+
 class PaymentGateway(Protocol):
     name: str
 
@@ -68,6 +79,24 @@ class PaymentGateway(Protocol):
     def get_balance(self) -> dict[str, Any]: ...
 
     def resend_push(self, reference: str) -> None: ...
+
+    def create_mobile_payout(
+        self, *, amount: int, recipient_phone: str, recipient_name: str, narration: str,
+        idempotency_key: str, metadata: dict[str, str] | None = None, webhook_url: str | None = None,
+    ) -> GatewayPayout: ...
+
+    def get_payout(self, reference: str) -> GatewayPayout: ...
+
+
+def parse_gateway_payout(data: dict[str, Any]) -> GatewayPayout:
+    amount = data.get("amount")
+    value = amount.get("value") if isinstance(amount, dict) else amount
+    currency = amount.get("currency") if isinstance(amount, dict) else data.get("currency")
+    return GatewayPayout(
+        reference=str(data.get("reference") or ""), status=str(data.get("status") or "").lower(),
+        amount=int(value or 0), currency=str(currency or "TZS"), failure_reason=data.get("failure_reason"),
+        completed_at=data.get("completed_at"), raw=data,
+    )
 
 
 def parse_gateway_payment(data: dict[str, Any]) -> GatewayPayment:
@@ -181,6 +210,25 @@ class SnippeClient:
     def resend_push(self, reference: str) -> None:
         """Re-trigger the USSD prompt for a pending mobile payment."""
         self._request("POST", f"/v1/payments/{reference}/push")
+
+    def create_mobile_payout(
+        self, *, amount: int, recipient_phone: str, recipient_name: str, narration: str,
+        idempotency_key: str, metadata: dict[str, str] | None = None, webhook_url: str | None = None,
+    ) -> GatewayPayout:
+        payload: dict[str, Any] = {
+            "amount": int(amount), "channel": "mobile", "recipient_phone": normalise_phone(recipient_phone),
+            "recipient_name": recipient_name, "narration": narration, "metadata": metadata or {},
+        }
+        if webhook_url and is_valid_webhook_url(webhook_url):
+            payload["webhook_url"] = webhook_url
+        data = self._request(
+            "POST", "/v1/payouts/send", json_body=payload,
+            headers={"Idempotency-Key": idempotency_key[:IDEMPOTENCY_KEY_MAX_LENGTH]},
+        )
+        return parse_gateway_payout(data)
+
+    def get_payout(self, reference: str) -> GatewayPayout:
+        return parse_gateway_payout(self._request("GET", f"/v1/payouts/{reference}"))
 
 
 def is_valid_webhook_url(url: str) -> bool:

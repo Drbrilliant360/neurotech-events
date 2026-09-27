@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from app.api.deps import AppSettings, DbSession, Gateway
 from app.integrations.payments.snippe import verify_webhook_signature
 from app.services.payments import PaymentService
+from app.services.refunds import RefundService
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -29,5 +30,9 @@ async def snippe_webhook(request: Request, db: DbSession, gateway: Gateway, sett
         raise HTTPException(status_code=400, detail="Webhook body is not valid JSON.") from exc
     if not isinstance(event, dict):
         raise HTTPException(status_code=400, detail="Webhook body must be a JSON object.")
-    PaymentService(db, gateway, settings).handle_webhook("snippe", event)
+    event_type = str(event.get("type") or "")
+    if event_type.startswith("payout."):
+        RefundService(db, gateway, settings).handle_webhook("snippe", event)
+    else:
+        PaymentService(db, gateway, settings).handle_webhook("snippe", event)
     return {"status": "received"}
