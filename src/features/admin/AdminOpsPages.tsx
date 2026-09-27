@@ -673,9 +673,9 @@ export function AdminPaymentsPage() {
                     <StatusPill value={item.status} />
                   </td>
                   <td>
-                    {item.status === "paid" && !live ? (
+                    {item.status === "paid" ? (
                       <button type="button" className="nt-chip" onClick={() => refund(item.id)}>
-                        Simulate refund
+                        {live ? "Refund" : "Simulate refund"}
                       </button>
                     ) : null}
                   </td>

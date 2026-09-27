@@ -321,6 +321,18 @@ export const checkInTicket = (eventId: string, code: string) =>
 export const undoCheckIn = (eventId: string, id: string) =>
   authRequest<CheckInDto>(`/admin/events/${eventId}/check-ins/${id}/undo`, { method: "POST" });
 
+export interface RefundDto {
+  id: string;
+  payment_id: string;
+  status: "pending" | "completed" | "failed" | "reversed";
+  provider_reference: string | null;
+}
+
+export const requestRefund = (eventId: string, paymentId: string, reason: string) =>
+  authRequest<RefundDto>(`/admin/events/${eventId}/payments/${paymentId}/refund`, {
+    method: "POST", ...json({ reason }),
+  });
+
 export const updateOrganization = (id: string, input: Partial<Omit<OrganizationDto, "id">>) =>
   authRequest<OrganizationDto>(`/admin/organizations/${id}`, { method: "PATCH", ...json(input) });
 

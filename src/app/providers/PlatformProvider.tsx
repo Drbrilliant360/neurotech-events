@@ -600,7 +600,13 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       // Payment state is owned by the server and the provider; nothing to simulate locally.
       pay: () => undefined,
       linkRemote: () => undefined,
-      refund: () => setError("Refunds are issued from the Snippe dashboard; they are not yet automated here."),
+      refund: (paymentId) => {
+        const payment = db.payments.find((item) => item.id === paymentId);
+        if (!payment) return;
+        const reason = window.prompt("Reason for refund (the registration must already be cancelled):");
+        if (!reason?.trim()) return;
+        void mutate(() => api.requestRefund(payment.eventId, payment.id, reason.trim()));
+      },
       checkIn: async (query) => {
         const needle = query.trim();
         if (!needle) return { message: "Enter a ticket number, QR code, name or email." };
