@@ -143,7 +143,7 @@ def test_admin_sees_platform_and_provider_transactions(client, gateway) -> None:
 
 
 def test_validation_and_conflict_rules(client, db) -> None:
-    free = {**CHECKOUT, "event_slug": "research-methods-bootcamp", "ticket_code": "tix_b"}
+    free = {**CHECKOUT, "event_slug": "snippe-payments-developer-day", "ticket_code": "tix_b"}
     assert client.post("/api/v1/payments/mobile", json=free).status_code == 400  # below provider minimum
 
     inactive = {**CHECKOUT, "ticket_code": "tix_early"}
@@ -152,7 +152,7 @@ def test_validation_and_conflict_rules(client, db) -> None:
     assert client.post("/api/v1/payments/mobile", json={**CHECKOUT, "event_slug": "nope"}).status_code == 404
     assert client.post("/api/v1/payments/mobile", json={**CHECKOUT, "ticket_code": "nope"}).status_code == 404
 
-    draft = {**CHECKOUT, "event_slug": "ai-in-healthcare-conference", "ticket_code": "tix_c"}
+    draft = {**CHECKOUT, "event_slug": "ghala-whatsapp-commerce-clinic", "ticket_code": "tix_c"}
     assert client.post("/api/v1/payments/mobile", json=draft).status_code == 409
 
     bad_phone = {**CHECKOUT, "phone_number": "12345"}

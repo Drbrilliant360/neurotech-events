@@ -189,7 +189,7 @@ def test_draft_event_can_be_deleted_but_not_one_with_registrations(client, db) -
 def test_public_event_list_filters(client) -> None:
     featured = client.get("/api/v1/events", params={"featured": True}).json()
     assert [item["slug"] for item in featured] == ["neurotech-summit-2026"]
-    assert client.get("/api/v1/events", params={"q": "bci"}).json()[0]["slug"] == "bci-hands-on-workshop"
+    assert client.get("/api/v1/events", params={"q": "sarufi"}).json()[0]["slug"] == "sarufi-ai-agents-workshop"
     assert len(client.get("/api/v1/events", params={"limit": 1}).json()) == 1
 
 

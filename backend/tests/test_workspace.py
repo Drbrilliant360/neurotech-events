@@ -13,7 +13,7 @@ def test_public_catalogue_hydrates_the_site_in_one_request(client) -> None:
     body = response.json()
     assert body["organization"]["vat_percent"] == "18.00"
     slugs = [event["slug"] for event in body["events"]]
-    assert "neurotech-summit-2026" in slugs and "ai-in-healthcare-conference" not in slugs  # draft hidden
+    assert "neurotech-summit-2026" in slugs and "ghala-whatsapp-commerce-clinic" not in slugs  # draft hidden
     summit = next(event for event in body["events"] if event["slug"] == "neurotech-summit-2026")
     assert summit["ticket_types"] and summit["organization_id"] == str(ORGANIZATION_ID)
     assert body["venues"]
@@ -52,7 +52,7 @@ def test_workspace_filters_sensitive_rows_by_capability(client, db) -> None:
 
 def test_free_registration_confirms_without_payment(client, db) -> None:
     ticket = db.scalar(select(TicketType).where(TicketType.code == "tix_b"))
-    body = {"event_slug": "research-methods-bootcamp", "ticket_code": "tix_b",
+    body = {"event_slug": "snippe-payments-developer-day", "ticket_code": "tix_b",
             "attendee": {"full_name": "Neema Free", "email": "free@example.org"}}
     response = client.post("/api/v1/registrations/free", json=body)
     assert response.status_code == 201, response.text

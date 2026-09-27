@@ -7,7 +7,7 @@ def test_public_events_and_detail(client) -> None:
     events = client.get("/api/v1/events").json()
     slugs = {event["slug"] for event in events}
     assert "neurotech-summit-2026" in slugs
-    assert "ai-in-healthcare-conference" not in slugs  # draft events stay private
+    assert "ghala-whatsapp-commerce-clinic" not in slugs  # draft events stay private
     assert events == sorted(events, key=lambda event: event["starts_at"])
 
     detail = client.get("/api/v1/events/neurotech-summit-2026").json()
@@ -15,7 +15,7 @@ def test_public_events_and_detail(client) -> None:
     codes = {ticket["code"]: ticket for ticket in detail["ticket_types"]}
     assert codes["tix_pro"]["price"] == 100000 and codes["tix_pro"]["sold"] == 0
     assert codes["tix_early"]["active"] is False
-    assert client.get("/api/v1/events/ai-in-healthcare-conference").status_code == 404
+    assert client.get("/api/v1/events/ghala-whatsapp-commerce-clinic").status_code == 404
     assert client.get("/api/v1/events/nope").status_code == 404
 
 
@@ -24,7 +24,7 @@ def test_ticket_quote_is_server_authoritative(client) -> None:
     assert (quote["price"], quote["vat"], quote["total"], quote["currency"]) == (100000, 18000, 118000, "TZS")
     assert quote["payable_online"] is True and quote["available"] == 500
 
-    free = client.get("/api/v1/events/research-methods-bootcamp/tickets/tix_b/quote").json()
+    free = client.get("/api/v1/events/snippe-payments-developer-day/tickets/tix_b/quote").json()
     assert free["total"] == 0 and free["payable_online"] is False
 
     assert client.get("/api/v1/events/neurotech-summit-2026/tickets/nope/quote").status_code == 404
