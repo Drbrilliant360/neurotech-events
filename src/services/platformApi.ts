@@ -160,6 +160,23 @@ export interface CheckInDto {
   undone: boolean;
 }
 
+export interface OfflineManifestDto {
+  manifest_id: string;
+  event_id: string;
+  issued_at: string;
+  expires_at: string;
+  entries: Array<{ registration_id: string; ticket_number: string; qr_payload: string; attendee_name: string; ticket_name: string }>;
+  token: string;
+}
+
+export interface OfflineScanDto { client_operation_id: string; code: string; scanned_at: string }
+export interface OfflineOutcomeDto {
+  client_operation_id: string;
+  status: string;
+  message: string;
+  check_in: CheckInDto | null;
+}
+
 export interface WorkspaceDto {
   organizations: OrganizationDto[];
   events: EventDto[];
@@ -320,6 +337,12 @@ export const checkInTicket = (eventId: string, code: string) =>
   authRequest<CheckInDto>(`/admin/events/${eventId}/check-ins`, { method: "POST", ...json({ code }) });
 export const undoCheckIn = (eventId: string, id: string) =>
   authRequest<CheckInDto>(`/admin/events/${eventId}/check-ins/${id}/undo`, { method: "POST" });
+export const fetchOfflineManifest = (eventId: string) =>
+  authRequest<OfflineManifestDto>(`/admin/events/${eventId}/check-ins/offline-manifest`);
+export const reconcileOfflineScans = (eventId: string, manifestToken: string, deviceId: string, operations: OfflineScanDto[]) =>
+  authRequest<{ outcomes: OfflineOutcomeDto[] }>(`/admin/events/${eventId}/check-ins/reconcile`, {
+    method: "POST", ...json({ manifest_token: manifestToken, device_id: deviceId, operations }),
+  });
 
 export interface RefundDto {
   id: string;

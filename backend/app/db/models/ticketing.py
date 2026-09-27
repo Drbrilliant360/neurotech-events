@@ -19,7 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import Base, JSONList, TimestampMixin, UUIDPrimaryKeyMixin
 from app.db.models.enums import PaymentMethod, PaymentStatus, RefundStatus, RegistrationStatus, string_enum
 
 if TYPE_CHECKING:
@@ -204,6 +204,22 @@ class CheckIn(UUIDPrimaryKeyMixin, Base):
 
     registration: Mapped["Registration"] = relationship(back_populates="check_ins")
     checked_in_by: Mapped["User | None"] = relationship()
+
+
+class OfflineCheckInOperation(UUIDPrimaryKeyMixin, Base):
+    """Idempotency record for one client-created offline scan reconciliation."""
+
+    __tablename__ = "offline_check_in_operations"
+
+    client_operation_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False, unique=True)
+    event_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("events.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    operator_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    manifest_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    device_id_hash: Mapped[str | None] = mapped_column(String(64))
+    outcome: Mapped[dict] = mapped_column(JSONList, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
 class Certificate(UUIDPrimaryKeyMixin, Base):

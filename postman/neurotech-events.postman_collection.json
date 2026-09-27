@@ -2680,6 +2680,57 @@
             ],
             "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/audit"
           }
+        },
+        {
+          "name": "Prepare offline check-in manifest",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins/offline-manifest"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.environment.set(\"offline_manifest_token\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reconcile offline check-ins",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/check-ins/reconcile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"manifest_token\": \"{{offline_manifest_token}}\",\n  \"device_id\": \"postman-door-device\",\n  \"operations\": [{\n    \"client_operation_id\": \"{{$guid}}\",\n    \"code\": \"NTS-0000000000\",\n    \"scanned_at\": \"{{$isoTimestamp}}\"\n  }]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },

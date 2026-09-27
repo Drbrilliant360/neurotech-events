@@ -20,6 +20,9 @@ from app.schemas.operations import (
     CheckInRequest,
     ComplimentaryRegistrationRequest,
     EventSummaryReport,
+    OfflineManifestOut,
+    OfflineReconcileOut,
+    OfflineReconcileRequest,
 )
 from app.schemas.payments import PaymentPageOut, RefundOut, RefundRequest
 from app.services import operations
@@ -50,8 +53,14 @@ def list_registrations(
 ) -> AdminRegistrationPage:
     event, _ = require_event(db, user, event_id, Capability.MANAGE)
     items, total = operations.list_registrations(
-        db, event, status=status_filter, ticket_type_id=ticket_type_id, q=q, checked_in=checked_in,
-        page=page, page_size=page_size,
+        db,
+        event,
+        status=status_filter,
+        ticket_type_id=ticket_type_id,
+        q=q,
+        checked_in=checked_in,
+        page=page,
+        page_size=page_size,
     )
     return AdminRegistrationPage(items=items, total=total, page=page, page_size=page_size)
 
@@ -136,6 +145,28 @@ def lookup_attendee(
     return operations.lookup_for_check_in(db, event, q)
 
 
+@router.get("/check-ins/offline-manifest", response_model=OfflineManifestOut)
+def offline_manifest(
+    event_id: uuid.UUID, user: CurrentUser, db: DbSession, settings: AppSettings
+) -> OfflineManifestOut:
+    """Download a short-lived, signed, PII-minimised roster for temporary connectivity loss."""
+    event, _ = require_event(db, user, event_id, Capability.CHECK_IN)
+    return operations.create_offline_manifest(db, settings, user, event)
+
+
+@router.post("/check-ins/reconcile", response_model=OfflineReconcileOut)
+def reconcile_offline_check_ins(
+    event_id: uuid.UUID,
+    payload: OfflineReconcileRequest,
+    user: CurrentUser,
+    db: DbSession,
+    settings: AppSettings,
+) -> OfflineReconcileOut:
+    """Idempotently submit provisional offline scans; only these server outcomes are authoritative."""
+    event, _ = require_event(db, user, event_id, Capability.CHECK_IN)
+    return operations.reconcile_offline(db, settings, user, event, payload)
+
+
 # ------------------------------------------------------------------ reporting
 
 
@@ -165,13 +196,19 @@ def event_payments(
 
 @router.post("/payments/{payment_id}/refund", response_model=RefundOut, status_code=status.HTTP_201_CREATED)
 def request_refund(
-    event_id: uuid.UUID, payment_id: uuid.UUID, payload: RefundRequest, user: CurrentUser,
-    db: DbSession, gateway: Gateway, settings: AppSettings,
+    event_id: uuid.UUID,
+    payment_id: uuid.UUID,
+    payload: RefundRequest,
+    user: CurrentUser,
+    db: DbSession,
+    gateway: Gateway,
+    settings: AppSettings,
 ) -> RefundOut:
     event, _ = require_event(db, user, event_id, Capability.FINANCE)
     payment = PaymentService(db, gateway, settings).get_payment(payment_id)
     if payment.event_id != event.id:
         from app.services.errors import NotFoundError
+
         raise NotFoundError("Payment not found.")
     service = RefundService(db, gateway, settings)
     return service.to_out(service.request(payment_id, user, payload.reason))
@@ -179,13 +216,18 @@ def request_refund(
 
 @router.get("/payments/{payment_id}/refund", response_model=RefundOut)
 def get_refund(
-    event_id: uuid.UUID, payment_id: uuid.UUID, user: CurrentUser, db: DbSession,
-    gateway: Gateway, settings: AppSettings,
+    event_id: uuid.UUID,
+    payment_id: uuid.UUID,
+    user: CurrentUser,
+    db: DbSession,
+    gateway: Gateway,
+    settings: AppSettings,
 ) -> RefundOut:
     event, _ = require_event(db, user, event_id, Capability.FINANCE)
     payment = PaymentService(db, gateway, settings).get_payment(payment_id)
     if payment.event_id != event.id:
         from app.services.errors import NotFoundError
+
         raise NotFoundError("Refund not found.")
     service = RefundService(db, gateway, settings)
     return service.to_out(service.verify(payment_id, actor=user))

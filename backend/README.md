@@ -722,3 +722,21 @@ Every phase must include:
 - a focused pull request.
 
 Do not begin the next phase by hiding unfinished behavior behind broad mocks. Mocks are acceptable at explicit integration boundaries, especially payment and messaging providers, but domain rules must be real and tested.
+
+### Offline / poor-network door check-in
+
+Door staff with event `check_in` capability can prepare an offline roster with
+`GET /admin/events/{event_id}/check-ins/offline-manifest`. The roster is event-scoped,
+HMAC integrity-protected, expires after at most eight hours (and shortly after the event),
+and is capped at 5,000 confirmed registrations. It contains only registration id, ticket
+number, signed QR payload, display name, and ticket type—never email, phone, organization,
+payment, dietary, or accessibility data.
+
+The browser stores that roster and provisional scans in IndexedDB. Offline matches are not
+admission authority: the UI labels them provisional. Once online it submits up to 200 scans
+to `POST /admin/events/{event_id}/check-ins/reconcile`, each with a UUID client operation id.
+The server verifies manifest integrity, expiry and event scope, re-evaluates current registration
+and check-in state, and persists each outcome for idempotent retries. Outcomes include `accepted`,
+`already_checked_in`, `invalid_ticket`, `wrong_event`, and `not_confirmed`; forged, expired, or
+wrong-event manifests reject the batch. Operators can always fall back to online ticket-number
+lookup. Clear site data after an event on shared devices.

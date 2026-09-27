@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
 import { QrScanner } from "../../components/shared/QrScanner";
@@ -10,6 +10,7 @@ import type { AudienceSegment, CommunicationChannel, PaymentStatus, SponsorTier,
 import { AdminEventFormPage } from "./AdminEventsPage";
 import { AdminEventPicker, ScopedAdminPage, type EditorProps } from "./AdminEventPicker";
 import type { Event } from "../../domain/types";
+import { downloadManifest, offlineStatus, queueScan, reconcile } from "../../services/offlineCheckIn";
 
 export function AdminEventEditPage() {
   const { eventId } = useParams();
@@ -224,17 +225,39 @@ export function AdminAttendeesPage() {
 }
 
 export function AdminCheckInPage() {
-  const { db, checkIn, undoScan, live } = usePlatform();
+  const { db, checkIn, undoScan, live, access, reload } = usePlatform();
   const [query, setQuery] = useState("");
   const [scanner, setScanner] = useState(false);
   const [result, setResult] = useState<{ tone: "ok" | "duplicate" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const eligibleEvents = db.events.filter((item) => !live || access[item.id]?.can_check_in);
+  const [offlineEventId, setOfflineEventId] = useState(eligibleEvents[0]?.id ?? "");
+  const [online, setOnline] = useState(navigator.onLine);
+  const [offlineInfo, setOfflineInfo] = useState<{ expires?: string; queued: number }>({ queued: 0 });
   const history = db.checkIns.filter((item) => !item.undone);
   const tickets = db.registrations.filter((item) => item.status === "confirmed");
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update); window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
+
+  useEffect(() => { if (offlineEventId) void offlineStatus(offlineEventId).then((state) => setOfflineInfo({ expires: state?.manifest.expires_at, queued: state?.queue.length ?? 0 })); }, [offlineEventId]);
 
   async function run(value: string) {
     if (!value.trim()) return;
     setBusy(true);
+    if (live && !online) {
+      try {
+        const queued = await queueScan(offlineEventId, value);
+        setOfflineInfo((current) => ({ ...current, queued: queued.queued }));
+        setResult(queued.matched
+          ? { tone: "duplicate", text: `Provisional only: ${queued.label}. Queued for server reconciliation.` }
+          : { tone: "error", text: "Not found in the offline roster. Do not admit without manual verification." });
+      } catch (error) { setResult({ tone: "error", text: error instanceof Error ? error.message : "Offline scan failed." }); }
+      setBusy(false); return;
+    }
     const outcome = await checkIn(value);
     setBusy(false);
     setResult({
@@ -247,6 +270,23 @@ export function AdminCheckInPage() {
   return (
     <div style={{ maxWidth: 900 }}>
       <h1>Check-in</h1>
+      {live ? (
+        <div className="nt-card" style={{ marginBottom: 16 }}>
+          <strong>{online ? "Online — server decisions are authoritative" : "Offline — scans are provisional"}</strong>
+          <div className="nt-actions" style={{ marginTop: 10 }}>
+            <select className="nt-chip" value={offlineEventId} onChange={(event) => setOfflineEventId(event.target.value)}>
+              {eligibleEvents.map((event) => <option key={event.id} value={event.id}>{event.title}</option>)}
+            </select>
+            <button type="button" className="nt-btn ghost" disabled={!online || !offlineEventId || busy} onClick={async () => {
+              setBusy(true); try { const state = await downloadManifest(offlineEventId); setOfflineInfo({ expires: state.manifest.expires_at, queued: state.queue.length }); setResult({ tone: "ok", text: `Offline roster ready (${state.manifest.entries.length} tickets).` }); } catch (error) { setResult({ tone: "error", text: error instanceof Error ? error.message : "Could not download roster." }); } finally { setBusy(false); }
+            }}>Prepare offline roster</button>
+            <button type="button" className="nt-btn" disabled={!online || !offlineInfo.queued || busy} onClick={async () => {
+              setBusy(true); try { const outcomes = await reconcile(offlineEventId); setOfflineInfo((current) => ({ ...current, queued: 0 })); const accepted = outcomes.filter((item) => item.status === "accepted").length; const conflicts = outcomes.length - accepted; setResult({ tone: conflicts ? "duplicate" : "ok", text: `Server reconciled ${accepted} accepted, ${conflicts} conflict${conflicts === 1 ? "" : "s"}.` }); await reload(); } catch (error) { setResult({ tone: "error", text: error instanceof Error ? error.message : "Reconciliation failed; queue retained." }); } finally { setBusy(false); }
+            }}>Reconcile {offlineInfo.queued} queued</button>
+          </div>
+          <div className="nt-muted">{offlineInfo.expires ? `Roster expires ${formatDateTime(offlineInfo.expires)}. ` : "No offline roster. "}Only this browser stores the roster and queued scans. Use ticket-number lookup as the manual fallback while online.</div>
+        </div>
+      ) : null}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 20 }}>
         <div className="nt-card">
           {scanner ? (
