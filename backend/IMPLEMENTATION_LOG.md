@@ -9,8 +9,8 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - API prefix: `/api/v1`
 - Database foundation: SQLAlchemy with Alembic migrations
 - Current completed phases: Phase 0, Phase 2
-- Current active phases: Phase 1 (email verification/reset), Phase 3 and 4 (refunds), Phase 6 (offline check-in)
-- Next priority: refunds through Snippe, then an email/SMS provider; Neon is deferred while testing runs on local PostgreSQL
+- Current active phases: Phase 1 (email verification/reset), Phase 6 (offline check-in), Phase 7 (external delivery)
+- Next priority: email verification/reset and an email/SMS provider; Neon is deferred while testing runs on local PostgreSQL
 
 ## Phase status
 
@@ -19,8 +19,8 @@ This is the durable handoff record for backend work. Add a new entry after each 
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, database foundation, tests, Dockerfile and CI |
 | Phase 1 — Identity and authorization | Mostly complete | Rotating refresh tokens, revocation, password change, rate limits, audit log, scoped capabilities on every organiser route and team management by email; email verification and password reset remain |
 | Phase 2 — Public events and program | Complete | Public list/detail/programme/speakers/quotes; organiser CRUD for events, tickets, sessions, milestones, speakers and venues |
-| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout with seat holds and sales windows, attendee QR tickets, complimentary tickets and organiser cancellation; refunds remain |
-| Phase 4 — Payments | In progress | Snippe adapter, server-side pricing, throttled polling, signed race-safe webhooks, late-payment recovery, audit events, platform and event-scoped finance views; refunds remain |
+| Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout, attendee QR tickets, complimentary tickets, cancellation and provider-backed refunds |
+| Phase 4 — Payments | Mostly complete | Snippe collections/refund payouts, polling, signed race-safe webhooks, late-payment recovery, audit events and scoped finance views |
 | Phase 5 — Attendee experience | Mostly complete | Saved sessions, opt-in networking, in-app notifications, certificates with public verification; external notification channels remain |
 | Phase 6 — Operations and check-in | Mostly complete | Camera QR scanning in the console, signed-QR/ticket-number check-in with undo, door lookup, attendee list, CSV export, event summary and audit trail; offline check-in remains |
 | Phase 7 — Communications, media and scale | In progress | Organiser communications and sponsors on the server with in-app delivery; email/SMS providers, workers, storage, observability and retention remain |
@@ -213,6 +213,17 @@ Validation: frontend lint and build; headless Chrome with a fake camera streamin
 QR against uvicorn + local PostgreSQL, run twice (native detector, and with `BarcodeDetector` removed to
 force jsQR): the scan checks the attendee in, the ticket still in frame is then reported as already
 checked in, jsQR downloads only for the fallback, closing the camera resets the page, no page errors.
+
+### 2026-09-27 — Snippe-backed organiser refunds
+
+Phases 3 and 4.
+
+- Added one-refund-per-payment persistence with database uniqueness, stable provider idempotency keys and row locking.
+- Finance-authorized endpoints create and verify Snippe mobile-money payouts tied to the original paid payment, cancelled registration and attendee phone.
+- Payments remain `paid` while the payout is pending and become `refunded` only after provider completion; failed and reversed payouts are retained and audited.
+- Signed payout webhooks are deduplicated through the existing provider event ledger; GET verification recovers status when webhooks cannot reach local deployments.
+- Provider errors are logged without exposing provider details or credentials to clients.
+- Added organiser UI action, Postman requests, migration, adapter/service tests and API authorization/idempotency tests.
 
 ## Next implementation slices
 

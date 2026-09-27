@@ -2630,6 +2630,45 @@
           }
         },
         {
+          "name": "Request payment refund (finance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Event cancellation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/payments/{{payment_id}}/refund"
+          }
+        },
+        {
+          "name": "Verify refund status (finance)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/payments/{{payment_id}}/refund"
+          }
+        },
+        {
           "name": "Event audit trail",
           "request": {
             "method": "GET",
