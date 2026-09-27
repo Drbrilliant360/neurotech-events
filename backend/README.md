@@ -376,6 +376,10 @@ Rules enforced:
 Configuration (`.env`): `SNIPPE_API_KEY`, `SNIPPE_WEBHOOK_SECRET`, `PUBLIC_BASE_URL` (HTTPS origin used to
 build the webhook URL; leave empty locally and the API verifies by polling), `ADMIN_API_TOKEN`, `CORS_ORIGINS`.
 
+Ticket QR payloads are signed with `TICKET_SIGNING_KEY`, not `JWT_SECRET_KEY`. Production and staging
+require independently generated, distinct values of at least 32 characters. See `SECURITY.md` for the
+deliberately invalidating ticket-key rotation procedure.
+
 The admin console publishes its catalogue with `PUT /api/v1/admin/catalogue` (button on the
 Tickets page when `VITE_API_BASE_URL` is set). Events are matched by slug and tickets by code, so
 repeated publishes update in place; tickets no longer listed are deactivated, never deleted.

@@ -1,8 +1,8 @@
 """Signed, offline-verifiable ticket QR payloads.
 
 Payload format: `NTQ1.<registration uuid hex>.<signature>`. The signature is an HMAC over the
-registration id with a key derived from the JWT secret, so a QR code cannot be forged or
-altered, and codes can be revoked by cancelling the registration.
+registration id with a key derived from the dedicated ticket signing key, so a QR code cannot
+be forged or altered, and codes can be revoked by cancelling the registration.
 """
 
 import base64

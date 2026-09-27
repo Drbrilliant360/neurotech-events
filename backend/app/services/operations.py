@@ -305,7 +305,7 @@ def _check_in_out(check_in: CheckIn, registration: Registration, staff: User | N
 
 def _resolve_code(db: Session, settings: Settings, event: Event, code: str) -> uuid.UUID:
     code = code.strip()
-    registration_id = verify_ticket(settings.jwt_secret_key, code)
+    registration_id = verify_ticket(settings.ticket_signing_key, code)
     if registration_id is not None:
         return registration_id
     if code.upper().startswith("NTQ1."):
@@ -504,7 +504,7 @@ def attendee_ticket(settings: Settings, registration: Registration, check_in: Ch
         ticket_name=registration.ticket_type.name,
         attendee_name=registration.attendee.full_name,
         starts_at=registration.event.starts_at,
-        qr_payload=sign_ticket(settings.jwt_secret_key, registration.id),
+        qr_payload=sign_ticket(settings.ticket_signing_key, registration.id),
         checked_in_at=check_in.checked_in_at if check_in else None,
     )
 

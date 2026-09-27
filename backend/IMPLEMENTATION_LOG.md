@@ -146,7 +146,17 @@ admin reads. Not yet validated: migrations `b7e1c4d2a9f3` and `c5a2f8e7d1b4` aga
 PostgreSQL; run them on a Neon branch before production.
 
 Follow-up: frontend refresh-token handling and organiser screens; provider refunds; email
-verification and password reset; offline check-in; dedicated QR signing key; CI security scans.
+verification and password reset; offline check-in; CI security scans.
+
+### 2026-09-27 — Dedicated ticket QR signing key
+
+- Added `TICKET_SIGNING_KEY` and moved ticket issuance and check-in verification off the JWT key.
+- Hardened environments reject the development default, keys shorter than 32 characters, and a
+  ticket key equal to `JWT_SECRET_KEY`.
+- Rotation deliberately has no JWT/old-key verification fallback: existing registrations can fetch
+  a freshly signed QR, while old rendered or printed QR payloads are invalidated. Ticket-number lookup
+  remains the recovery path during a planned rotation.
+- Added focused configuration, issuance, signing-boundary and check-in rejection coverage.
 
 ### 2026-09-27 — Organiser team, Neurotech Africa catalogue and end-to-end check
 
@@ -228,7 +238,7 @@ Phases 3 and 4.
 ## Next implementation slices
 
 1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to Neon production (development is at head).
-2. Offline/poor-network check-in strategy and a dedicated QR signing key.
+2. Offline/poor-network check-in strategy.
 3. Refund workflow through the provider for organiser cancellations flagged `refund_required`.
 4. Email verification and password reset once an email provider contract exists.
 5. Email/SMS provider for communications, password reset and verification.

@@ -133,6 +133,7 @@ def test_settings() -> Settings:
         snippe_api_key="snp_test",
         snippe_webhook_secret=WEBHOOK_SECRET,
         public_base_url="https://api.example.org",
+        ticket_signing_key="test-ticket-signing-key-that-is-distinct",
         rate_limit_enabled=False,
     )
 
