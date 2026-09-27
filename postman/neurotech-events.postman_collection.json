@@ -603,7 +603,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/schedule"
+            "url": "{{base_url}}{{api_prefix}}/me/schedule",
+            "description": "Implemented."
           }
         },
         {
@@ -616,7 +617,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}"
+            "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}",
+            "description": "Implemented."
           }
         },
         {
@@ -629,7 +631,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}"
+            "url": "{{base_url}}{{api_prefix}}/me/schedule/{{session_id}}",
+            "description": "Implemented."
           }
         },
         {
@@ -642,7 +645,30 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/networking"
+            "url": "{{base_url}}{{api_prefix}}/me/networking",
+            "description": "Implemented."
+          }
+        },
+        {
+          "name": "Save my networking profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/me/networking/profile",
+            "description": "Implemented. Opt-in; only people sharing a confirmed registration can see it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"public_name\": \"Demo Attendee\",\n  \"job_title\": \"Engineer\",\n  \"organization\": \"Neurotech Africa\",\n  \"interests\": [\n    \"AI agents\"\n  ],\n  \"bio\": \"\",\n  \"is_visible\": true\n}"
+            }
           }
         },
         {
@@ -663,7 +689,8 @@
               "mode": "raw",
               "raw": "{\n  \"attendee_id\": \"replace-with-attendee-id\"\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/me/networking/connections"
+            "url": "{{base_url}}{{api_prefix}}/me/networking/connections",
+            "description": "Implemented."
           }
         },
         {
@@ -676,7 +703,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/networking/connections/replace-with-attendee-id"
+            "url": "{{base_url}}{{api_prefix}}/me/networking/connections/replace-with-attendee-id",
+            "description": "Implemented."
           }
         },
         {
@@ -689,7 +717,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/notifications"
+            "url": "{{base_url}}{{api_prefix}}/me/notifications",
+            "description": "Implemented."
           }
         },
         {
@@ -702,7 +731,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/notifications/{{notification_id}}/read"
+            "url": "{{base_url}}{{api_prefix}}/me/notifications/{{notification_id}}/read",
+            "description": "Implemented."
           }
         },
         {
@@ -715,7 +745,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/notifications/read-all"
+            "url": "{{base_url}}{{api_prefix}}/me/notifications/read-all",
+            "description": "Implemented."
           }
         },
         {
@@ -728,7 +759,8 @@
                 "value": "Bearer {{access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/me/certificates"
+            "url": "{{base_url}}{{api_prefix}}/me/certificates",
+            "description": "Implemented."
           }
         },
         {
@@ -736,7 +768,8 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": "{{base_url}}{{api_prefix}}/certificates/{{certificate_id}}/verify"
+            "url": "{{base_url}}{{api_prefix}}/certificates/{{certificate_id}}/verify",
+            "description": "Implemented."
           }
         }
       ]
@@ -1206,7 +1239,8 @@
                 "value": "Bearer {{admin_access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications"
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications",
+            "description": "Implemented."
           }
         },
         {
@@ -1227,7 +1261,8 @@
               "mode": "raw",
               "raw": "{\n  \"channel\": \"email\",\n  \"audience\": \"all\",\n  \"subject\": \"Event update\",\n  \"body\": \"Your event update goes here.\"\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications"
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/communications",
+            "description": "Implemented."
           },
           "event": [
             {
@@ -1253,7 +1288,58 @@
                 "value": "Bearer {{admin_access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/admin/communications/{{communication_id}}/send"
+            "url": "{{base_url}}{{api_prefix}}/admin/communications/{{communication_id}}/send",
+            "description": "Implemented."
+          }
+        },
+        {
+          "name": "Update draft communication",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/communications/{{communication_id}}",
+            "description": "Implemented. Drafts only (409 once sent).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Updated message.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete draft communication",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/communications/{{communication_id}}",
+            "description": "Implemented. Drafts only."
+          }
+        },
+        {
+          "name": "Issue certificates for event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/certificates/issue",
+            "description": "Implemented. Checked-in, confirmed attendees of a completed event; idempotent."
           }
         },
         {
@@ -1266,7 +1352,8 @@
                 "value": "Bearer {{admin_access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/admin/sponsors"
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors",
+            "description": "Implemented."
           }
         },
         {
@@ -1287,7 +1374,8 @@
               "mode": "raw",
               "raw": "{\n  \"name\": \"New Sponsor\",\n  \"tier\": \"partner\",\n  \"website\": \"https://example.com\",\n  \"contact\": \"contact@example.com\",\n  \"event_ids\": [\"{{event_id}}\"]\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/admin/sponsors"
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors",
+            "description": "Implemented."
           },
           "event": [
             {
@@ -1321,7 +1409,8 @@
               "mode": "raw",
               "raw": "{\n  \"active\": true\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}"
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}",
+            "description": "Implemented."
           }
         },
         {
@@ -1334,7 +1423,8 @@
                 "value": "Bearer {{admin_access_token}}"
               }
             ],
-            "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}"
+            "url": "{{base_url}}{{api_prefix}}/admin/sponsors/{{sponsor_id}}",
+            "description": "Implemented."
           }
         },
         {

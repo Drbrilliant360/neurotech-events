@@ -10,7 +10,7 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - Database foundation: SQLAlchemy with Alembic migrations
 - Current completed phases: Phase 0, Phase 2
 - Current active phases: Phase 1 (email verification/reset), Phase 3 and 4 (refunds), Phase 6 (offline check-in)
-- Next priority: apply migrations to Neon production, then refunds and Phase 5 attendee features (saved sessions, certificates, notifications)
+- Next priority: camera QR check-in, then refunds; Neon is deferred while testing runs on local PostgreSQL
 
 ## Phase status
 
@@ -21,9 +21,9 @@ This is the durable handoff record for backend work. Add a new entry after each 
 | Phase 2 — Public events and program | Complete | Public list/detail/programme/speakers/quotes; organiser CRUD for events, tickets, sessions, milestones, speakers and venues |
 | Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout with seat holds and sales windows, attendee QR tickets, complimentary tickets and organiser cancellation; refunds remain |
 | Phase 4 — Payments | In progress | Snippe adapter, server-side pricing, throttled polling, signed race-safe webhooks, late-payment recovery, audit events, platform and event-scoped finance views; refunds remain |
-| Phase 5 — Attendee experience | Not started | Dashboard, schedules, networking, notifications and certificates |
+| Phase 5 — Attendee experience | Mostly complete | Saved sessions, opt-in networking, in-app notifications, certificates with public verification; external notification channels remain |
 | Phase 6 — Operations and check-in | Mostly complete | Signed-QR/ticket-number check-in with undo, door lookup, attendee list, CSV export, event summary and audit trail; offline check-in remains |
-| Phase 7 — Communications, media and scale | Not started | Workers, providers, storage, observability and retention |
+| Phase 7 — Communications, media and scale | In progress | Organiser communications and sponsors on the server with in-app delivery; email/SMS providers, workers, storage, observability and retention remain |
 
 ## Completed work
 
@@ -175,11 +175,33 @@ duplicate rejection and undo); and a headless-Chrome run of the real UI (home/ab
 account creation landing in `/app`, admin sign-in landing in `/admin`, speakers/venues/team pages,
 speaker create and delete) with no console errors.
 
+### 2026-09-27 — Attendee engagement and organiser outreach on the server
+
+Phases 5 and 7. No schema change: the tables were in the initial migration.
+
+- `/me/schedule`, `/me/networking` (+ `PUT /me/networking/profile`), `/me/notifications`,
+  `/me/certificates` and public `GET /certificates/{code}/verify`.
+- Networking privacy: the directory lists only opted-in profiles of attendees who share a confirmed
+  registration with the caller, never contact details; connecting follows the same rule.
+- Notifications are created for free, paid and complimentary confirmations, certificates and
+  organiser messages (`app/services/notifications.py`, free of service imports to avoid cycles).
+- Certificates: issued on read (and via `POST /admin/events/{id}/certificates/issue`) for confirmed,
+  checked-in attendees of completed events; 48-bit codes.
+- Sponsors CRUD (directory-style permissions) and public sponsors in `/catalogue` without contacts.
+- Event communications: drafts, edit/delete, and send with a row lock; delivery is in-app to the chosen
+  audience and the response reports `external_delivery: not_configured`.
+- Frontend live mode no longer uses the demo store for any of these collections.
+
+Validation: Ruff clean; 126 backend tests (9 new); frontend lint and build; headless Chrome against
+uvicorn + local PostgreSQL 18 (admin creates a sponsor that appears on /partners, sends a message the
+attendee receives, attendee marks notices read, saves a session that survives reload, creates a
+networking profile, loads certificates, and verification rejects an unknown code), no console errors.
+
 ## Next implementation slices
 
 1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to Neon production (development is at head).
 2. Real camera QR scanning on the check-in page (the API already accepts signed QR payloads).
 3. Refund workflow through the provider for organiser cancellations flagged `refund_required`.
 4. Email verification and password reset once an email provider contract exists.
-5. Phase 5 attendee features: saved sessions, notifications, networking and certificates.
+5. Email/SMS provider for communications, password reset and verification.
 6. Add `pip-audit`, secret scanning and SAST to backend CI.
