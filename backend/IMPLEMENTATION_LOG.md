@@ -10,14 +10,14 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - Database foundation: SQLAlchemy with Alembic migrations
 - Current completed phases: Phase 0, Phase 2
 - Current active phases: Phase 1 (email verification/reset), Phase 3 and 4 (refunds), Phase 6 (offline check-in)
-- Next priority: wire the frontend admin console and attendee ticket page to the organiser API, then refunds and Phase 5 attendee features
+- Next priority: apply migrations to Neon production, then refunds and Phase 5 attendee features (saved sessions, certificates, notifications)
 
 ## Phase status
 
 | Phase | Status | Current boundary |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, database foundation, tests, Dockerfile and CI |
-| Phase 1 — Identity and authorization | Mostly complete | Rotating refresh tokens, revocation, password change, rate limits, audit log and scoped capabilities on every organiser route; email verification and password reset remain |
+| Phase 1 — Identity and authorization | Mostly complete | Rotating refresh tokens, revocation, password change, rate limits, audit log, scoped capabilities on every organiser route and team management by email; email verification and password reset remain |
 | Phase 2 — Public events and program | Complete | Public list/detail/programme/speakers/quotes; organiser CRUD for events, tickets, sessions, milestones, speakers and venues |
 | Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout with seat holds and sales windows, attendee QR tickets, complimentary tickets and organiser cancellation; refunds remain |
 | Phase 4 — Payments | In progress | Snippe adapter, server-side pricing, throttled polling, signed race-safe webhooks, late-payment recovery, audit events, platform and event-scoped finance views; refunds remain |
@@ -148,11 +148,37 @@ PostgreSQL; run them on a Neon branch before production.
 Follow-up: frontend refresh-token handling and organiser screens; provider refunds; email
 verification and password reset; offline check-in; dedicated QR signing key; CI security scans.
 
+### 2026-09-27 — Organiser team, Neurotech Africa catalogue and end-to-end check
+
+Phases 1 and 2.
+
+- **Team API** (`feat(api): manage organiser team members and event staff by email`):
+  `GET/POST /admin/organizations/{id}/team` and `POST /admin/events/{id}/staff` resolve colleagues by
+  sign-up email. Only owners grant owner and nobody changes their own role; removal reuses the
+  `/authorization` DELETE routes. Postman folder "Admin - Team and roles" added.
+- **Settings fix**: `PATCH /admin/organizations/{id}` now saves `contact_phone`, `default_city` and
+  `default_country` (they were silently dropped).
+- **Frontend admin**: `/admin/speakers`, `/admin/venues` and `/admin/team` pages on the organiser API.
+- **Catalogue**: the seed is themed on Neurotech Africa (Summit, Sarufi, Ghala, SemaCall, Snippe,
+  Generative AI Tanzania meetup/hackathon) with company contact details from neurotech.africa.
+  `seed_programme()` adds product-team speakers and the summit programme from the CLI only. Event keys
+  and ticket codes are unchanged; every slug except the summit changed (`sarufi-ai-agents-workshop`,
+  `ghala-whatsapp-commerce-clinic`, `snippe-payments-developer-day`, `generative-ai-tanzania-meetup`,
+  `generative-ai-tanzania-hackathon-2025`). Dates and prices are placeholders for the events team.
+- **Neon**: the `development` branch was already at head (`c5a2f8e7d1b4`) and was re-seeded.
+  Production was **not** migrated in this session; run `alembic upgrade head` against it.
+
+Validation: Ruff clean; 117 backend tests; frontend lint and build; a scripted API run against
+uvicorn + Neon development (attendee sign-up/login/refresh reuse detection/logout revocation, free
+registration and signed QR ticket, admin login, workspace, team add/remove, speaker CRUD, QR check-in,
+duplicate rejection and undo); and a headless-Chrome run of the real UI (home/about/partners content,
+account creation landing in `/app`, admin sign-in landing in `/admin`, speakers/venues/team pages,
+speaker create and delete) with no console errors.
+
 ## Next implementation slices
 
-1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to a Neon branch, verify, then production.
-2. Frontend: store and rotate refresh tokens; move the admin console from local data and
-   `PUT /admin/catalogue` to the organiser API; show the signed QR on the attendee ticket page.
+1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to Neon production (development is at head).
+2. Real camera QR scanning on the check-in page (the API already accepts signed QR payloads).
 3. Refund workflow through the provider for organiser cancellations flagged `refund_required`.
 4. Email verification and password reset once an email provider contract exists.
 5. Phase 5 attendee features: saved sessions, notifications, networking and certificates.

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePlatform } from "../../app/providers/PlatformProvider";
+import { CLIENTS, COMMUNITY_STATS, COMPANY, PRINCIPLES, PRODUCTS, SUPPORTERS } from "../../lib/company";
 import { accountPathFor } from "../../lib/routes";
 import { publicEvents } from "../../repositories/platform";
 
@@ -11,44 +12,59 @@ export function AboutPage() {
   return (
     <div className="nt-container nt-page nt-info-page">
       <section className="nt-info-hero">
-        <p className="nt-kicker">About Neurotech Events</p>
-        <h1>Events with more connection, and less friction.</h1>
-        <p className="nt-lede">Neurotech Events is the shared home for Neurotech Africa experiences: the place to discover a programme, register, stay informed and return to the moments that moved your work forward.</p>
+        <p className="nt-kicker">About Neurotech Africa</p>
+        <h1>{COMPANY.tagline}.</h1>
+        <p className="nt-lede">
+          {COMPANY.name} builds practical AI and commerce infrastructure for African businesses from Dar es Salaam. The next African business stack will not start with a website. It starts where customers already are: in conversation.
+        </p>
         <div className="nt-info-actions">
           <Link to="/events" className="nt-btn accent">Explore events</Link>
-          <Link to={accountPath} className="nt-btn ghost">Open my events</Link>
+          <a href={COMPANY.website} target="_blank" rel="noreferrer" className="nt-btn ghost">Company website ↗</a>
         </div>
       </section>
 
-      <section className="nt-info-grid" aria-label="Platform overview">
-        <article><strong>{events.length}</strong><span>published experiences</span></article>
-        <article><strong>{db.speakers.length}+</strong><span>speakers and facilitators</span></article>
-        <article><strong>{db.venues.length}</strong><span>places to meet and learn</span></article>
+      <section className="nt-info-grid" aria-label="Neurotech Africa at a glance">
+        {PRODUCTS.filter((product) => "stat" in product).map((product) => (
+          <article key={product.name}><strong>{"stat" in product ? product.stat : ""}</strong><span>{"statLabel" in product ? product.statLabel : ""}</span></article>
+        ))}
       </section>
 
       <section className="nt-info-story">
         <div>
-          <p className="nt-kicker">Designed around the attendee</p>
-          <h2>From the first invitation to your event history.</h2>
+          <p className="nt-kicker">Our products</p>
+          <h2>{COMPANY.mission}</h2>
         </div>
         <div className="nt-info-story-copy">
-          <p>Every Neurotech Africa event has a clear path: discover what is happening, choose a ticket, keep your schedule close and arrive with the details you need.</p>
-          <p>After the event, your account keeps its place in the story with tickets, notices and any certificates you become eligible to receive.</p>
+          {PRODUCTS.map((product) => (
+            <p key={product.name}><strong>{product.name}</strong> · {product.kind}. {product.body}</p>
+          ))}
         </div>
       </section>
 
       <section className="nt-info-principles">
-        {[
-          ["Discover clearly", "Straightforward event details, schedules and speaker line-ups before you commit."],
-          ["Attend confidently", "One account keeps your registration, ticket and event updates together."],
-          ["Keep the momentum", "Your event history makes it simple to reconnect with future Neurotech Africa experiences."],
-        ].map(([title, body], index) => (
+        {PRINCIPLES.map(([title, body], index) => (
           <article key={title} className="nt-card">
             <span className="nt-info-index">0{index + 1}</span>
             <h3>{title}</h3>
             <p className="nt-muted">{body}</p>
           </article>
         ))}
+      </section>
+
+      <section className="nt-info-story">
+        <div>
+          <p className="nt-kicker">Neurotech Events</p>
+          <h2>One home for every Neurotech Africa event.</h2>
+        </div>
+        <div className="nt-info-story-copy">
+          <p>
+            Discover summits, product workshops and Generative AI Tanzania meetups, register with one account and keep your tickets, schedule and certificates together. {events.length} events are published right now.
+          </p>
+          <p>
+            The Generative AI Tanzania community has reached {COMMUNITY_STATS.map(([value, label]) => `${value} ${label}`).join(", ")}.
+          </p>
+          <Link to={accountPath} className="nt-arrow-link">Open my events →</Link>
+        </div>
       </section>
     </div>
   );
@@ -64,7 +80,7 @@ export function PartnersPage() {
         <p className="nt-kicker">Partnerships</p>
         <h1>Build the rooms where Africa&apos;s next ideas take shape.</h1>
         <p className="nt-lede">Neurotech Africa events bring product teams, institutions, operators and communities together around practical conversations and meaningful progress.</p>
-        <Link to="/help" className="nt-btn accent">Talk to the events team</Link>
+        <a href={`mailto:${COMPANY.email}?subject=Event%20partnership`} className="nt-btn accent">Talk to us about partnering</a>
       </section>
 
       <section className="nt-partner-value">
@@ -82,7 +98,7 @@ export function PartnersPage() {
       <section>
         <div className="nt-section-heading">
           <div>
-            <p className="nt-kicker">Current partners</p>
+            <p className="nt-kicker">Event partners</p>
             <h2>Helping make the experience possible.</h2>
           </div>
         </div>
@@ -99,8 +115,26 @@ export function PartnersPage() {
             ))}
           </div>
         ) : (
-          <div className="nt-empty"><strong>Partner announcements are coming soon.</strong><p className="nt-muted">Check the event pages for partner information as each programme is confirmed.</p></div>
+          <div className="nt-empty"><strong>Event partners are announced with each programme.</strong><p className="nt-muted">Check the event pages for partner information as each programme is confirmed.</p></div>
         )}
+      </section>
+
+      <section style={{ marginTop: 48 }}>
+        <div className="nt-section-heading">
+          <div>
+            <p className="nt-kicker">Working with Neurotech Africa</p>
+            <h2>Teams that build with our products.</h2>
+          </div>
+        </div>
+        <ul className="nt-partner-grid" style={{ listStyle: "none", padding: 0 }}>
+          {CLIENTS.map((name) => (
+            <li key={name} className="nt-card nt-partner-card">
+              <span className="nt-partner-monogram" aria-hidden="true">{name.slice(0, 1)}</span>
+              <h3>{name}</h3>
+            </li>
+          ))}
+        </ul>
+        <p className="nt-muted" style={{ marginTop: 24 }}>Neurotech Africa is supported by {SUPPORTERS.join(", ")}.</p>
       </section>
     </div>
   );
@@ -108,6 +142,7 @@ export function PartnersPage() {
 
 export function HelpPage() {
   const { db } = usePlatform();
+  const phone = db.settings.contactPhone || COMPANY.phone;
   return (
     <div className="nt-container nt-page nt-info-page nt-help-page">
       <section className="nt-info-hero">
@@ -118,10 +153,10 @@ export function HelpPage() {
 
       <section className="nt-help-grid">
         {[
-          ["Registration and tickets", "Register from an event page, then find your ticket anytime in My events. Each registration is kept with the attendee account used for the demo."],
+          ["Registration and tickets", "Register from an event page, then find your ticket anytime in My events. Each registration stays with the account you used to register."],
           ["Schedules and updates", "Use the schedule to explore sessions before the event. Attendees can save sessions to their own agenda and receive notices in the attendee area."],
-          ["Payments", "Paid tickets are settled by mobile money (M-Pesa, Airtel Money, Mixx by Yas, HaloPesa). You approve the prompt on your phone and your ticket is issued once the payment is confirmed."],
-          ["On the day", "Bring your ticket details and follow the event-specific guidance on your event page. Venue, session and check-in information can vary by event."],
+          ["Payments", "Paid tickets are settled by mobile money through Snippe (M-Pesa, Airtel Money, Mixx by Yas, HaloPesa). You approve the prompt on your phone and your ticket is issued once the payment is confirmed."],
+          ["On the day", "Bring your ticket QR code and follow the guidance on your event page. Venue, session and check-in information can vary by event."],
         ].map(([title, body]) => (
           <article key={title} className="nt-card nt-help-card">
             <h3>{title}</h3>
@@ -134,11 +169,11 @@ export function HelpPage() {
         <div>
           <p className="nt-kicker">Still need a hand?</p>
           <h2>Reach the events team.</h2>
-          <p>Email the events team and mention the event name so they have the right context.</p>
+          <p>Mention the event name so we have the right context. Our office is at {COMPANY.address}.</p>
         </div>
         <div className="nt-actions">
           <a href={`mailto:${db.settings.contactEmail}`} className="nt-btn accent">Email {db.settings.contactEmail}</a>
-          <Link to="/events" className="nt-btn ghost">Find an event</Link>
+          <a href={`tel:${phone.replace(/\s+/g, "")}`} className="nt-btn ghost">Call {phone}</a>
         </div>
       </section>
     </div>

@@ -301,3 +301,47 @@ export const updateOrganization = (id: string, input: Partial<Omit<OrganizationD
 export async function downloadRegistrationsCsv(eventId: string): Promise<string> {
   return authRequest<string>(`/admin/events/${eventId}/registrations.csv`);
 }
+
+// ---------------------------------------------------------------- directory
+
+export interface SpeakerInput {
+  name?: string;
+  initials?: string | null;
+  role?: string | null;
+  organization?: string | null;
+  bio?: string | null;
+  track?: string | null;
+  social_url?: string | null;
+}
+
+export const createSpeaker = (input: SpeakerInput) =>
+  authRequest<SpeakerDto>("/admin/speakers", { method: "POST", ...json(input) });
+export const updateSpeaker = (id: string, input: SpeakerInput) =>
+  authRequest<SpeakerDto>(`/admin/speakers/${id}`, { method: "PATCH", ...json(input) });
+export const deleteSpeaker = (id: string) => authRequest<void>(`/admin/speakers/${id}`, { method: "DELETE" });
+
+export type VenueInput = Partial<Omit<VenueDto, "id">>;
+
+export const createVenue = (input: VenueInput) => authRequest<VenueDto>("/admin/venues", { method: "POST", ...json(input) });
+export const updateVenue = (id: string, input: VenueInput) =>
+  authRequest<VenueDto>(`/admin/venues/${id}`, { method: "PATCH", ...json(input) });
+
+// --------------------------------------------------------------------- team
+
+export type OrganizationRole = "owner" | "admin" | "finance" | "member";
+export type EventStaffRole = "manager" | "staff" | "check_in" | "speaker";
+
+export interface TeamMemberDto { user_id: string; email: string; full_name: string; role: string }
+export interface EventStaffDto extends TeamMemberDto { event_id: string }
+export interface OrganizationTeamDto { members: TeamMemberDto[]; event_staff: EventStaffDto[] }
+
+export const fetchTeam = (organizationId: string) =>
+  authRequest<OrganizationTeamDto>(`/admin/organizations/${organizationId}/team`);
+export const addTeamMember = (organizationId: string, email: string, role: OrganizationRole) =>
+  authRequest<TeamMemberDto>(`/admin/organizations/${organizationId}/team`, { method: "POST", ...json({ email, role }) });
+export const removeTeamMember = (organizationId: string, userId: string) =>
+  authRequest<void>(`/authorization/organizations/${organizationId}/memberships/${userId}`, { method: "DELETE" });
+export const addEventStaff = (eventId: string, email: string, role: EventStaffRole) =>
+  authRequest<EventStaffDto>(`/admin/events/${eventId}/staff`, { method: "POST", ...json({ email, role }) });
+export const removeEventStaff = (eventId: string, userId: string) =>
+  authRequest<void>(`/authorization/events/${eventId}/assignments/${userId}`, { method: "DELETE" });

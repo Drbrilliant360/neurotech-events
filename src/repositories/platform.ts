@@ -19,6 +19,7 @@ import type {
   Sponsor,
   TicketType,
   TimelineMilestone,
+  Venue,
 } from "../domain/types";
 import { certificateCode, createId, paymentReference, slugify, ticketNumber } from "../lib/ids";
 import { computeVat } from "../lib/money";
@@ -499,6 +500,47 @@ export function checkInAttendee(db: PlatformDatabase, query: string): { db: Plat
 
 export function undoCheckIn(db: PlatformDatabase, checkInId: string): PlatformDatabase {
   db.checkIns = db.checkIns.map((item) => (item.id === checkInId ? { ...item, undone: true } : item));
+  return db;
+}
+
+export function upsertSpeaker(db: PlatformDatabase, input: Partial<Speaker> & Pick<Speaker, "name">): PlatformDatabase {
+  if (input.id) {
+    db.speakers = db.speakers.map((item) => (item.id === input.id ? { ...item, ...input } : item));
+    return db;
+  }
+  db.speakers.push({
+    id: createId("spk"),
+    name: input.name,
+    initials: input.initials || initialsOf(input.name),
+    role: input.role ?? "",
+    organization: input.organization ?? "",
+    bio: input.bio ?? "",
+    track: input.track ?? "",
+    socialUrl: input.socialUrl,
+  });
+  return db;
+}
+
+/** Sessions keep their slot but lose the link, matching the server behaviour. */
+export function removeSpeaker(db: PlatformDatabase, speakerId: string): PlatformDatabase {
+  db.speakers = db.speakers.filter((item) => item.id !== speakerId);
+  db.sessions = db.sessions.map((item) => (item.speakerId === speakerId ? { ...item, speakerId: undefined } : item));
+  return db;
+}
+
+export function upsertVenue(db: PlatformDatabase, input: Partial<Venue> & Pick<Venue, "name">): PlatformDatabase {
+  if (input.id) {
+    db.venues = db.venues.map((item) => (item.id === input.id ? { ...item, ...input } : item));
+    return db;
+  }
+  db.venues.push({
+    id: createId("ven"),
+    name: input.name,
+    address: input.address ?? "",
+    city: input.city ?? "",
+    region: input.region ?? "",
+    country: input.country ?? "",
+  });
   return db;
 }
 

@@ -668,8 +668,9 @@ def update_organization(db: Session, user: User, organization_id: uuid.UUID, cha
     require_organization_manager(db, user, organization.id)
     _apply(
         organization, changes,
-        {"name", "brand_name", "contact_email", "default_currency", "vat_percent",
-         "registration_open_by_default", "notify_on_registration", "notify_on_payment"},
+        {"name", "brand_name", "contact_email", "contact_phone", "default_currency", "default_city",
+         "default_country", "vat_percent", "registration_open_by_default", "notify_on_registration",
+         "notify_on_payment"},
     )
     audit.record(
         db, "organization.updated", actor=user, target_type="organization", target_id=organization.id,

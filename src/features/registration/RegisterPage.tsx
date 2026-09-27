@@ -29,7 +29,7 @@ export function RegisterPage() {
     roleTitle: "",
     dietary: "",
     accessibility: "",
-    interests: "AI, BCI",
+    interests: "AI agents, Payments",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 

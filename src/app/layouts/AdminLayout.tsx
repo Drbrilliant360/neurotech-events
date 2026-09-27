@@ -27,6 +27,8 @@ const SECTIONS: NavSection[] = [
     items: [
       { to: "/admin/schedule", label: "Schedule builder", icon: "calendar" },
       { to: "/admin/timeline", label: "Timeline", icon: "chart" },
+      { to: "/admin/speakers", label: "Speakers", icon: "mic" },
+      { to: "/admin/venues", label: "Venues", icon: "home" },
     ],
   },
   {
@@ -43,6 +45,7 @@ const SECTIONS: NavSection[] = [
       { to: "/admin/payments", label: "Payments", icon: "card" },
       ...(isLivePaymentsEnabled() ? [{ to: "/admin/transactions", label: "All transactions", icon: "card" } as NavItem] : []),
       { to: "/admin/reports", label: "Reports", icon: "chart" },
+      { to: "/admin/team", label: "Team & roles", icon: "people" },
       { to: "/admin/settings", label: "Settings", icon: "cog" },
     ],
   },

@@ -122,7 +122,27 @@ postman/
   *.json        FastAPI contract-first collection and local environment
 ```
 
-Frontend and backend connect through `src/services/` (a shared API client plus auth, payments and catalogue modules). With the API configured, sign-in and account creation use the backend, the profile page saves to the account, checkout shows the server-verified price and starts a real mobile-money payment, the payment page polls the server until Snippe confirms, admins publish the event and ticket catalogue to the payments server from the Tickets page, and platform admins see every transaction under Finance. Without it the site runs as a local demo.
+Frontend and backend connect through `src/services/` (a shared API client plus auth, payments, catalogue and organiser modules). With the API configured the whole app hydrates from the backend: sign-in and account creation (with rotating refresh tokens), the profile, the public catalogue, checkout and mobile-money payments through Snippe, attendee tickets with signed QR codes, and the organiser console (events, tickets, programme, speakers, venues, team roles, check-in and settings). Sponsors, communications, networking, notifications and certificates still use local demo data. Without the API the site runs as a local demo.
+
+### Run the full stack locally
+
+The backend reads `backend/.env`; the frontend reads `VITE_API_BASE_URL` from `.env.local`. For testing, the backend uses a local PostgreSQL database (see `backend/.env.example` for the one-time setup). Neon serverless PostgreSQL is reserved for production: set `DATABASE_URL` to the Neon URL when deploying, and run migrations with the unpooled Neon URL.
+
+```bash
+# Terminal 1 — API on http://127.0.0.1:8000 (docs at /docs)
+brew services start postgresql@18                # local test database
+cd backend
+.venv/bin/alembic -c alembic.ini upgrade head   # apply migrations
+.venv/bin/python -m app.db.seed                  # catalogue + summit programme (idempotent)
+.venv/bin/python -m app.db.create_admin --email you@example.com --name "Your Name"   # once; prompts for a password
+.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Terminal 2 — web app on http://127.0.0.1:5173
+npm install
+npm run dev -- --host 127.0.0.1
+```
+
+Attendees create an account at `/register` and land in `/app`; organisers sign in at `/login` and land in `/admin`. Organisers can grant colleagues console access from **Team & roles** once those colleagues have an account.
 
 Navigation: on phones and tablets the public site uses a menu drawer, the attendee and admin workspaces use a bottom navigation bar with a "More" drawer, deep pages carry breadcrumbs that collapse to a back control, and event pages pin a Register bar to the bottom of the screen. `src/styles/mobile.css` is loaded last and owns the small-screen rules. During development, `/?as=admin` or `/?as=attendee` opens a workspace directly (ignored in production builds), and in demo mode the sign-in page offers shortcuts into both workspaces.
 

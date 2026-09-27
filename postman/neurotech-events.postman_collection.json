@@ -2595,6 +2595,97 @@
           }
         }
       ]
+    },
+    {
+      "name": "Admin - Team and roles",
+      "item": [
+        {
+          "name": "List organization team",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/organizations/{{organization_id}}/team",
+            "description": "Owner/admin only. Active members and staff on the organization's events."
+          }
+        },
+        {
+          "name": "Add or update member by email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/organizations/{{organization_id}}/team",
+            "description": "Roles: owner, admin, finance, member. The account must exist (404 otherwise); only owners grant owner.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"colleague@example.com\",\n  \"role\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/organizations/{{organization_id}}/memberships/{{user_id}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "Assign event staff by email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/admin/events/{{event_id}}/staff",
+            "description": "Roles: manager, staff, check_in, speaker. Requires manage access on the event.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"door@example.com\",\n  \"role\": \"check_in\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Remove event staff",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_access_token}}"
+              }
+            ],
+            "url": "{{base_url}}{{api_prefix}}/authorization/events/{{event_id}}/assignments/{{user_id}}",
+            "description": ""
+          }
+        }
+      ]
     }
   ]
 }
