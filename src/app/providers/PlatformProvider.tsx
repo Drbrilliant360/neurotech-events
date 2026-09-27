@@ -605,11 +605,17 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         const needle = query.trim();
         if (!needle) return { message: "Enter a ticket number, QR code, name or email." };
         const lower = needle.toLowerCase();
-        const match = db.registrations.find((item) => {
+        // Signed ticket QR: NTQ1.<registration id hex>.<signature>. The server verifies the signature;
+        // the id only tells us which event to send it to.
+        const qrId = /^NTQ1\.([0-9a-f]{32})\./i.exec(needle)?.[1]?.toLowerCase();
+        const fromQr = qrId
+          ? db.registrations.find((item) => item.id.replace(/-/g, "").toLowerCase() === qrId)
+          : undefined;
+        const match = fromQr ?? db.registrations.find((item) => {
           const attendee = db.attendees.find((person) => person.id === item.attendeeId);
           return item.ticketNumber.toLowerCase() === lower || attendee?.email.toLowerCase() === lower || attendee?.fullName.toLowerCase().includes(lower);
         });
-        const code = match?.ticketNumber ?? needle;
+        const code = qrId ? needle : (match?.ticketNumber ?? needle);
         const candidates = match ? [match.eventId] : Object.values(access).filter((item) => item.can_check_in).map((item) => item.event_id);
         let last = "No matching ticket or attendee.";
         for (const eventId of candidates) {
