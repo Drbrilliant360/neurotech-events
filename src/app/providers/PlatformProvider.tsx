@@ -12,9 +12,11 @@ import type {
   PlatformDatabase,
   Registration,
   Session,
+  Speaker,
   Sponsor,
   TicketType,
   TimelineMilestone,
+  Venue,
 } from "../../domain/types";
 import { DEMO_ATTENDEE_KEY, DEMO_ROLE_KEY } from "../../lib/localStore";
 import { createId } from "../../lib/ids";
@@ -37,6 +39,7 @@ import {
   markNotification,
   quoteTotals,
   refundPayment,
+  removeSpeaker,
   saveSettings,
   simulatePayment,
   toggleSavedSession,
@@ -46,8 +49,10 @@ import {
   upsertEvent,
   upsertMilestone,
   upsertSession,
+  upsertSpeaker,
   upsertSponsor,
   upsertTicket,
+  upsertVenue,
   type AttendeeInput,
   type AttendeePatch,
   type RemotePaymentLink,
@@ -110,6 +115,11 @@ interface PlatformContextValue {
   saveMilestone: (input: Partial<TimelineMilestone> & Pick<TimelineMilestone, "eventId" | "title" | "date">) => Promise<boolean>;
   updateSettings: (settings: OrganizationSettings) => Promise<boolean>;
   issueCerts: () => void;
+  saveSpeaker: (input: Partial<Speaker> & Pick<Speaker, "name">) => Promise<boolean>;
+  deleteSpeaker: (speakerId: string) => Promise<boolean>;
+  saveVenue: (input: Partial<Venue> & Pick<Venue, "name">) => Promise<boolean>;
+  /** Live mode: the organization the console manages, when the account manages one. */
+  organizationId?: string;
 }
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
@@ -411,13 +421,41 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         undoScan: (id) => { applyLocal(undoCheckIn(repo.clone(), id)); return done(true); },
         saveMilestone: (input) => { applyLocal(upsertMilestone(repo.clone(), input)); return done(true); },
         updateSettings: (settings) => { applyLocal(saveSettings(repo.clone(), settings)); return done(true); },
+        saveSpeaker: (input) => { applyLocal(upsertSpeaker(repo.clone(), input)); return done(true); },
+        deleteSpeaker: (speakerId) => { applyLocal(removeSpeaker(repo.clone(), speakerId)); return done(true); },
+        saveVenue: (input) => { applyLocal(upsertVenue(repo.clone(), input)); return done(true); },
       };
     }
 
     // ------------------------------------------------------------- live mode
     const organizationId = sources?.workspace?.organizations[0]?.id;
+    const nullable = (value: string | undefined) => (value === undefined ? undefined : value.trim() || null);
     return {
       ...shared,
+      organizationId,
+      saveSpeaker: (input) => mutate(() => {
+        const body = strip({
+          name: input.name.trim(),
+          initials: nullable(input.initials),
+          role: nullable(input.role),
+          organization: nullable(input.organization),
+          bio: nullable(input.bio),
+          track: nullable(input.track),
+          social_url: nullable(input.socialUrl),
+        });
+        return input.id ? api.updateSpeaker(input.id, body) : api.createSpeaker(body);
+      }),
+      deleteSpeaker: (speakerId) => mutate(() => api.deleteSpeaker(speakerId)),
+      saveVenue: (input) => mutate(() => {
+        const body = strip({
+          name: input.name.trim(),
+          address: nullable(input.address),
+          city: nullable(input.city),
+          region: nullable(input.region),
+          country: nullable(input.country),
+        });
+        return input.id ? api.updateVenue(input.id, body) : api.createVenue(body);
+      }),
       saveProfile: (patch) => mutate(() => updateMe({
         full_name: patch.fullName,
         phone: patch.phone,

@@ -43,6 +43,7 @@ import {
   AdminTicketsPage,
   AdminTimelinePage,
 } from "../../features/admin/AdminOpsPages";
+import { AdminSpeakersPage, AdminTeamPage, AdminVenuesPage } from "../../features/admin/AdminDirectoryPages";
 
 function RoleHome() {
   const { role } = usePlatform();
@@ -107,6 +108,9 @@ export function AppRouter() {
             <Route path="payments" element={<AdminPaymentsPage />} />
             <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="speakers" element={<AdminSpeakersPage />} />
+            <Route path="venues" element={<AdminVenuesPage />} />
+            <Route path="team" element={<AdminTeamPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
