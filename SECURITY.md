@@ -62,11 +62,20 @@ The frontend must never:
 
 Payment integrations should use idempotent server operations, signed callbacks/webhooks, and reconciliation for delayed/duplicate provider events.
 
-## Dependency security
+## Dependency and automated security checks
 
 Review dependency changes deliberately. Do not add a dependency for functionality that can be implemented safely with the existing stack without clear benefit.
 
-When dependency/security automation is introduced, resolve critical/high findings before production deployment or document an explicit risk acceptance.
+The least-privilege `Security` GitHub Actions workflow runs on pull requests to `main`, selected pushes, and manual dispatch. It performs:
+
+- `pip-audit` against the installed Python application dependencies;
+- `npm audit --omit=dev --audit-level=high`, which blocks high and critical production dependency findings;
+- Bandit static analysis of `backend/app` at medium-or-higher severity and confidence;
+- Gitleaks secret scanning across full Git history.
+
+Scanner packages and third-party actions are pinned. Review and intentionally update those pins rather than switching to floating action tags. A passing scan does not make committed credentials safe: revoke and rotate any exposed secret, remove it from Git history where appropriate, and notify maintainers privately.
+
+Resolve critical/high dependency findings before production deployment or document an explicit, time-bounded risk acceptance. Medium or lower findings should still be triaged rather than ignored solely because they do not fail the npm gate.
 
 ## Logging and privacy
 

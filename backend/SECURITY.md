@@ -51,9 +51,17 @@ Before merging backend changes:
 ```bash
 backend/.venv/bin/ruff check backend
 backend/.venv/bin/pytest backend/tests
-cd backend && .venv/bin/alembic check
+(cd backend && .venv/bin/alembic check)
 npm run check
+npm audit --omit=dev --audit-level=high
+# With pip-audit and Bandit installed in the active backend environment:
+(cd backend && pip-audit --local --skip-editable)
+(cd backend && bandit -c pyproject.toml -r app --severity-level medium --confidence-level medium)
 ```
+
+CI also scans the complete Git history with Gitleaks. See the repository
+[`SECURITY.md`](../SECURITY.md) and `.github/workflows/security.yml` for gate scope and
+scanner pins.
 
 Do not commit `.env`, `.env.local`, `.neon`, tokens, private keys or provider
 credentials. Every new protected route requires explicit `401`, `403`, and
@@ -68,7 +76,7 @@ migration and validation against SQLite tests and Neon PostgreSQL before release
 - Move the refresh token to an `HttpOnly`, `Secure`, `SameSite` cookie once the frontend and
   API share a site; until then the frontend must keep it out of `localStorage` where possible.
 - Replace the legacy `PUT /admin/catalogue` super-admin sync with the scoped organiser API.
-- Add dependency, secret, SAST and DAST checks to CI.
+- Add authenticated DAST once a stable deployed test environment and seeded test account are available; dependency, secret and Python SAST checks now run in CI.
 - Ticket QR payloads use `TICKET_SIGNING_KEY`, which hardened environments require to be at
   least 32 characters, non-default and distinct from `JWT_SECRET_KEY`. Generate both independently.
 - There is intentionally no fallback to `JWT_SECRET_KEY` or a previous ticket key: accepting an
