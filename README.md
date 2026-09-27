@@ -126,10 +126,11 @@ Frontend and backend connect through `src/services/` (a shared API client plus a
 
 ### Run the full stack locally
 
-The backend reads `backend/.env` (the Neon `development` branch locally); the frontend reads `VITE_API_BASE_URL` from `.env.local`.
+The backend reads `backend/.env`; the frontend reads `VITE_API_BASE_URL` from `.env.local`. For testing, the backend uses a local PostgreSQL database (see `backend/.env.example` for the one-time setup). Neon serverless PostgreSQL is reserved for production: set `DATABASE_URL` to the Neon URL when deploying, and run migrations with the unpooled Neon URL.
 
 ```bash
 # Terminal 1 — API on http://127.0.0.1:8000 (docs at /docs)
+brew services start postgresql@18                # local test database
 cd backend
 .venv/bin/alembic -c alembic.ini upgrade head   # apply migrations
 .venv/bin/python -m app.db.seed                  # catalogue + summit programme (idempotent)
