@@ -26,6 +26,20 @@ class RefreshToken(UUIDPrimaryKeyMixin, Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
+class IdentityToken(UUIDPrimaryKeyMixin, Base):
+    """Single-use email verification or password-reset secret (digest only)."""
+
+    __tablename__ = "identity_tokens"
+    __table_args__ = (Index("ix_identity_tokens_user_purpose", "user_id", "purpose"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    purpose: Mapped[str] = mapped_column(String(24), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class AuditLog(UUIDPrimaryKeyMixin, Base):
     """Append-only record of security-relevant and administrative actions."""
 

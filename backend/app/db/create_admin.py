@@ -9,6 +9,7 @@ site and open the super-admin transaction views without the static ADMIN_API_TOK
 import argparse
 import getpass
 import os
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -41,6 +42,7 @@ def main() -> None:
             user.role = UserRole.PLATFORM_ADMIN
             user.password_hash = password_hash.hash(password)
             user.is_active = True
+            user.email_verified_at = datetime.now(UTC)
             db.commit()
             action = "promoted"
     print(f"{action} platform_admin {email}")

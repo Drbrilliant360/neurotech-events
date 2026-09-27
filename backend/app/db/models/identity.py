@@ -68,6 +68,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Embedded in access tokens; incrementing it revokes every token issued before.
     token_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
 

@@ -291,7 +291,7 @@
           }
         },
         {
-          "name": "Forgot password",
+          "name": "Request password reset",
           "request": {
             "method": "POST",
             "header": [
@@ -304,12 +304,12 @@
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{user_email}}\"\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/auth/forgot-password",
-            "description": "Planned. "
+            "url": "{{base_url}}{{api_prefix}}/auth/password-reset/request",
+            "description": "Implemented. Generic accepted response prevents account enumeration."
           }
         },
         {
-          "name": "Reset password",
+          "name": "Confirm password reset",
           "request": {
             "method": "POST",
             "header": [
@@ -320,10 +320,46 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"token\": \"replace-with-reset-token\",\n  \"password\": \"NewChangeMe123!\"\n}"
+              "raw": "{\n  \"token\": \"{{identity_token}}\",\n  \"new_password\": \"NewChangeMe123!\"\n}"
             },
-            "url": "{{base_url}}{{api_prefix}}/auth/reset-password",
-            "description": "Planned. "
+            "url": "{{base_url}}{{api_prefix}}/auth/password-reset/confirm",
+            "description": "Implemented. Single-use token; revokes all sessions."
+          }
+        },
+        {
+          "name": "Request email verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\"\n}"
+            },
+            "url": "{{base_url}}{{api_prefix}}/auth/email-verification/request",
+            "description": "Implemented. Invalidates earlier links."
+          }
+        },
+        {
+          "name": "Confirm email verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{identity_token}}\"\n}"
+            },
+            "url": "{{base_url}}{{api_prefix}}/auth/email-verification/confirm",
+            "description": "Implemented. Single-use, expiring token."
           }
         }
       ]

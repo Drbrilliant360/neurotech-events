@@ -16,6 +16,7 @@ export interface AuthUser {
   full_name: string;
   role: string;
   is_active: boolean;
+  email_verified: boolean;
   profile: AuthProfile | null;
   attendee_id: string | null;
   organizer: boolean;
@@ -49,6 +50,25 @@ export async function login(email: string, password: string): Promise<AuthUser> 
 
 export async function register(input: { email: string; password: string; full_name: string; profile?: Partial<AuthProfile> }): Promise<AuthUser> {
   return remember(await apiRequest<TokenResponse>("/auth/register", { method: "POST", body: JSON.stringify(input) }));
+}
+
+export function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return apiRequest("/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+export function confirmPasswordReset(token: string, newPassword: string): Promise<{ message: string }> {
+  return apiRequest("/auth/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}
+
+export function requestEmailVerification(email: string): Promise<{ message: string }> {
+  return apiRequest("/auth/email-verification/request", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+export function confirmEmailVerification(token: string): Promise<{ message: string }> {
+  return apiRequest("/auth/email-verification/confirm", { method: "POST", body: JSON.stringify({ token }) });
 }
 
 export function fetchMe(): Promise<AuthUser> {

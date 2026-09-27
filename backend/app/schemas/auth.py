@@ -39,12 +39,29 @@ class PasswordChangeRequest(BaseModel):
     new_password: str = Field(min_length=8, max_length=128)
 
 
+class IdentityEmailRequest(BaseModel):
+    email: EmailStr
+
+
+class IdentityTokenRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=200)
+
+
+class PasswordResetConfirmRequest(IdentityTokenRequest):
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class MessageResponse(BaseModel):
+    message: str
+
+
 class UserResponse(BaseModel):
     id: uuid.UUID
     email: EmailStr
     full_name: str
     role: str
     is_active: bool
+    email_verified: bool
     profile: ProfileFields | None = None
     # The attendee record linked to this account (tickets, registrations).
     attendee_id: uuid.UUID | None = None
