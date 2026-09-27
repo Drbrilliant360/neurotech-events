@@ -1,19 +1,27 @@
 /**
  * Builds the in-memory `PlatformDatabase` the pages render from API responses.
  *
- * Server-owned collections (events, venues, tickets, programme, registrations, payments,
- * check-ins, settings) always come from the API. Collections the backend does not model yet
- * (sponsors, communications, notifications, networking, certificates, saved sessions) stay in
- * the browser's demo store and are clearly local. Checkout drafts (a registration form that has
- * not been paid for yet) live in session storage until the server creates the registration.
+ * Every collection comes from the API: the public catalogue, the organiser workspace, and the
+ * signed-in attendee's registrations and engagement (agenda, notifications, networking,
+ * certificates). Only checkout drafts (a registration form that has not been paid for yet) live
+ * in session storage until the server creates the registration.
  */
 import type {
+  AppNotification,
   Attendee,
+  AudienceSegment,
+  Certificate,
   CheckIn,
+  Communication,
+  CommunicationChannel,
+  CommunicationStatus,
+  Connection,
   Event,
   EventFormat,
   EventStatus,
   MilestoneStatus,
+  NetworkingProfile,
+  NotificationCategory,
   OrganizationSettings,
   Payment,
   PaymentMethod,
@@ -24,6 +32,8 @@ import type {
   Session,
   SessionType,
   Speaker,
+  Sponsor,
+  SponsorTier,
   TicketTier,
   TicketType,
   TimelineMilestone,
@@ -36,11 +46,15 @@ import type {
   AttendeeRegistrationDto,
   CatalogueDto,
   CheckInDto,
+  CommunicationDto,
+  EngagementDto,
   EventDto,
   MilestoneDto,
+  NetworkingProfileDto,
   OrganizationDto,
   SessionDto,
   SpeakerDto,
+  SponsorDto,
   TicketTypeDto,
   VenueDto,
   WorkspaceDto,
@@ -185,6 +199,50 @@ function toCheckIn(dto: CheckInDto): CheckIn {
   };
 }
 
+function toSponsor(dto: SponsorDto): Sponsor {
+  return {
+    id: dto.id, name: dto.name, tier: dto.tier as SponsorTier, website: text(dto.website), contact: text(dto.contact),
+    active: dto.active ?? true, eventIds: dto.event_ids,
+  };
+}
+
+function toCommunication(dto: CommunicationDto): Communication {
+  return {
+    id: dto.id, eventId: dto.event_id, channel: dto.channel as CommunicationChannel, audience: dto.audience as AudienceSegment,
+    subject: dto.subject, body: dto.body, status: dto.status as CommunicationStatus, createdAt: dto.created_at,
+    sentAt: dto.sent_at ?? undefined,
+  };
+}
+
+function toProfile(dto: NetworkingProfileDto): NetworkingProfile {
+  return {
+    id: `net-${dto.attendee_id}`, attendeeId: dto.attendee_id, publicName: dto.public_name, initials: text(dto.initials),
+    jobTitle: text(dto.job_title), organization: text(dto.organization), interests: dto.interests, bio: text(dto.bio),
+  };
+}
+
+/** The attendee's own agenda, notices, network and certificates. */
+function engagementCollections(engagement: EngagementDto | undefined, attendeeId: string) {
+  if (!engagement || !attendeeId) {
+    return { savedSessions: [], notifications: [], networkingProfiles: [], connections: [], certificates: [] };
+  }
+  const { schedule, notifications, networking, certificates } = engagement;
+  return {
+    savedSessions: schedule.map((item) => ({ attendeeId, sessionId: item.session_id })),
+    notifications: notifications.map((item): AppNotification => ({
+      id: item.id, attendeeId, title: item.title, body: text(item.body), category: item.category as NotificationCategory,
+      createdAt: item.created_at, read: item.is_read,
+    })),
+    networkingProfiles: [...(networking.profile ? [networking.profile] : []), ...networking.people].map(toProfile),
+    connections: networking.connections.map((to): Connection => ({
+      id: `con-${to}`, fromAttendeeId: attendeeId, toAttendeeId: to, createdAt: "",
+    })),
+    certificates: certificates.map((item): Certificate => ({
+      id: item.id, attendeeId, eventId: item.event_id, certificateId: item.certificate_code, issuedAt: item.issued_at,
+    })),
+  };
+}
+
 function blankAttendee(id: string, fullName: string, email: string): Attendee {
   return { id, fullName, email, phone: "", organization: "", jobTitle: "", country: "", roleTitle: "", interests: [], isDemoUser: false };
 }
@@ -238,6 +296,7 @@ export interface LiveSources {
   workspace?: WorkspaceDto;
   user?: AuthUser;
   myRegistrations?: AttendeeRegistrationDto[];
+  engagement?: EngagementDto;
 }
 
 function unique<T extends { id: string }>(items: T[]): T[] {
@@ -246,7 +305,7 @@ function unique<T extends { id: string }>(items: T[]): T[] {
 
 /** Rebuild the database: server data first, local-only collections and drafts on top. */
 export function buildLiveDatabase(local: PlatformDatabase, sources: LiveSources): PlatformDatabase {
-  const { catalogue, workspace, user, myRegistrations } = sources;
+  const { catalogue, workspace, user, myRegistrations, engagement } = sources;
   const eventDtos = workspace ? workspace.events : catalogue.events;
   const events = eventDtos.map(toEvent);
 
@@ -355,11 +414,6 @@ export function buildLiveDatabase(local: PlatformDatabase, sources: LiveSources)
 
   const drafts = readDrafts();
 
-  // Local-only records were seeded against demo event ids; re-point them by slug.
-  const remoteIdBySlug = new Map(events.map((event) => [event.slug, event.id]));
-  const localSlugById = new Map(local.events.map((event) => [event.id, event.slug]));
-  const remap = (id: string) => remoteIdBySlug.get(localSlugById.get(id) ?? "") ?? id;
-
   return {
     ...local,
     venues,
@@ -373,8 +427,8 @@ export function buildLiveDatabase(local: PlatformDatabase, sources: LiveSources)
     payments: unique([...payments, ...drafts.payments]),
     attendees: unique([...attendees, ...drafts.attendees]),
     checkIns,
-    sponsors: local.sponsors.map((sponsor) => ({ ...sponsor, eventIds: sponsor.eventIds.map(remap) })),
-    communications: local.communications.map((item) => ({ ...item, eventId: remap(item.eventId) })),
-    certificates: local.certificates.map((item) => ({ ...item, eventId: remap(item.eventId) })),
+    sponsors: (workspace?.sponsors ?? catalogue.sponsors ?? []).map(toSponsor),
+    communications: (workspace?.communications ?? []).map(toCommunication),
+    ...engagementCollections(engagement, user?.attendee_id ?? ""),
   };
 }

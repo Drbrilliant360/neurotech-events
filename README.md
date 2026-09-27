@@ -122,7 +122,7 @@ postman/
   *.json        FastAPI contract-first collection and local environment
 ```
 
-Frontend and backend connect through `src/services/` (a shared API client plus auth, payments, catalogue and organiser modules). With the API configured the whole app hydrates from the backend: sign-in and account creation (with rotating refresh tokens), the profile, the public catalogue, checkout and mobile-money payments through Snippe, attendee tickets with signed QR codes, and the organiser console (events, tickets, programme, speakers, venues, team roles, check-in and settings). Sponsors, communications, networking, notifications and certificates still use local demo data. Without the API the site runs as a local demo.
+Frontend and backend connect through `src/services/` (a shared API client plus auth, payments, catalogue and organiser modules). With the API configured the whole app hydrates from the backend: sign-in and account creation (with rotating refresh tokens), the profile, the public catalogue, checkout and mobile-money payments through Snippe, attendee tickets with signed QR codes, and the organiser console (events, tickets, programme, speakers, venues, team roles, check-in and settings). Attendee agendas, networking, notifications and certificates, and organiser sponsors and communications, are on the server too; communications are delivered in-app only until an email/SMS provider is configured. Without the API the site runs as a local demo.
 
 ### Run the full stack locally
 

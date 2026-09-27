@@ -5,7 +5,7 @@ import { StatusPill } from "../../components/shared/Widgets";
 import { downloadTextFile, toCsv } from "../../lib/csv";
 import { formatDateTime, minutesBetween } from "../../lib/dates";
 import { formatMoney, paymentMethodLabel } from "../../lib/money";
-import type { CommunicationChannel, PaymentStatus, SponsorTier, TicketTier } from "../../domain/types";
+import type { AudienceSegment, CommunicationChannel, PaymentStatus, SponsorTier, TicketTier } from "../../domain/types";
 import { AdminEventFormPage } from "./AdminEventsPage";
 import { AdminEventPicker, ScopedAdminPage, type EditorProps } from "./AdminEventPicker";
 import type { Event } from "../../domain/types";
@@ -503,13 +503,18 @@ function AdminPosterEditor({ events, event, setEventId }: EditorProps) {
 function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveComms, live } = usePlatform();
   const [channel, setChannel] = useState<CommunicationChannel>("email");
+  const [audience, setAudience] = useState<AudienceSegment>("all");
   const [body, setBody] = useState("Thank you for joining us at Neurotech Events.");
   const [subject, setSubject] = useState("Event reminder");
   return (
     <div style={{ maxWidth: 720 }}>
       <h1>Communications</h1>
       <AdminEventPicker events={events} event={event} onChange={setEventId} />
-      <p className="nt-lede">Messages are simulated in this browser. Nothing is sent{live ? " — communications are not on the server yet" : ""}.</p>
+      <p className="nt-lede">
+        {live
+          ? "Sending posts the message to each recipient's in-app notifications. Email, SMS and push need a delivery provider, which is not configured yet, so nothing leaves the platform."
+          : "Messages are simulated in this browser. Nothing is sent."}
+      </p>
       <div className="nt-card">
         <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
           {(["email", "sms", "push"] as const).map((item) => (
@@ -519,6 +524,14 @@ function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
           ))}
         </div>
         <label className="nt-field">
+          <span>Audience</span>
+          <select value={audience} onChange={(e) => setAudience(e.target.value as AudienceSegment)}>
+            {([["all", "Everyone confirmed"], ["paid", "Paid tickets"], ["student", "Student tickets"], ["vip", "VIP tickets"], ["checked-in", "Checked in"]] as const).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="nt-field">
           <span>Subject</span>
           <input value={subject} onChange={(e) => setSubject(e.target.value)} />
         </label>
@@ -526,17 +539,18 @@ function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
           <span>Message</span>
           <textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} />
         </label>
-        <button type="button" className="nt-btn" onClick={() => saveComms({ eventId: event.id, body, subject, channel, status: "sent", audience: "all" })}>
-          Simulate send
-        </button>
-        <button type="button" className="nt-btn ghost" onClick={() => saveComms({ eventId: event.id, body, subject, channel, status: "draft", audience: "all" })}>
+        <button type="button" className="nt-btn" onClick={() => saveComms({ eventId: event.id, body, subject, channel, status: "sent", audience })}>
+          {live ? "Send to attendees" : "Simulate send"}
+        </button>{" "}
+        <button type="button" className="nt-btn ghost" onClick={() => saveComms({ eventId: event.id, body, subject, channel, status: "draft", audience })}>
           Save draft
         </button>
       </div>
-      {db.communications.map((item) => (
+      {db.communications.filter((item) => item.eventId === event.id).map((item) => (
         <div key={item.id} className="nt-card" style={{ marginTop: 10 }}>
-          <StatusPill value={item.status} /> {item.channel} · {item.subject}
+          <StatusPill value={item.status} /> {item.channel} · {item.audience} · {item.subject}
           <div className="nt-muted">{item.body}</div>
+          {item.sentAt ? <div className="nt-muted">Sent {formatDateTime(item.sentAt)}</div> : null}
         </div>
       ))}
     </div>
@@ -546,6 +560,7 @@ function AdminCommsEditor({ events, event, setEventId }: EditorProps) {
 function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
   const { db, saveSponsor, deleteSponsor } = usePlatform();
   const [name, setName] = useState("");
+  const [website, setWebsite] = useState("");
   const [tier, setTier] = useState<SponsorTier>("gold");
   const [pending, setPending] = useState<string | null>(null);
   return (
@@ -558,6 +573,10 @@ function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
           <input value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label className="nt-field">
+          <span>Website (https, optional)</span>
+          <input type="url" value={website} placeholder="https://" onChange={(e) => setWebsite(e.target.value)} />
+        </label>
+        <label className="nt-field">
           <span>Tier</span>
           <select value={tier} onChange={(e) => setTier(e.target.value as SponsorTier)}>
             {["title", "platinum", "gold", "silver", "partner"].map((item) => (
@@ -565,7 +584,7 @@ function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
             ))}
           </select>
         </label>
-        <button type="button" className="nt-btn" onClick={() => { if (!name.trim()) return; saveSponsor({ name, tier, eventIds: [event.id], website: "", contact: "" }); setName(""); }}>
+        <button type="button" className="nt-btn" onClick={() => { if (!name.trim()) return; saveSponsor({ name, tier, eventIds: [event.id], website, contact: "" }); setName(""); setWebsite(""); }}>
           Add sponsor
         </button>
       </div>
@@ -575,6 +594,7 @@ function AdminSponsorsEditor({ events, event, setEventId }: EditorProps) {
             <h3>{sponsor.name}</h3>
             <div style={{ color: "#2f7d34" }}>{sponsor.tier}</div>
             <div className="nt-muted">{sponsor.website}</div>
+            <div className="nt-muted">{sponsor.eventIds.map((id) => db.events.find((item) => item.id === id)?.title).filter(Boolean).join(", ") || "Not linked to an event"}</div>
             <StatusPill value={sponsor.active ? "active" : "inactive"} />
             <button type="button" className="nt-chip" onClick={() => saveSponsor({ ...sponsor, active: !sponsor.active })}>
               {sponsor.active ? "Deactivate" : "Activate"}

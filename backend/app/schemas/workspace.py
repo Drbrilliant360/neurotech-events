@@ -14,6 +14,7 @@ from app.schemas.admin_events import (
     VenueOut,
 )
 from app.schemas.authorization import EventAccessResponse
+from app.schemas.engagement import CommunicationOut, PublicSponsorOut, SponsorOut
 from app.schemas.events import EventDetailOut
 from app.schemas.operations import AdminRegistrationOut, CheckInOut
 from app.schemas.payments import PaymentOut
@@ -59,6 +60,7 @@ class PublicCatalogueOut(BaseModel):
     sessions: list[SessionOut]
     speakers: list[SpeakerOut]
     milestones: list[MilestoneOut]
+    sponsors: list[PublicSponsorOut] = []
 
 
 class AdminWorkspaceOut(BaseModel):
@@ -78,3 +80,7 @@ class AdminWorkspaceOut(BaseModel):
     check_ins: list[CheckInOut]
     # Only for events where the caller has `finance`.
     payments: list[PaymentOut]
+    # Organizers see the shared sponsor directory.
+    sponsors: list[SponsorOut] = []
+    # Only for events where the caller has `manage`.
+    communications: list[CommunicationOut] = []

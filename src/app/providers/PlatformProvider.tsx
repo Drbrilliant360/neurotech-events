@@ -115,6 +115,8 @@ interface PlatformContextValue {
   saveMilestone: (input: Partial<TimelineMilestone> & Pick<TimelineMilestone, "eventId" | "title" | "date">) => Promise<boolean>;
   updateSettings: (settings: OrganizationSettings) => Promise<boolean>;
   issueCerts: () => void;
+  /** Create or update the attendee's opt-in networking profile. */
+  saveNetworkingProfile: (input: api.NetworkingProfileInput) => Promise<boolean>;
   saveSpeaker: (input: Partial<Speaker> & Pick<Speaker, "name">) => Promise<boolean>;
   deleteSpeaker: (speakerId: string) => Promise<boolean>;
   saveVenue: (input: Partial<Venue> & Pick<Venue, "name">) => Promise<boolean>;
@@ -220,12 +222,14 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async (forRole: DemoRole, account: AuthUser | null, catalogueRequest?: Promise<api.CatalogueDto>) => {
     // Independent requests run in parallel: each one is a network round trip to the API.
-    const [catalogue, workspace, myRegistrations] = await Promise.all([
+    const attendee = Boolean(account) && forRole === "attendee";
+    const [catalogue, workspace, myRegistrations, engagement] = await Promise.all([
       catalogueRequest ?? api.fetchCatalogue(),
       account && forRole === "admin" ? api.fetchWorkspace() : Promise.resolve(undefined),
-      account && forRole === "attendee" ? api.fetchMyRegistrations() : Promise.resolve(undefined),
+      attendee ? api.fetchMyRegistrations() : Promise.resolve(undefined),
+      attendee ? api.fetchEngagement() : Promise.resolve(undefined),
     ]);
-    setSources({ catalogue, user: account ?? undefined, workspace, myRegistrations });
+    setSources({ catalogue, user: account ?? undefined, workspace, myRegistrations, engagement });
   }, []);
 
   const reload = useCallback(async () => {
@@ -424,6 +428,18 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
         saveSpeaker: (input) => { applyLocal(upsertSpeaker(repo.clone(), input)); return done(true); },
         deleteSpeaker: (speakerId) => { applyLocal(removeSpeaker(repo.clone(), speakerId)); return done(true); },
         saveVenue: (input) => { applyLocal(upsertVenue(repo.clone(), input)); return done(true); },
+        saveNetworkingProfile: (input) => {
+          const next = repo.clone();
+          const existing = next.networkingProfiles.find((item) => item.attendeeId === attendeeId);
+          const initials = input.public_name.split(/\s+/).map((part) => part[0] ?? "").join("").slice(0, 2).toUpperCase();
+          const profile = {
+            id: existing?.id ?? createId("net"), attendeeId, publicName: input.public_name, initials,
+            jobTitle: input.job_title ?? "", organization: input.organization ?? "", interests: input.interests, bio: input.bio ?? "",
+          };
+          next.networkingProfiles = [...next.networkingProfiles.filter((item) => item.attendeeId !== attendeeId), profile];
+          applyLocal(next);
+          return done(true);
+        },
       };
     }
 
@@ -433,6 +449,35 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     return {
       ...shared,
       organizationId,
+      toggleAgenda: (sessionId) => {
+        const saved = db.savedSessions.some((item) => item.sessionId === sessionId);
+        void mutate(() => (saved ? api.unsaveSession(sessionId) : api.saveSession(sessionId)));
+      },
+      toggleConnect: (toAttendeeId) => {
+        const connected = db.connections.some((item) => item.toAttendeeId === toAttendeeId);
+        void mutate(() => (connected ? api.disconnectFrom(toAttendeeId) : api.connectWith(toAttendeeId)));
+      },
+      readOne: (id) => { void mutate(() => api.markNotificationRead(id)); },
+      readAll: () => { void mutate(() => api.markAllNotificationsRead()); },
+      // Reading certificates issues any the attendee has newly earned.
+      issueCerts: () => { void reload(); },
+      saveNetworkingProfile: (input) => mutate(() => api.saveNetworkingProfile(input)),
+      saveSponsor: (input) => {
+        const body = strip({
+          name: input.name, tier: input.tier, website: input.website === undefined ? undefined : input.website || null,
+          contact: input.contact === undefined ? undefined : input.contact || null, active: input.active, event_ids: input.eventIds,
+        });
+        void mutate(() => (input.id ? api.updateSponsor(input.id, body) : api.createSponsor(body)));
+      },
+      deleteSponsor: (id) => { void mutate(() => api.deleteSponsor(id)); },
+      saveComms: (input) => {
+        void mutate(async () => {
+          const draft = await api.createCommunication(input.eventId, {
+            channel: input.channel ?? "email", audience: input.audience ?? "all", subject: input.subject ?? "Event update", body: input.body,
+          });
+          if (input.status === "sent") await api.sendCommunication(draft.id);
+        });
+      },
       saveSpeaker: (input) => mutate(() => {
         const body = strip({
           name: input.name.trim(),
