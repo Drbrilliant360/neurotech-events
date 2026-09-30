@@ -66,9 +66,13 @@ npm run dev
 npm run lint
 npm run typecheck
 npm run build
+npm run test        # frontend tests (Vitest), also part of npm run check
+npm run test:watch  # re-run tests on change
 npm run check
 npm run preview
 ```
+
+Frontend tests live next to the code as `*.test.ts(x)`. They render the whole app in live mode against an in-memory fake API (`src/test/fakeApi.ts`), so no backend is needed. Current coverage: login and session refresh, free-ticket registration, and check-in (ticket number, signed QR routing, duplicates, camera errors). Backend tests run with `backend/.venv/bin/pytest`.
 
 ## Engineering workflow
 

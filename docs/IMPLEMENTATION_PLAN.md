@@ -392,7 +392,7 @@ Reports should identify source, timeframe, and metric definitions so dashboards 
 
 # Phase 10 — Production hardening
 
-**Status (2026-09-27):** In progress. Backend has 142 tests and CI; accessibility basics are applied to new screens. Dependency audits, Bandit SAST and gitleaks secret scanning run in CI. Remaining: frontend test harness and E2E suite, a focused security review, performance budgets, deployment and observability.
+**Status (2026-09-27):** In progress. Backend has 142 tests and CI; accessibility basics are applied to new screens. Dependency audits, Bandit SAST and gitleaks secret scanning run in CI. A Vitest + Testing Library harness covers login, session refresh, registration and check-in and runs in `npm run check`. Remaining: broader frontend coverage and a browser E2E suite, a focused security review, performance budgets, deployment and observability.
 
 ## Automated testing
 
@@ -447,7 +447,7 @@ Complete a focused review covering:
 
 The original first tickets (domain types, routing, service layer, CI) are done. Remaining work, in suggested order:
 
-1. `test: establish a frontend test harness and tests for login, registration and check-in`
+1. `test: extend frontend coverage (payments, admin CRUD) and add a browser E2E suite against a real API`
 2. `feat: choose an email/SMS provider (ADR) and implement the notification port adapter`
 3. `feat: media uploads for event artwork, speaker photos and sponsor logos`
 4. `chore: deployment (API, web) and Neon production migration`

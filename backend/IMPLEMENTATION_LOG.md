@@ -252,13 +252,19 @@ Merged in PRs #22 and #23 without a log entry; recorded here from the code.
 - **Security CI** (`5dab421`): `.github/workflows/security.yml` runs `pip-audit` and Bandit on the backend,
   `npm audit --omit=dev --audit-level=high`, and a gitleaks secret scan.
 
-### 2026-09-30 — Cleanup
+### 2026-09-30 — Cleanup and frontend tests
 
 - `offline_check_in_operations.outcome` declared JSONB on PostgreSQL in the model but plain JSON in
   migration `e7a4b9c1d2f3`; the model now uses JSON, so `alembic check` is clean on PostgreSQL. No schema change.
 - Removed the unused `web/` copy of the prototype and its oxlint ignore entry.
 - Local databases created before PRs #21–#23 need `alembic upgrade head`; until then every login fails
   with `users.email_verified_at does not exist`.
+- Frontend test harness: Vitest + Testing Library (jsdom) render the whole app in live mode against an
+  in-memory fake API. 13 tests cover login and workspace routing, session refresh (single flight,
+  rejected refresh), free-ticket registration, and check-in (ticket number, signed QR routed to its event,
+  duplicate scans, no-camera message). `npm run check` runs them, so CI does too. Mutation checks confirmed
+  the QR-routing and workspace-routing tests fail when that logic is broken.
+- The tests exposed an unhandled rejection when IndexedDB is unavailable on the check-in page; fixed.
 
 ## Next implementation slices
 
