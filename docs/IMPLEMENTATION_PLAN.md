@@ -4,12 +4,12 @@ This plan converts the original NeuroTech Events frontend prototype into a maint
 
 ## Current implementation snapshot
 
-_Last updated: 2026-09-27._
+_Last updated: 2026-09-30._
 
 The product covers three user modes (public visitor, attendee, administrator) end to end against a real backend:
 
 - **Frontend:** React 19 + TypeScript + Vite with React Router, typed domain models (`src/domain/types.ts`), feature folders (`src/features/`), and an API client (`src/services/`). With `VITE_API_BASE_URL` set, every collection comes from the API; without it the app runs as a local demo.
-- **Backend:** FastAPI modular monolith in `backend/` with SQLAlchemy 2, Alembic migrations, 126 automated tests, and a Postman collection. See `backend/README.md` and `backend/IMPLEMENTATION_LOG.md`.
+- **Backend:** FastAPI modular monolith in `backend/` with SQLAlchemy 2, Alembic migrations, 142 automated tests, and a Postman collection. See `backend/README.md` and `backend/IMPLEMENTATION_LOG.md`.
 - **Identity:** accounts with Argon2 passwords, rotating refresh tokens, revocation, rate limits, audit log, and scoped roles (platform, organization, per-event staff) enforced server-side.
 - **Payments:** Snippe mobile money with server-side pricing, signed webhooks and polling; the browser never marks anything paid.
 - **Operations:** organiser CRUD for events, tickets, programme, speakers, venues, sponsors, team roles, communications; camera QR check-in with signed tickets; CSV export and reports.
@@ -17,7 +17,7 @@ The product covers three user modes (public visitor, attendee, administrator) en
 - **Databases:** local PostgreSQL for testing; Neon serverless PostgreSQL reserved for production (deferred while testing).
 - **Prototype artefacts** (`src/design/`, `src/lib/dcRender.tsx`, `src/lib/useAppModel.ts`) are kept as visual reference only.
 
-Not yet built: refunds, email/SMS delivery (and therefore password reset and email verification), offline check-in, media uploads, frontend automated tests, deployment.
+Not yet built: a production email/SMS adapter (verification, reset and announcement messages are console-only locally), media uploads, card/bank payments, deployment. Refunds, offline check-in, email verification/reset and CI security scans landed on 2026-09-27.
 
 ## Delivery principles
 
@@ -221,7 +221,7 @@ Components consume domain services/hooks rather than embedded demo data for migr
 
 # Phase 3 — Identity and access
 
-**Status (2026-09-27):** Mostly complete. Sign-in/out, rotating refresh tokens, protected attendee/admin routes, server-side scoped permissions (ADR 0001) and expired-session handling are done. Remaining: email verification and self-service password reset (need an email provider).
+**Status (2026-09-27):** Mostly complete. Sign-in/out, rotating refresh tokens, protected attendee/admin routes, server-side scoped permissions (ADR 0001) and expired-session handling are done. Email verification and self-service password reset are implemented; sending them in production needs an email provider adapter.
 
 **Goal:** establish real public, attendee, and admin boundaries.
 
@@ -275,7 +275,7 @@ Registration status and ticket ownership are persisted server-side and recoverab
 
 # Phase 5 — Payments
 
-**Status (2026-09-27):** Mostly complete. Snippe mobile money (server-created payments, signed race-safe webhooks, polling, late-payment recovery, receipts). Remaining: provider refunds; card and bank methods.
+**Status (2026-09-27):** Mostly complete. Snippe mobile money (server-created payments, signed race-safe webhooks, polling, late-payment recovery, receipts). Organiser refunds are paid out through Snippe. Remaining: card and bank methods.
 
 **Goal:** implement payment without placing trust or secrets in the browser.
 
@@ -325,7 +325,7 @@ An event operator can configure and run an event without direct database interve
 
 # Phase 7 — Check-in and live-event resilience
 
-**Status (2026-09-27):** Mostly complete. Camera QR scanning (native BarcodeDetector with jsQR fallback), signed-payload server validation, duplicate-scan handling with cooldown, manual lookup, undo, audit trail and scoped check-in staff. Remaining: offline/poor-network strategy and throughput testing.
+**Status (2026-09-27):** Mostly complete. Camera QR scanning (native BarcodeDetector with jsQR fallback), signed-payload server validation, duplicate-scan handling with cooldown, manual lookup, undo, audit trail and scoped check-in staff. Offline manifests with idempotent reconciliation are implemented. Remaining: throughput testing.
 
 **Goal:** support high-pressure event-day operations reliably.
 
@@ -392,7 +392,7 @@ Reports should identify source, timeframe, and metric definitions so dashboards 
 
 # Phase 10 — Production hardening
 
-**Status (2026-09-27):** In progress. Backend has 126 tests and CI; accessibility basics are applied to new screens. Remaining: frontend test harness and E2E suite, dependency/secret scanning in CI, a focused security review, performance budgets, deployment and observability.
+**Status (2026-09-27):** In progress. Backend has 142 tests and CI; accessibility basics are applied to new screens. Dependency audits, Bandit SAST and gitleaks secret scanning run in CI. Remaining: frontend test harness and E2E suite, a focused security review, performance budgets, deployment and observability.
 
 ## Automated testing
 
@@ -447,13 +447,11 @@ Complete a focused review covering:
 
 The original first tickets (domain types, routing, service layer, CI) are done. Remaining work, in suggested order:
 
-1. `feat(api): refunds through Snippe for organiser cancellations flagged refund_required`
-2. `feat: choose an email/SMS provider (ADR), then deliver communications, password reset and email verification`
-3. `test: establish a frontend test harness and E2E tests for registration, payment recovery, tickets and check-in`
-4. `ci: add dependency audit, secret scanning and SAST`
-5. `feat: offline/poor-network check-in strategy (explicit conflict rules)`
-6. `feat: media uploads for event artwork and speaker photos`
-7. `chore: deployment (API, web) and Neon production migration`
+1. `test: establish a frontend test harness and tests for login, registration and check-in`
+2. `feat: choose an email/SMS provider (ADR) and implement the notification port adapter`
+3. `feat: media uploads for event artwork, speaker photos and sponsor logos`
+4. `chore: deployment (API, web) and Neon production migration`
+5. `feat: card and bank payments; check-in throughput testing`
 
 Completed milestones are recorded in `backend/IMPLEMENTATION_LOG.md`.
 
