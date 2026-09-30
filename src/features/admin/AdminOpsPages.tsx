@@ -243,7 +243,13 @@ export function AdminCheckInPage() {
     return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
   }, []);
 
-  useEffect(() => { if (offlineEventId) void offlineStatus(offlineEventId).then((state) => setOfflineInfo({ expires: state?.manifest.expires_at, queued: state?.queue.length ?? 0 })); }, [offlineEventId]);
+  useEffect(() => {
+    if (!offlineEventId) return;
+    offlineStatus(offlineEventId)
+      .then((state) => setOfflineInfo({ expires: state?.manifest.expires_at, queued: state?.queue.length ?? 0 }))
+      // No browser storage: behave as if no roster was downloaded; downloading reports the reason.
+      .catch(() => setOfflineInfo({ queued: 0 }));
+  }, [offlineEventId]);
 
   async function run(value: string) {
     if (!value.trim()) return;
