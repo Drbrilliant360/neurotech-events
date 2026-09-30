@@ -12,6 +12,11 @@ export interface OfflineState {
 
 function openDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    // Missing in some private-browsing modes and locked-down browsers.
+    if (typeof indexedDB === "undefined") {
+      reject(new Error("Offline check-in needs browser storage (IndexedDB), which is unavailable here."));
+      return;
+    }
     const request = indexedDB.open(DB, 1);
     request.onupgradeneeded = () => request.result.createObjectStore(STORE);
     request.onsuccess = () => resolve(request.result);

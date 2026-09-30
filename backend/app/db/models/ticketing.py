@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
@@ -19,7 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, JSONList, TimestampMixin, UUIDPrimaryKeyMixin
+from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.db.models.enums import PaymentMethod, PaymentStatus, RefundStatus, RegistrationStatus, string_enum
 
 if TYPE_CHECKING:
@@ -218,7 +219,8 @@ class OfflineCheckInOperation(UUIDPrimaryKeyMixin, Base):
     operator_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     manifest_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     device_id_hash: Mapped[str | None] = mapped_column(String(64))
-    outcome: Mapped[dict] = mapped_column(JSONList, nullable=False)
+    # Plain JSON, matching migration e7a4b9c1d2f3; a single record, not a searchable list.
+    outcome: Mapped[dict] = mapped_column(JSON, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 

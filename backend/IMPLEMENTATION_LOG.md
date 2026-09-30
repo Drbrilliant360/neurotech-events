@@ -8,22 +8,22 @@ This is the durable handoff record for backend work. Add a new entry after each 
 - Backend style: FastAPI modular monolith
 - API prefix: `/api/v1`
 - Database foundation: SQLAlchemy with Alembic migrations
-- Current completed phases: Phase 0, Phase 2
-- Current active phases: Phase 1 (email verification/reset), Phase 6 (offline check-in), Phase 7 (external delivery)
-- Next priority: email verification/reset and an email/SMS provider; Neon is deferred while testing runs on local PostgreSQL
+- Current completed phases: Phase 0, Phase 1, Phase 2
+- Current active phases: Phase 3–6 (card/bank payments, throughput testing), Phase 7 (external delivery, media, deployment)
+- Next priority: an email/SMS provider adapter (identity links and communications are console-only locally and disabled in production), then media uploads and deployment; Neon is deferred while testing runs on local PostgreSQL
 
 ## Phase status
 
 | Phase | Status | Current boundary |
 | --- | --- | --- |
 | Phase 0 — Contract and scaffolding | Complete | FastAPI app, configuration, health/meta routes, database foundation, tests, Dockerfile and CI |
-| Phase 1 — Identity and authorization | Mostly complete | Rotating refresh tokens, revocation, password change, rate limits, audit log, scoped capabilities on every organiser route and team management by email; email verification and password reset remain |
+| Phase 1 — Identity and authorization | Complete | Rotating refresh tokens, revocation, password change, rate limits, audit log, scoped capabilities on every organiser route, team management by email, email verification and password reset (delivery needs a provider adapter; see Phase 7) |
 | Phase 2 — Public events and program | Complete | Public list/detail/programme/speakers/quotes; organiser CRUD for events, tickets, sessions, milestones, speakers and venues |
 | Phase 3 — Ticketing and registration | Mostly complete | Oversell-safe checkout, attendee QR tickets, complimentary tickets, cancellation and provider-backed refunds |
 | Phase 4 — Payments | Mostly complete | Snippe collections/refund payouts, polling, signed race-safe webhooks, late-payment recovery, audit events and scoped finance views |
 | Phase 5 — Attendee experience | Mostly complete | Saved sessions, opt-in networking, in-app notifications, certificates with public verification; external notification channels remain |
-| Phase 6 — Operations and check-in | Mostly complete | Camera QR scanning in the console, signed-QR/ticket-number check-in with undo, door lookup, attendee list, CSV export, event summary and audit trail; offline check-in remains |
-| Phase 7 — Communications, media and scale | In progress | Organiser communications and sponsors on the server with in-app delivery; email/SMS providers, workers, storage, observability and retention remain |
+| Phase 6 — Operations and check-in | Mostly complete | Camera QR scanning, signed-QR/ticket-number check-in with undo, offline manifests with reconciliation, door lookup, attendee list, CSV export, event summary and audit trail; throughput testing remains |
+| Phase 7 — Communications, media and scale | In progress | Organiser communications and sponsors with in-app delivery; a notification provider port with console (local) and disabled implementations; CI dependency, SAST and secret scans; production email/SMS adapters, workers, media storage, observability, retention and deployment remain |
 
 ## Completed work
 
@@ -235,11 +235,41 @@ Phases 3 and 4.
 - Provider errors are logged without exposing provider details or credentials to clients.
 - Added organiser UI action, Postman requests, migration, adapter/service tests and API authorization/idempotency tests.
 
+### 2026-09-27 — Offline check-in, email verification/reset and CI security scans (recorded 2026-09-30)
+
+Merged in PRs #22 and #23 without a log entry; recorded here from the code.
+
+- **Offline check-in** (`302b922`): `GET /admin/events/{id}/check-ins/offline-manifest` issues a signed roster
+  that expires at the earlier of 8 hours or 2 hours after the event ends; the console stores it and queued
+  scans in IndexedDB (`src/services/offlineCheckIn.ts`). `POST .../check-ins/reconcile` replays scans
+  idempotently by client operation id (migration `e7a4b9c1d2f3`); expired manifests and operation ids
+  reused across events are rejected.
+- **Email verification and password reset** (`bfbffb3`): hashed single-use identity tokens (migration
+  `f8b5c2d4e6a1`), `/auth/email-verification/*` and `/auth/password-reset/*` with their own rate limit,
+  identical responses for unknown emails, `/verify-email` and `/reset-password` pages. Links are sent
+  through a `NotificationProvider` port: `console` prints them locally and is rejected in
+  production/staging; `disabled` is the default. A production email/SMS adapter is still needed.
+- **Security CI** (`5dab421`): `.github/workflows/security.yml` runs `pip-audit` and Bandit on the backend,
+  `npm audit --omit=dev --audit-level=high`, and a gitleaks secret scan.
+
+### 2026-09-30 — Cleanup and frontend tests
+
+- `offline_check_in_operations.outcome` declared JSONB on PostgreSQL in the model but plain JSON in
+  migration `e7a4b9c1d2f3`; the model now uses JSON, so `alembic check` is clean on PostgreSQL. No schema change.
+- Removed the unused `web/` copy of the prototype and its oxlint ignore entry.
+- Local databases created before PRs #21–#23 need `alembic upgrade head`; until then every login fails
+  with `users.email_verified_at does not exist`.
+- Frontend test harness: Vitest + Testing Library (jsdom) render the whole app in live mode against an
+  in-memory fake API. 13 tests cover login and workspace routing, session refresh (single flight,
+  rejected refresh), free-ticket registration, and check-in (ticket number, signed QR routed to its event,
+  duplicate scans, no-camera message). `npm run check` runs them, so CI does too. Mutation checks confirmed
+  the QR-routing and workspace-routing tests fail when that logic is broken.
+- The tests exposed an unhandled rejection when IndexedDB is unavailable on the check-in page; fixed.
+
 ## Next implementation slices
 
-1. Apply `b7e1c4d2a9f3` and `c5a2f8e7d1b4` to Neon production (development is at head).
-2. Offline/poor-network check-in strategy.
-3. Refund workflow through the provider for organiser cancellations flagged `refund_required`.
-4. Email verification and password reset once an email provider contract exists.
-5. Email/SMS provider for communications, password reset and verification.
-6. Add `pip-audit`, secret scanning and SAST to backend CI.
+1. Production email/SMS adapter for the notification port (identity links and organiser communications).
+2. Media uploads (event artwork, speaker photos, sponsor logos) with object storage.
+3. Deployment of the API and web app; then apply all migrations to Neon production.
+4. Card and bank payments if Snippe supports them for this account.
+5. Check-in throughput testing at expected event volume.
